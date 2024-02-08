@@ -39,16 +39,28 @@ class DataSheet:
     def __init__(self, name, datasource, excel=False):
         self.name = name
         self.columns = {}
+        self.data_columns = []
         if excel:
             self.df = pd.read_excel(datasource.file, self.name)
             cols = [col for col in self.df.columns if '(%)' not in col]
+
             if datasource.name == 'Census':
-                cols = ['date'] + cols[1:] + ['Not reported']
+                cols = ['date'] + cols[1:]
                 self.df.insert(0, 'date', ['2010-01-01'], False)
-                self.df['Not reported'] = [0]
+
+            self.df['date'] = pd.to_datetime(self.df['date'])
+
+            if cols[-1].find('Not reported') == -1:
+                cols = cols + ['Not reported']
+                self.df['Not reported'] = 0
+
             self.columns['date'] = cols[0]
             for col in cols[1:]:
                 colname = col
                 if datasource.name == 'MIDRC':
                     colname = str(col).split('(CUSUM)')[0]
+                    self.df[colname.rstrip()] = self.df[col]
                 self.columns[colname.rstrip()] = col
+
+            self.data_columns = list(self.columns.keys())[1:]
+
