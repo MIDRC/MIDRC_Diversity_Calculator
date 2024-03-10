@@ -1,4 +1,5 @@
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
+import ExcelLayout
 
 class JSDTableModel(QAbstractTableModel):
     def __init__(self):
@@ -7,6 +8,11 @@ class JSDTableModel(QAbstractTableModel):
         self.mapping = {}
         self.column_count = 0
         self.row_count = 0
+
+        self.raw_data = {}
+        self.raw_data['MIDRC'] = ExcelLayout.DataSource('MIDRC')
+        self.raw_data['CDC'] = ExcelLayout.DataSource('CDC')
+        self.raw_data['Census'] = ExcelLayout.DataSource('Census')
 
     def rowCount(self, parent=QModelIndex()):
         return len(self.input_data)
@@ -55,3 +61,4 @@ class JSDTableModel(QAbstractTableModel):
 
     def clear_mapping(self):
         self.mapping = {}
+
