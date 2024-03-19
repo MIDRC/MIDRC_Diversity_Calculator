@@ -98,9 +98,8 @@ class DataSheet:
                         use_col = False
                     if len(colrange) == 1 and not math.isinf(agerange[1]):
                         use_col = False
-                    if len(colrange) > 1:
-                        if agerange[1] < int(colrange[1]):
-                            use_col = False
+                    if len(colrange) > 1 and agerange[1] < int(colrange[1]):
+                        use_col = False
 
                     if use_col:
                         cols_to_sum.append(col)
