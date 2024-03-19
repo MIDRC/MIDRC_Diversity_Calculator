@@ -100,7 +100,7 @@ class JsdWindow(QMainWindow):
         self.series.attachAxis(axisY)
 
     def setAnimationOptions(self, toggle):
-        print(f"Set Chart Animations To {toggle}")
+        # print(f"Set Chart Animations To {toggle}")
         if toggle:
             self.chart.setAnimationOptions(QChart.AllAnimations)
         else:

@@ -1,3 +1,4 @@
+import ExcelLayout
 import excelparse
 import jsdview
 import jsdmodel
@@ -15,6 +16,7 @@ class JSDController(QObject):
         super().__init__()
         self.jsd_view = jsd_view
         self.jsd_model = jsd_model
+
         self.fileChanged(None, newcategoryindex=2)
         for f_c in self.jsd_view.groupbox.file_comboboxes:
             f_c.currentIndexChanged.connect(self.fileChanged)
@@ -57,6 +59,14 @@ class JSDController(QObject):
             cbox1 = self.jsd_view.groupbox.file_comboboxes[i]
             df1 = self.jsd_model.raw_data[cbox1.currentData()].sheets[cat].df
             cols_to_use = self.jsd_model.raw_data[cbox1.currentData()].sheets[cat].data_columns
+
+            # Use custom age columns for JSD calculation
+            if cat == 'Age at Index':
+                cols_to_use = []
+                for agerange in ExcelLayout.WhitneyPaper.CustomAgeColumns:
+                    cols_to_use.append(f'{agerange[0]}-{agerange[1]} Custom')
+                cols_to_use.append('Not reported')
+
             for j in range(i+1, num_files):
                 cbox2 = self.jsd_view.groupbox.file_comboboxes[j]
                 df2 = self.jsd_model.raw_data[cbox2.currentData()].sheets[cat].df
