@@ -61,14 +61,7 @@ class JSDController(QObject):
         for i in range(0, num_files):
             cbox1 = self.jsd_view.dataselectiongroupbox.file_comboboxes[i]
             df1 = self.jsd_model.raw_data[cbox1.currentData()].sheets[cat].df
-            cols_to_use = self.jsd_model.raw_data[cbox1.currentData()].sheets[cat].data_columns
-
-            # Use custom age columns for JSD calculation
-            if cat == 'Age at Index':
-                cols_to_use = []
-                for agerange in ExcelLayout.WhitneyPaper.CustomAgeColumns:
-                    cols_to_use.append(f'{agerange[0]}-{agerange[1]} Custom')
-                cols_to_use.append('Not reported')
+            cols_to_use = self.get_cols_to_use_for_jsd_calc(cbox1, cat)
 
             for j in range(i+1, num_files):
                 cbox2 = self.jsd_view.dataselectiongroupbox.file_comboboxes[j]
@@ -104,6 +97,39 @@ class JSDController(QObject):
             # cur_col += 2
         self.categoryplotdatachanged.emit()
         self.jsd_model.layoutChanged.emit()
+
+    def get_cols_to_use_for_jsd_calc(self, cbox, category):
+        cols_to_use = self.jsd_model.raw_data[cbox.currentData()].sheets[category].data_columns
+
+        # Use custom age columns for JSD calculation
+        if category == 'Age at Index':
+            cols_to_use = []
+            for agerange in ExcelLayout.WhitneyPaper.CustomAgeColumns:
+                cols_to_use.append(f'{agerange[0]}-{agerange[1]} Custom')
+            cols_to_use.append('Not reported')
+
+        return cols_to_use
+
+    def get_spider_plot_values(self, calcdate):
+        if calcdate is None:
+            calcdate = np.datetime64('today')
+
+        categories = [self.jsd_view.dataselectiongroupbox.category_combobox.itemText(i) for i in
+                      range(self.jsd_view.dataselectiongroupbox.category_combobox.count())]
+
+        cbox0 = self.jsd_view.dataselectiongroupbox.file_comboboxes[0]
+        sheets0 = self.jsd_model.raw_data[cbox0.currentData()].sheets
+        cbox1 = self.jsd_view.dataselectiongroupbox.file_comboboxes[1]
+        sheets1 = self.jsd_model.raw_data[cbox1.currentData()].sheets
+
+        jsd_values = {}
+
+        for category in categories:
+            cols_to_use = self.get_cols_to_use_for_jsd_calc(cbox0, category)
+            jsd = calcjsd(sheets0[category].df, sheets1[category].df, cols_to_use, calcdate)
+            jsd_values[category] = jsd
+
+        return jsd_values
 
 
 def calcjsd(df1, df2, cols_to_use, calcdate):

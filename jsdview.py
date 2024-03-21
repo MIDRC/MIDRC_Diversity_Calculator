@@ -3,7 +3,7 @@ from PySide6.QtGui import QColor, QPainter, QAction
 from PySide6.QtWidgets import (QGridLayout, QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter)
 from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QVXYModelMapper, QDateTimeAxis, QValueAxis,
-                              QPieSeries, QPolarChart, QAreaSeries)
+                              QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
 
 import jsdmodel
 import jsdcontroller
@@ -55,7 +55,7 @@ class JsdWindow(QMainWindow):
         # The fileselectionchanged signal emits before we connect it, so call receiver once here
         self.updateFileBasedCharts()
 
-        self.setWindowTitle('MIDRC JSD Tool')
+        self.setWindowTitle('MIDRC Diversity Calculator')
 
     def createMainLayout(self):
         main_layout = QVBoxLayout()
@@ -84,7 +84,7 @@ class JsdWindow(QMainWindow):
         self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table_view.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
         table_dock_widget.setWidget(self.table_view)
-        table_dock_widget.setWindowTitle('JSD Table')
+        table_dock_widget.setWindowTitle('JSD Table - MIDRC Diversity Calculator')
         return table_dock_widget
 
     def createPieChartDockWidget(self):
@@ -92,6 +92,7 @@ class JsdWindow(QMainWindow):
         w = QWidget()
         pie_chart_dock_widget.setWidget(w)
         w.setLayout(self.pie_chart_hbox)
+        pie_chart_dock_widget.setWindowTitle('Pie Charts - MIDRC Diversity Calculator')
         return pie_chart_dock_widget
 
     def createSpiderChartDockWidget(self):
@@ -104,6 +105,7 @@ class JsdWindow(QMainWindow):
         self.spider_chart_vbox.addWidget(area_chart_view)
         spider_chart_view = QChartView(self.spider_chart)
         self.spider_chart_vbox.addWidget(spider_chart_view)
+        spider_chart_dock_widget.setWindowTitle('Diversity Charts - MIDRC Diversity Calculator')
         return spider_chart_dock_widget
 
     def updateFileBasedCharts(self):
@@ -148,8 +150,37 @@ class JsdWindow(QMainWindow):
             chart.legend().setAlignment(Qt.AlignRight)
             self.pie_chart_hbox.addWidget(self.pie_chart_views[category], stretch=1)
 
-    def updateSpiderChart(self):
-        self.spider_chart.setTitle('Spider Chart')
+    def updateSpiderChart(self, date=None):
+        # For now, just use the file in the first combobox
+        spider_plot_values = self.jsd_controller.get_spider_plot_values(date)
+        self.spider_chart.removeAllSeries()
+        for axis in self.spider_chart.axes():
+            self.spider_chart.removeAxis(axis)
+
+        self.spider_chart.setTitle(f'{self.dataselectiongroupbox.file_comboboxes[0].currentData()} vs '
+                                   f'{self.dataselectiongroupbox.file_comboboxes[1].currentData()} '
+                                   'JSD per category')
+
+        labels = list(spider_plot_values.keys())
+        series = QLineSeries()
+        angular_axis = QCategoryAxis()
+        angular_axis.setRange(0, 360)
+        angular_axis.setLabelsPosition(QCategoryAxis.AxisLabelsPositionOnValue)
+        for index, label in enumerate(labels):
+            angle = 360 * index / len(labels)
+            series.append(angle, spider_plot_values[label])
+            angular_axis.append(label, angle)
+        series.append(360, spider_plot_values[labels[0]])
+
+        self.spider_chart.addSeries(series)
+        self.spider_chart.addAxis(angular_axis, QPolarChart.PolarOrientationAngular)
+        series.attachAxis(angular_axis)
+
+        radial_axis = QValueAxis()
+        radial_axis.setRange(0, 1)
+        self.spider_chart.addAxis(radial_axis, QPolarChart.PolarOrientationRadial)
+        series.attachAxis(radial_axis)
+
 
     def updateAreaChart(self):
         # For now, just use the file in the first combobox
@@ -157,7 +188,8 @@ class JsdWindow(QMainWindow):
         sheets = self.get_file_sheets_from_combobox(file_cbox_index)
         category = self.dataselectiongroupbox.category_combobox.currentText()
         self.area_chart.removeAllSeries()
-        self.area_chart.setTitle(f'{category} distribution over time')
+        self.area_chart.setTitle(f'{self.dataselectiongroupbox.file_comboboxes[file_cbox_index].currentData()} '
+                                 f'{category} distribution over time')
 
         df = sheets[category].df
         cols_to_use = sheets[category].data_columns
