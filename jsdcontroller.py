@@ -12,6 +12,7 @@ from scipy.spatial import distance
 
 class JSDController(QObject):
     categoryplotdatachanged = Signal()
+    fileselectionchanged = Signal()
     def __init__(self, jsd_view, jsd_model):
         super().__init__()
         self.jsd_view = jsd_view
@@ -39,6 +40,8 @@ class JSDController(QObject):
         self.jsd_view.dataselectiongroupbox.category_combobox.addItems(categorylist)
         self.jsd_view.dataselectiongroupbox.category_combobox.setCurrentIndex(categoryindex)
         self.jsd_view.dataselectiongroupbox.category_combobox.blockSignals(False)
+
+        self.fileselectionchanged.emit()
 
         self.categoryChanged()
 
