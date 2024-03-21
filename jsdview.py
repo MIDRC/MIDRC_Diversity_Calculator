@@ -115,6 +115,7 @@ class JsdWindow(QMainWindow):
                     # slc.setLabelVisible()
             # series.setPieSize(0.4)
             chart.addSeries(series)
+            chart.legend().setAlignment(Qt.AlignRight)
             self.hbox.addWidget(self.pie_chart_views[category])
 
     def updateCategoryPlots(self):
