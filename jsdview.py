@@ -1,7 +1,7 @@
 from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF
 from PySide6.QtGui import QColor, QPainter, QAction
 from PySide6.QtWidgets import (QGridLayout, QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox,
-                               QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget)
+                               QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter)
 from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QVXYModelMapper, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries)
 
@@ -37,7 +37,7 @@ class JsdWindow(QMainWindow):
 
         self.spider_chart = QPolarChart()
         self.area_chart = QChart()
-        self.spider_chart_vbox = QVBoxLayout()
+        self.spider_chart_vbox = QSplitter(Qt.Vertical)
         self.spider_chart_dock_widget = self.createSpiderChartDockWidget()
         self.addDockWidget(Qt.RightDockWidgetArea, self.spider_chart_dock_widget)
 
@@ -96,9 +96,10 @@ class JsdWindow(QMainWindow):
 
     def createSpiderChartDockWidget(self):
         spider_chart_dock_widget = QDockWidget()
-        w = QWidget()
-        spider_chart_dock_widget.setWidget(w)
-        w.setLayout(self.spider_chart_vbox)
+        # w = QWidget()
+        # spider_chart_dock_widget.setWidget(w)
+        # w.setLayout(self.spider_chart_vbox)
+        spider_chart_dock_widget.setWidget(self.spider_chart_vbox)
         area_chart_view = QChartView(self.area_chart)
         self.spider_chart_vbox.addWidget(area_chart_view)
         spider_chart_view = QChartView(self.spider_chart)
@@ -117,7 +118,7 @@ class JsdWindow(QMainWindow):
     def updatePieChartDock(self):
         # First, get rid of the old stuff just to be safe
         for c, pv in self.pie_chart_views.items():
-            print('Deleting chart', pv.chart().title(), ':', c)
+            # print('Deleting chart', pv.chart().title(), ':', c)
             self.pie_chart_dock_widget.layout().removeWidget(pv)
             pv.deleteLater()
         self.pie_chart_views = {}
@@ -152,29 +153,33 @@ class JsdWindow(QMainWindow):
 
     def updateAreaChart(self):
         # For now, just use the file in the first combobox
-        sheets = self.get_file_sheets_from_combobox(0)
+        file_cbox_index = 0
+        sheets = self.get_file_sheets_from_combobox(file_cbox_index)
         category = self.dataselectiongroupbox.category_combobox.currentText()
         self.area_chart.removeAllSeries()
         self.area_chart.setTitle(f'{category} distribution over time')
 
         df = sheets[category].df
         cols_to_use = sheets[category].data_columns
-        # df['_area_chart_totals_'] = df[cols_to_use].sum(axis=1)
         total_counts = df[cols_to_use].sum(axis=1)
+        dates = [QDateTime(jsdcontroller.numpy_datetime64_to_qdate(date), QTime()) for date in df.date.values]
+        print("Dates:", dates)
+        # lower_series = [QPointF(dates[j], 0.0) for j in range(len(dates))]  # This is an option instead of None
         lower_series = None
-        dates = [QDateTime(jsdcontroller.numpy_datetime64_to_qdate(date), QTime()).toMSecsSinceEpoch() for date in df.date.values]
         for index, col in enumerate(cols_to_use):
+            if df[col].iloc[-1] == 0:  # Cumulative sum is zero, so skip category
+                print(f"Skipping column '{col}' for category '{category}' and file "
+                      f"'{self.dataselectiongroupbox.file_comboboxes[file_cbox_index].currentData()}'")
+                # continue
+
             upper_counts = df[cols_to_use[:index+1]].sum(axis=1)
-            points = [QPointF(dates[j], 100.0 * upper_counts[j] / total_counts[j]) for j in range(len(dates))]
+            points = [QPointF(dates[j].toMSecsSinceEpoch(), 100.0 * upper_counts[j] / total_counts[j]) for j in range(len(dates))]
+
+            if len(dates) == 1:  # Only a single date in this file
+                points.append(QPointF(dates[0].toMSecsSinceEpoch() + 1, 100.0 * upper_counts[0] / total_counts[0]))
 
             upper_series = QLineSeries(self.area_chart)
             upper_series.append(points)
-
-            # printing for debug
-            print(f"Counts for column {col}")
-            if lower_series:
-                print(lower_series.points()[20:30])
-            print(upper_series.points()[20:30])
 
             area = QAreaSeries(upper_series, lower_series)
             area.setName(col)
@@ -183,22 +188,24 @@ class JsdWindow(QMainWindow):
 
         for axis in self.area_chart.axes():
             self.area_chart.removeAxis(axis)
+        self.area_chart.createDefaultAxes()  # We have to use createDefaultAxes() or each line uses its own set of axes
 
+        self.area_chart.removeAxis(self.area_chart.axisX())
         axisX = QDateTimeAxis()
         # axisX.setTickCount(10)
         axisX.setFormat("MMM yyyy")
-        # axisX.setTitleText("Date")
+        axisX.setTitleText("Date")
+        # We assume that the dates are sorted, so don't need the following
+        # dates_s = sorted(dates)
+        # axisX.setRange(dates_s[0], dates_s[-1])
+        axisX.setRange(dates[0], dates[-1] if len(dates) > 1 else dates[0].addMSecs(1))
         self.area_chart.addAxis(axisX, Qt.AlignBottom)
-        # series.attachAxis(axisX)
 
-        axisY = QValueAxis()
+        axisY = self.area_chart.axisY()
         axisY.setTitleText("Percent of total")
         axisY.setLabelFormat('%.0f%')
         axisY.setRange(0, 100)
         # axisY.setTickCount(11)
-        self.area_chart.addAxis(axisY, Qt.AlignLeft)
-        # series.attachAxis(axisY)
-
 
     def updateCategoryPlots(self):
         self.updatejsdtimelineplot()
@@ -224,7 +231,6 @@ class JsdWindow(QMainWindow):
         # self.mapper.setSeries(series)
         # self.mapper.setModel(self.jsd_model)
         self.jsd_timeline_chart.addSeries(series)
-
 
         self.jsd_model.add_mapping(series.pen().color().name(),
                                    QRect(0, 0, 2, self.jsd_model.rowCount()))
