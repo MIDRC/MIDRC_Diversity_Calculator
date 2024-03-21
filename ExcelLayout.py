@@ -80,7 +80,7 @@ class DataSheet:
         # The 'Age at Index' columns need alteration for JSD calculation
         if self.name == 'Age at Index':
             cols = [col for col in self.df.columns if '(%)' not in col and '(CUSUM)' not in col and col[0].isdigit()]
-            print(cols)
+            # print(cols)
             cols_used = []
             for agerange in age_ranges:
                 cols_to_sum = []

@@ -1,9 +1,9 @@
-from PySide6.QtCore import QRect, Qt, QDateTime, QTime
+from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF
 from PySide6.QtGui import QColor, QPainter, QAction
 from PySide6.QtWidgets import (QGridLayout, QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget)
 from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QVXYModelMapper, QDateTimeAxis, QValueAxis,
-                              QPieSeries)
+                              QPieSeries, QPolarChart, QAreaSeries)
 
 import jsdmodel
 import jsdcontroller
@@ -17,7 +17,6 @@ class JsdWindow(QMainWindow):
         self.dataselectiongroupbox = JsdDataSelectionGroupBox()
 
         self.table_view = QTableView()
-        self.hbox = QHBoxLayout()
         self.addDockWidget(Qt.LeftDockWidgetArea, self.createTableDockWidget())
 
         self.jsd_timeline_chart = QChart()
@@ -31,9 +30,16 @@ class JsdWindow(QMainWindow):
 
         self.setMenuBar(self.createMenuBar())
 
-        self.pie_chart_dock_widget = self.createPieChartDockWidget()
         self.pie_chart_views = {}
+        self.pie_chart_hbox = QHBoxLayout()  # If this is a local variable, only 1 plot shows up ¯\_(ツ)_/¯
+        self.pie_chart_dock_widget = self.createPieChartDockWidget()
         self.addDockWidget(Qt.BottomDockWidgetArea, self.pie_chart_dock_widget)
+
+        self.spider_chart = QPolarChart()
+        self.area_chart = QChart()
+        self.spider_chart_vbox = QVBoxLayout()
+        self.spider_chart_dock_widget = self.createSpiderChartDockWidget()
+        self.addDockWidget(Qt.RightDockWidgetArea, self.spider_chart_dock_widget)
 
         # Connect model and controller to this view
         self.jsd_model = jsdmodel.JSDTableModel()
@@ -41,23 +47,21 @@ class JsdWindow(QMainWindow):
 
         # Update category plots when the category is changed
         self.jsd_controller.categoryplotdatachanged.connect(self.updateCategoryPlots)
-        # The plotdatachanged signal emits before we connect it, so call updateplot() once here
+        # The plotdatachanged signal emits before we connect it, so call receiver once here
         self.updateCategoryPlots()
 
         # Update the file-based plots when the file selection is changed
-        self.jsd_controller.fileselectionchanged.connect(self.updatePieChartDock)
-        # The fileselectionchanged signal emits before we connect it, so call updateplot() once here
-        self.updatePieChartDock()
+        self.jsd_controller.fileselectionchanged.connect(self.updateFileBasedCharts)
+        # The fileselectionchanged signal emits before we connect it, so call receiver once here
+        self.updateFileBasedCharts()
 
         self.setWindowTitle('MIDRC JSD Tool')
 
     def createMainLayout(self):
-        self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table_view.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
-
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.dataselectiongroupbox)
         main_layout.addWidget(self.jsd_timeline_chart_view)
+        # The table used to not be a dock widget, the following section can probably be removed now
         # table_hbox = QHBoxLayout()
         # table_hbox.addWidget(self.table_view)
         # table_hbox.addWidget(self.jsd_timeline_chart_view, stretch=1)
@@ -77,6 +81,8 @@ class JsdWindow(QMainWindow):
 
     def createTableDockWidget(self):
         table_dock_widget = QDockWidget()
+        self.table_view.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table_view.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
         table_dock_widget.setWidget(self.table_view)
         table_dock_widget.setWindowTitle('JSD Table')
         return table_dock_widget
@@ -85,8 +91,28 @@ class JsdWindow(QMainWindow):
         pie_chart_dock_widget = QDockWidget()
         w = QWidget()
         pie_chart_dock_widget.setWidget(w)
-        w.setLayout(self.hbox)
+        w.setLayout(self.pie_chart_hbox)
         return pie_chart_dock_widget
+
+    def createSpiderChartDockWidget(self):
+        spider_chart_dock_widget = QDockWidget()
+        w = QWidget()
+        spider_chart_dock_widget.setWidget(w)
+        w.setLayout(self.spider_chart_vbox)
+        area_chart_view = QChartView(self.area_chart)
+        self.spider_chart_vbox.addWidget(area_chart_view)
+        spider_chart_view = QChartView(self.spider_chart)
+        self.spider_chart_vbox.addWidget(spider_chart_view)
+        return spider_chart_dock_widget
+
+    def updateFileBasedCharts(self):
+        self.updatePieChartDock()
+        self.updateSpiderChart()
+
+    def get_file_sheets_from_combobox(self, index=0):
+        cbox = self.dataselectiongroupbox.file_comboboxes[index]
+        sheets = self.jsd_model.raw_data[cbox.currentData()].sheets
+        return sheets
 
     def updatePieChartDock(self):
         # First, get rid of the old stuff just to be safe
@@ -95,12 +121,15 @@ class JsdWindow(QMainWindow):
             self.pie_chart_dock_widget.layout().removeWidget(pv)
             pv.deleteLater()
         self.pie_chart_views = {}
-
-        # For now, just use the first file
-        cbox0 = self.dataselectiongroupbox.file_comboboxes[0]
-        sheets = self.jsd_model.raw_data[cbox0.currentData()].sheets
-        categories = list(sheets.keys())
         charts = {}
+
+        # For now, just use the file in the first combobox
+        sheets = self.get_file_sheets_from_combobox(0)
+        categories = list(sheets.keys())
+
+        # Set the timepoint to the last timepoint in the series for now
+        timepoint = -1
+
         for index, category in enumerate(categories):
             chart = QChart()
             self.pie_chart_views[category] = QChartView(chart)
@@ -109,17 +138,71 @@ class JsdWindow(QMainWindow):
             cols_to_use = sheets[category].data_columns
             series = QPieSeries(chart)
             for col in cols_to_use:
-                print(f"{category} Pie chart - {col} : {df[col].iloc[-1]}")
-                if df[col].iloc[-1] > 0:
-                    slc = series.append(col, df[col].iloc[-1])
+                # print(f"{category} Pie chart - {col} : {df[col].iloc[timepoint]}")
+                if df[col].iloc[timepoint] > 0:
+                    slc = series.append(col, df[col].iloc[timepoint])
                     # slc.setLabelVisible()
             # series.setPieSize(0.4)
             chart.addSeries(series)
             chart.legend().setAlignment(Qt.AlignRight)
-            self.hbox.addWidget(self.pie_chart_views[category])
+            self.pie_chart_hbox.addWidget(self.pie_chart_views[category], stretch=1)
+
+    def updateSpiderChart(self):
+        self.spider_chart.setTitle('Spider Chart')
+
+    def updateAreaChart(self):
+        # For now, just use the file in the first combobox
+        sheets = self.get_file_sheets_from_combobox(0)
+        category = self.dataselectiongroupbox.category_combobox.currentText()
+        self.area_chart.removeAllSeries()
+        self.area_chart.setTitle(f'{category} distribution over time')
+
+        df = sheets[category].df
+        cols_to_use = sheets[category].data_columns
+        # df['_area_chart_totals_'] = df[cols_to_use].sum(axis=1)
+        total_counts = df[cols_to_use].sum(axis=1)
+        lower_series = None
+        dates = [QDateTime(jsdcontroller.numpy_datetime64_to_qdate(date), QTime()).toMSecsSinceEpoch() for date in df.date.values]
+        for index, col in enumerate(cols_to_use):
+            upper_counts = df[cols_to_use[:index+1]].sum(axis=1)
+            points = [QPointF(dates[j], 100.0 * upper_counts[j] / total_counts[j]) for j in range(len(dates))]
+
+            upper_series = QLineSeries(self.area_chart)
+            upper_series.append(points)
+
+            # printing for debug
+            print(f"Counts for column {col}")
+            if lower_series:
+                print(lower_series.points()[20:30])
+            print(upper_series.points()[20:30])
+
+            area = QAreaSeries(upper_series, lower_series)
+            area.setName(col)
+            self.area_chart.addSeries(area)
+            lower_series = upper_series
+
+        for axis in self.area_chart.axes():
+            self.area_chart.removeAxis(axis)
+
+        axisX = QDateTimeAxis()
+        # axisX.setTickCount(10)
+        axisX.setFormat("MMM yyyy")
+        # axisX.setTitleText("Date")
+        self.area_chart.addAxis(axisX, Qt.AlignBottom)
+        # series.attachAxis(axisX)
+
+        axisY = QValueAxis()
+        axisY.setTitleText("Percent of total")
+        axisY.setLabelFormat('%.0f%')
+        axisY.setRange(0, 100)
+        # axisY.setTickCount(11)
+        self.area_chart.addAxis(axisY, Qt.AlignLeft)
+        # series.attachAxis(axisY)
+
 
     def updateCategoryPlots(self):
         self.updatejsdtimelineplot()
+        self.updateAreaChart()
 
     def updatejsdtimelineplot(self):
         # print("Updating table and plot")
@@ -128,8 +211,8 @@ class JsdWindow(QMainWindow):
         self.jsd_timeline_chart.removeAllSeries()
         series = QLineSeries()
         series.setName('{} vs {} {} JSD'.format(self.dataselectiongroupbox.file_comboboxes[0].currentData(),
-                                                     self.dataselectiongroupbox.file_comboboxes[1].currentData(),
-                                                     self.dataselectiongroupbox.category_combobox.currentText()))
+                                                self.dataselectiongroupbox.file_comboboxes[1].currentData(),
+                                                self.dataselectiongroupbox.category_combobox.currentText()))
         col = 0
         for i in range(self.jsd_model.rowCount()):
             if self.jsd_model.input_data[i][col] is not None:
