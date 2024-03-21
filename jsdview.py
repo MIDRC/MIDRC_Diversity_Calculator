@@ -163,14 +163,13 @@ class JsdWindow(QMainWindow):
         cols_to_use = sheets[category].data_columns
         total_counts = df[cols_to_use].sum(axis=1)
         dates = [QDateTime(jsdcontroller.numpy_datetime64_to_qdate(date), QTime()) for date in df.date.values]
-        print("Dates:", dates)
         # lower_series = [QPointF(dates[j], 0.0) for j in range(len(dates))]  # This is an option instead of None
         lower_series = None
         for index, col in enumerate(cols_to_use):
             if df[col].iloc[-1] == 0:  # Cumulative sum is zero, so skip category
-                print(f"Skipping column '{col}' for category '{category}' and file "
-                      f"'{self.dataselectiongroupbox.file_comboboxes[file_cbox_index].currentData()}'")
-                # continue
+                # print(f"Skipping column '{col}' for category '{category}' and file "
+                #       f"'{self.dataselectiongroupbox.file_comboboxes[file_cbox_index].currentData()}'")
+                continue
 
             upper_counts = df[cols_to_use[:index+1]].sum(axis=1)
             points = [QPointF(dates[j].toMSecsSinceEpoch(), 100.0 * upper_counts[j] / total_counts[j]) for j in range(len(dates))]
