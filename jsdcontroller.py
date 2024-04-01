@@ -8,15 +8,16 @@ from datetime import date
 import numpy as np
 import pandas as pd
 from scipy.spatial import distance
+from jsdmodel import JSDTableModel
 
 
 class JSDController(QObject):
     categoryplotdatachanged = Signal()
     fileselectionchanged = Signal()
-    def __init__(self, jsd_view, jsd_model):
+    def __init__(self, jsd_view):
         super().__init__()
         self.jsd_view = jsd_view
-        self.jsd_model = jsd_model
+        self.jsd_model = JSDTableModel()
 
         self.fileChanged(None, newcategoryindex=2)
         for f_c in self.jsd_view.dataselectiongroupbox.file_comboboxes:
