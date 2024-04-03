@@ -10,6 +10,10 @@ from datetimetools import numpy_datetime64_to_qdate, convert_date_to_millisecond
 from jsdmodel import JSDTableModel
 
 
+class JsdDataSelectionGroupBox:
+    pass
+
+
 class JsdWindow(QMainWindow):
     WINDOW_TITLE = 'MIDRC Diversity Calculator'
 
@@ -22,7 +26,7 @@ class JsdWindow(QMainWindow):
         super().__init__()
 
         # Set up graphical layout
-        self.dataselectiongroupbox = JsdDataSelectionGroupBox()
+        self._dataselectiongroupbox = JsdDataSelectionGroupBox()
 
         self.table_view = QTableView()
         self.addDockWidget(Qt.LeftDockWidgetArea, self.createTableDockWidget(self.table_view, 'JSD Table - ' + JsdWindow.WINDOW_TITLE))
@@ -57,9 +61,13 @@ class JsdWindow(QMainWindow):
         This layout includes the data selection group box and the JSD timeline chart view.
         """
         main_layout = QVBoxLayout()
-        main_layout.addWidget(self.dataselectiongroupbox)
+        main_layout.addWidget(self._dataselectiongroupbox)
         main_layout.addWidget(self.jsd_timeline_chart_view)
         return main_layout
+
+    def get_dataselectiongroupbox(self) -> JsdDataSelectionGroupBox:
+        # Get the Data Selection GroupBox object.
+        return self._dataselectiongroupbox
 
     def createMenuBar(self) -> QMenuBar:
         """
@@ -203,8 +211,8 @@ class JsdWindow(QMainWindow):
         """
         Update the spider chart with new data.
         """
-        file1_data = self.dataselectiongroupbox.file_comboboxes[0].currentData()
-        file2_data = self.dataselectiongroupbox.file_comboboxes[1].currentData()
+        file1_data = self._dataselectiongroupbox.file_comboboxes[0].currentData()
+        file2_data = self._dataselectiongroupbox.file_comboboxes[1].currentData()
 
         self.spider_chart.removeAllSeries()
         for axis in self.spider_chart.axes():
@@ -254,7 +262,7 @@ class JsdWindow(QMainWindow):
         """
         Update the area chart with new data.
         """
-        category = self.dataselectiongroupbox.category_combobox.currentText()
+        category = self._dataselectiongroupbox.category_combobox.currentText()
 
         self.area_chart.removeAllSeries()
         self.area_chart.setTitle(f'{filename} {category} distribution over time')
@@ -307,9 +315,9 @@ class JsdWindow(QMainWindow):
         self.jsd_timeline_chart.removeAllSeries()
         jsd_model.clear_mapping()
         series = QLineSeries()
-        series.setName(f"{self.dataselectiongroupbox.file_comboboxes[0].currentData()} vs "
-                       f"{self.dataselectiongroupbox.file_comboboxes[1].currentData()} "
-                       f"{self.dataselectiongroupbox.category_combobox.currentText()} JSD")
+        series.setName(f"{self._dataselectiongroupbox.file_comboboxes[0].currentData()} vs "
+                       f"{self._dataselectiongroupbox.file_comboboxes[1].currentData()} "
+                       f"{self._dataselectiongroupbox.category_combobox.currentText()} JSD")
         col = 0
         row_count = jsd_model.rowCount()
         for i in range(row_count):
@@ -317,8 +325,7 @@ class JsdWindow(QMainWindow):
             if timepoint is not None:
                 series.append(convert_date_to_milliseconds(timepoint), jsd_model.input_data[i][col + 1])
         self.jsd_timeline_chart.addSeries(series)
-        jsd_model.add_mapping(series.pen().color().name(),
-                                                  QRect(0, 0, 2, row_count))
+        jsd_model.add_mapping(series.pen().color().name(), QRect(0, 0, 2, row_count))
 
         self.jsd_timeline_chart.removeAxis(self.jsd_timeline_chart.axisX())
         axisX = QDateTimeAxis()
@@ -353,6 +360,7 @@ class JsdWindow(QMainWindow):
         else:
             self.jsd_timeline_chart.setAnimationOptions(QChart.NoAnimation)
         return True
+
 
 class JsdDataSelectionGroupBox(QGroupBox):
     def __init__(self):

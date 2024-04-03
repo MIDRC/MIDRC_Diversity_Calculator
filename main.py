@@ -46,4 +46,3 @@ if __name__ == '__main__':
     status = launch_diversity_calculator()
     sys.exit(status)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
