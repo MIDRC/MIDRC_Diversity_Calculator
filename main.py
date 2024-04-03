@@ -1,9 +1,10 @@
 import sys
-import jsdview
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QLabel, QSplashScreen
 from PySide6.QtGui import QPixmap, QPainter, QColor, QFont
-
+from jsdcontroller import JSDController
+from jsdmodel import JSDTableModel
+from jsdview import JsdWindow
 
 def launch_diversity_calculator():
     """
@@ -30,7 +31,9 @@ def launch_diversity_calculator():
     q_app.processEvents()
 
     # Create the diversity calculator window
-    w = jsdview.JsdWindow()
+    w = JsdWindow()
+    RAW_DATA_KEYS = ['MIDRC', 'CDC', 'Census']
+    w.jsd_controller = JSDController(w, JSDTableModel(RAW_DATA_KEYS))
     w.show()
 
     # Close the splash screen and wait for the window to be closed

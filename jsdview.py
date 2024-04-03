@@ -1,16 +1,13 @@
 from typing import List, Tuple
-from jsdmodel import JSDTableModel
-from jsdcontroller import JSDController
-from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF
+from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF, Signal
 from PySide6.QtGui import QColor, QPainter, QAction
 from PySide6.QtWidgets import (QGridLayout, QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
                                QLayout)
 from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QVXYModelMapper, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
-
-import jsdmodel
-import jsdcontroller
+from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
+from jsdmodel import JSDTableModel
 
 
 class JsdWindow(QMainWindow):
@@ -51,16 +48,8 @@ class JsdWindow(QMainWindow):
         self.spider_chart_dock_widget = self.createSpiderChartDockWidget(self.spider_chart_vbox, 'Diversity Charts - ' + JsdWindow.WINDOW_TITLE)
         self.addDockWidget(Qt.RightDockWidgetArea, self.spider_chart_dock_widget)
 
-        # Connect model and controller to this view
-        self.jsd_controller = JSDController(self)
-
-        self.jsd_controller.categoryplotdatachanged.connect(self.updateCategoryPlots)
-        self.jsd_controller.fileselectionchanged.connect(self.updateFileBasedCharts)
-
-        self.jsd_controller.categoryplotdatachanged.emit()
-        self.jsd_controller.fileselectionchanged.emit()
-
         self.setWindowTitle(JsdWindow.WINDOW_TITLE)
+
 
     def createMainLayout(self) -> QVBoxLayout:
         """
@@ -177,48 +166,7 @@ class JsdWindow(QMainWindow):
         self.spider_chart_vbox.addWidget(spider_chart_view)
         return spider_chart_view
 
-    def updateFileBasedCharts(self):
-        """
-        Update the file-based charts.
-
-        This method updates the pie chart dock and the spider chart.
-
-        Parameters:
-            None
-
-        Returns:
-            True if the update was successful, False otherwise
-
-        Raises:
-            None
-        """
-        self.updatePieChartDock()
-        self.updateSpiderChart()
-        return True
-
-    def get_file_sheets_from_combobox(self, index=0):
-        """
-        Get the sheets from the selected file combobox.
-
-        Args:
-            index (int): The index of the file combobox. Default is 0.
-
-        Returns:
-            dict: A dictionary containing the sheets from the selected file.
-        """
-        if index < 0 or index >= len(self.dataselectiongroupbox.file_comboboxes):
-            raise IndexError("Index out of range")
-    
-        cbox = self.dataselectiongroupbox.file_comboboxes[index]
-        current_data = cbox.currentData()
-    
-        if current_data in self.jsd_controller.jsd_model.data_sources:
-            sheets = self.jsd_controller.jsd_model.data_sources[current_data].sheets
-            return sheets
-        else:
-            return None
-
-    def updatePieChartDock(self):
+    def updatePieChartDock(self, sheets):
         """
         Update the pie chart dock with new data.
         """
@@ -230,7 +178,6 @@ class JsdWindow(QMainWindow):
         charts = {}
 
         # For now, just use the file in the first combobox
-        sheets = self.get_file_sheets_from_combobox(0)
         categories = list(sheets)
 
         # Set the timepoint to the last timepoint in the series for now
@@ -252,14 +199,13 @@ class JsdWindow(QMainWindow):
             self.pie_chart_hbox.addWidget(new_pie_chart_views[category], stretch=1)
         self.pie_chart_views = new_pie_chart_views
 
-    def updateSpiderChart(self, date=None):
+    def updateSpiderChart(self, spider_plot_values):
         """
         Update the spider chart with new data.
         """
         file1_data = self.dataselectiongroupbox.file_comboboxes[0].currentData()
         file2_data = self.dataselectiongroupbox.file_comboboxes[1].currentData()
 
-        spider_plot_values = self.jsd_controller.get_spider_plot_values(date)
         self.spider_chart.removeAllSeries()
         for axis in self.spider_chart.axes():
             self.spider_chart.removeAxis(axis)
@@ -304,24 +250,21 @@ class JsdWindow(QMainWindow):
         title = f"Comparison of {file1_data} and {file2_data} - JSD per category"
         self.spider_chart.setTitle(title)
 
-    def updateAreaChart(self):
+    def updateAreaChart(self, sheets, filename):
         """
         Update the area chart with new data.
         """
-        file_cbox_index = 0
-        sheets = self.get_file_sheets_from_combobox(file_cbox_index)
         category = self.dataselectiongroupbox.category_combobox.currentText()
-        current_data = self.dataselectiongroupbox.file_comboboxes[file_cbox_index].currentData()
 
         self.area_chart.removeAllSeries()
-        self.area_chart.setTitle(f'{current_data} {category} distribution over time')
+        self.area_chart.setTitle(f'{filename} {category} distribution over time')
 
         df = sheets[category].df
         cols_to_use = sheets[category].data_columns
         total_counts = df[cols_to_use].sum(axis=1)
         upper_counts = df[cols_to_use].cumsum(axis=1)
         upper_counts = upper_counts.apply(lambda x: 100.0 * x / total_counts)
-        dates = [QDateTime(jsdcontroller.numpy_datetime64_to_qdate(date), QTime()) for date in df.date.values]
+        dates = [QDateTime(numpy_datetime64_to_qdate(date), QTime()) for date in df.date.values]
         lower_series = None
         for index, col in enumerate(cols_to_use):
             if df[col].iloc[-1] == 0:
@@ -355,42 +298,26 @@ class JsdWindow(QMainWindow):
         axisY.setTitleText("Percent of total")
         axisY.setLabelFormat('%.0f%')
         axisY.setRange(0, 100)
-        self.area_chart.setProperty("current_data", current_data)
+        self.area_chart.setProperty("current_data", filename)
 
         return True
 
-    def updateCategoryPlots(self):
-        """
-        Update the category plots.
-
-        This method updates the JSD timeline plot and the area chart.
-
-        Parameters:
-            None
-
-        Returns:
-            True
-        """
-        self.updateJsdTimelinePlot()
-        self.updateAreaChart()
-        return True
-
-    def updateJsdTimelinePlot(self):
-        self.table_view.setModel(self.jsd_controller.jsd_model)
+    def updateJsdTimelinePlot(self, jsd_model):
+        self.table_view.setModel(jsd_model)
         self.jsd_timeline_chart.removeAllSeries()
-        self.jsd_controller.jsd_model.clear_mapping()
+        jsd_model.clear_mapping()
         series = QLineSeries()
         series.setName(f"{self.dataselectiongroupbox.file_comboboxes[0].currentData()} vs "
                        f"{self.dataselectiongroupbox.file_comboboxes[1].currentData()} "
                        f"{self.dataselectiongroupbox.category_combobox.currentText()} JSD")
         col = 0
-        row_count = self.jsd_controller.jsd_model.rowCount()
+        row_count = jsd_model.rowCount()
         for i in range(row_count):
-            timepoint = self.jsd_controller.jsd_model.input_data[i][col]
+            timepoint = jsd_model.input_data[i][col]
             if timepoint is not None:
-                series.append(convert_date_to_milliseconds(timepoint), self.jsd_controller.jsd_model.input_data[i][col + 1])
+                series.append(convert_date_to_milliseconds(timepoint), jsd_model.input_data[i][col + 1])
         self.jsd_timeline_chart.addSeries(series)
-        self.jsd_controller.jsd_model.add_mapping(series.pen().color().name(),
+        jsd_model.add_mapping(series.pen().color().name(),
                                                   QRect(0, 0, 2, row_count))
 
         self.jsd_timeline_chart.removeAxis(self.jsd_timeline_chart.axisX())
@@ -481,9 +408,3 @@ class JsdChart (QChart):
         """
         super().__init__()
         self.setAnimationOptions(animation_options)
-
-def convert_date_to_milliseconds(date):
-    """
-    Converts a date to milliseconds since epoch.
-    """
-    return QDateTime(date, QTime()).toMSecsSinceEpoch()
