@@ -212,8 +212,8 @@ class JsdWindow(QMainWindow):
         cbox = self.dataselectiongroupbox.file_comboboxes[index]
         current_data = cbox.currentData()
     
-        if current_data in self.jsd_controller.jsd_model.raw_data:
-            sheets = self.jsd_controller.jsd_model.raw_data[current_data].sheets
+        if current_data in self.jsd_controller.jsd_model.data_sources:
+            sheets = self.jsd_controller.jsd_model.data_sources[current_data].sheets
             return sheets
         else:
             return None
@@ -378,6 +378,7 @@ class JsdWindow(QMainWindow):
     def updateJsdTimelinePlot(self):
         self.table_view.setModel(self.jsd_controller.jsd_model)
         self.jsd_timeline_chart.removeAllSeries()
+        self.jsd_controller.jsd_model.clear_mapping()
         series = QLineSeries()
         series.setName(f"{self.dataselectiongroupbox.file_comboboxes[0].currentData()} vs "
                        f"{self.dataselectiongroupbox.file_comboboxes[1].currentData()} "
@@ -390,7 +391,7 @@ class JsdWindow(QMainWindow):
                 series.append(convert_date_to_milliseconds(timepoint), self.jsd_controller.jsd_model.input_data[i][col + 1])
         self.jsd_timeline_chart.addSeries(series)
         self.jsd_controller.jsd_model.add_mapping(series.pen().color().name(),
-                                   QRect(0, 0, 2, row_count))
+                                                  QRect(0, 0, 2, row_count))
 
         self.jsd_timeline_chart.removeAxis(self.jsd_timeline_chart.axisX())
         axisX = QDateTimeAxis()

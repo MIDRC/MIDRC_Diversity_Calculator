@@ -30,10 +30,10 @@ class JSDController(QObject):
             categoryindex = newcategoryindex
 
         cbox0 = self.jsd_view.dataselectiongroupbox.file_comboboxes[0]
-        categorylist = list(self.jsd_model.raw_data[cbox0.currentData()].sheets.keys())
+        categorylist = list(self.jsd_model.data_sources[cbox0.currentData()].sheets.keys())
 
         for cbox2 in self.jsd_view.dataselectiongroupbox.file_comboboxes[1:]:
-            categorylist2 = self.jsd_model.raw_data[cbox2.currentData()].sheets.keys()
+            categorylist2 = self.jsd_model.data_sources[cbox2.currentData()].sheets.keys()
             categorylist = [value for value in categorylist if value in categorylist2]
 
         self.jsd_view.dataselectiongroupbox.category_combobox.blockSignals(True)
@@ -50,7 +50,7 @@ class JSDController(QObject):
         cat = self.jsd_view.dataselectiongroupbox.category_combobox.currentText()
         # cbox0 = self.jsd_view.dataselectiongroupbox.file_comboboxes[0]
 
-        # cols = self.jsd_model.raw_data[cbox0.currentData()].sheets[cat].columns.values()
+        # cols = self.jsd_model.data_sources[cbox0.currentData()].sheets[cat].columns.values()
         # We don't really care about the columns themselves, we just need to update the jsd plot
         num_files = len(self.jsd_view.dataselectiongroupbox.file_comboboxes)
         self.jsd_model.input_data.clear()
@@ -61,12 +61,12 @@ class JSDController(QObject):
         # cur_col = 0
         for i in range(0, num_files):
             cbox1 = self.jsd_view.dataselectiongroupbox.file_comboboxes[i]
-            df1 = self.jsd_model.raw_data[cbox1.currentData()].sheets[cat].df
+            df1 = self.jsd_model.data_sources[cbox1.currentData()].sheets[cat].df
             cols_to_use = self.get_cols_to_use_for_jsd_calc(cbox1, cat)
 
             for j in range(i+1, num_files):
                 cbox2 = self.jsd_view.dataselectiongroupbox.file_comboboxes[j]
-                df2 = self.jsd_model.raw_data[cbox2.currentData()].sheets[cat].df
+                df2 = self.jsd_model.data_sources[cbox2.currentData()].sheets[cat].df
                 # cols_to_use = df1.columns.intersection(df2.columns.values())
                 # cols_to_use = cols_to_use[1:] # First column is date
                 first_date = max(df1.date.values[0], df2.date.values[0])
@@ -100,7 +100,7 @@ class JSDController(QObject):
         self.jsd_model.layoutChanged.emit()
 
     def get_cols_to_use_for_jsd_calc(self, cbox, category):
-        cols_to_use = self.jsd_model.raw_data[cbox.currentData()].sheets[category].data_columns
+        cols_to_use = self.jsd_model.data_sources[cbox.currentData()].sheets[category].data_columns
 
         # Use custom age columns for JSD calculation
         if category == 'Age at Index':
@@ -119,9 +119,9 @@ class JSDController(QObject):
                       range(self.jsd_view.dataselectiongroupbox.category_combobox.count())]
 
         cbox0 = self.jsd_view.dataselectiongroupbox.file_comboboxes[0]
-        sheets0 = self.jsd_model.raw_data[cbox0.currentData()].sheets
+        sheets0 = self.jsd_model.data_sources[cbox0.currentData()].sheets
         cbox1 = self.jsd_view.dataselectiongroupbox.file_comboboxes[1]
-        sheets1 = self.jsd_model.raw_data[cbox1.currentData()].sheets
+        sheets1 = self.jsd_model.data_sources[cbox1.currentData()].sheets
 
         jsd_values = {}
 
