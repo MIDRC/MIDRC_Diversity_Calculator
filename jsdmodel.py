@@ -1,24 +1,36 @@
 from ExcelLayout import DataSource
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
 from PySide6.QtGui import QColor
-from typing import Optional, Any
+from typing import Optional, Any, List
+
 
 class JSDTableModel(QAbstractTableModel):
-    def __init__(self):
+    HEADER_MAPPING = [
+        "Date",
+        "JSD"
+    ]
+
+    def __init__(self, raw_data_keys: Optional[List[str]] = None):
         """
         Initialize the JSDTableModel.
 
         This method initializes the JSDTableModel by setting up the input data, mapping, and raw data sources.
+
+        Args:
+            raw_data_keys (List[str]): The list of raw data keys.
+
+        Returns:
+            None
         """
         super().__init__()
         self.input_data = []
-        self.color_mapping = {}
-        self.color_cache = {}
+        self._color_mapping = {}
+        self._color_cache = {}
 
-        RAW_DATA_KEYS = ['MIDRC', 'CDC', 'Census']
-        self.data_sources = {}
-        for key in RAW_DATA_KEYS:
-            self.data_sources[key] = DataSource(key)
+        if raw_data_keys is not None:
+            self.data_sources = {}
+            for key in raw_data_keys:
+                self.data_sources[key] = DataSource(key)
 
     def rowCount(self, parent: QModelIndex = None) -> int:
         """
@@ -46,11 +58,6 @@ class JSDTableModel(QAbstractTableModel):
         """
         return len(self.input_data[parent.row()])
 
-    HEADER_MAPPING = {
-        0: "Date",
-        1: "JSD"
-    }
-
     def headerData(self, section: int, orientation: int, role: int) -> Optional[str]:
         """
         Returns the header data for the specified section, orientation, and role.
@@ -59,7 +66,7 @@ class JSDTableModel(QAbstractTableModel):
             return None
 
         if orientation == Qt.Horizontal:
-            return JSDTableModel.HEADER_MAPPING.get(section % 2, None)
+            return JSDTableModel.HEADER_MAPPING[section % 2]
         else:
             return str(section + 1)
 
@@ -72,10 +79,10 @@ class JSDTableModel(QAbstractTableModel):
         elif role == Qt.BackgroundRole:
             row = index.row()
             column = index.column()
-            for color, rect in self.color_mapping.items():
+            for color, rect in self._color_mapping.items():
                 if rect.contains(column, row):
-                    return self.color_cache.setdefault(color, QColor(color))
-            return self.color_cache.setdefault(Qt.white, QColor(Qt.white))
+                    return self._color_cache.setdefault(color, QColor(color))
+            return self._color_cache.setdefault(Qt.white, QColor(Qt.white))
         return None
 
     def setData(self, index: QModelIndex, value: Any, role: int = Qt.EditRole) -> bool:
@@ -121,7 +128,7 @@ class JSDTableModel(QAbstractTableModel):
         Returns:
             None
         """
-        self.color_mapping[color] = mapping_area
+        self._color_mapping[color] = mapping_area
 
     def clear_mapping(self):
         """
@@ -133,6 +140,6 @@ class JSDTableModel(QAbstractTableModel):
         Returns:
             None
         """
-        self.color_mapping.clear()
-        self.color_cache.clear()
+        self._color_mapping.clear()
+        self._color_cache.clear()
 

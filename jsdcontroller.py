@@ -17,7 +17,8 @@ class JSDController(QObject):
     def __init__(self, jsd_view):
         super().__init__()
         self.jsd_view = jsd_view
-        self.jsd_model = JSDTableModel()
+        RAW_DATA_KEYS = ['MIDRC', 'CDC', 'Census']
+        self.jsd_model = JSDTableModel(RAW_DATA_KEYS)
 
         self.fileChanged(None, newcategoryindex=2)
         for f_c in self.jsd_view.dataselectiongroupbox.file_comboboxes:
