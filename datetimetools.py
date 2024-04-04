@@ -1,12 +1,13 @@
-from PySide6.QtCore import QDateTime, QTime, QDate
+from PySide6.QtCore import QDateTime, QTime, QDate, QTimeZone
 import pandas as pd
 import numpy as np
+
 
 def convert_date_to_milliseconds(date):
     """
     Converts a date to milliseconds since epoch.
     """
-    return QDateTime(date, QTime()).toMSecsSinceEpoch()
+    return QDateTime(date, QTime(), QTimeZone.utc()).toMSecsSinceEpoch()
 
 
 def pandas_date_to_qdate(pandas_date):

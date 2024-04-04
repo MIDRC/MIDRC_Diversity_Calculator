@@ -117,7 +117,7 @@ class JSDTableModel(QAbstractTableModel):
             return Qt.NoItemFlags
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
-    def add_mapping(self, color: str, mapping_area: Any):
+    def add_color_mapping(self, color: str, mapping_area: Any):
         """
         Add a color mapping to the JSDTableModel.
 
@@ -130,7 +130,7 @@ class JSDTableModel(QAbstractTableModel):
         """
         self._color_mapping[color] = mapping_area
 
-    def clear_mapping(self):
+    def clear_color_mapping(self):
         """
         Clear the color mapping in the JSDTableModel.
 

@@ -230,9 +230,9 @@ class JSDController(QObject):
 
     def get_cols_to_use_for_jsd_calc(self, cbox, category):
         """
-        Update the file-based charts.
+        Generates a list of columns from a sheet that should be used in the JSD calculation.
 
-        This method updates the pie chart dock and the spider chart.
+        This handles custom categories i.e. for custom age ranges
 
         Parameters:
             cbox (QComboBox): The combobox used to get the data file from.
@@ -285,6 +285,8 @@ class JSDController(QObject):
 def calculate_jsd(df1, df2, cols_to_use, calcdate):
     """
     Calculate the Jensen-Shannon divergence between two dataframes for a given date.
+
+    There is an assumption that the date column of the dataframes are sorted from smallest to largest.
 
     Parameters:
     df1 (pd.DataFrame): First dataframe.

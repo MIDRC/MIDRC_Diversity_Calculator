@@ -105,11 +105,9 @@ class DataSheet:
         # The 'Age at Index' columns need alteration for JSD calculation
         if self.name == 'Age at Index':
             cols = [col for col in self.df.columns if '(%)' not in col and '(CUSUM)' not in col and col[0].isdigit()]
-            # print(cols)
             cols_used = []
             for agerange in age_ranges:
                 cols_to_sum = []
-                # Skip the first column (date) and the last column (Unreported)
                 for col in cols:
                     colrange = re.findall(r'\d+', col)
                     skip_col = (agerange[0] > int(colrange[0]) or

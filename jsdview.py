@@ -9,8 +9,56 @@ from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QDateTimeAxis, QV
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
 
 
-class JsdDataSelectionGroupBox:
-    pass
+class JsdDataSelectionGroupBox(QGroupBox):
+    NUM_DATA_ITEMS = 2
+    FILE_TYPES = {
+        'MIDRC': 'MIDRC Excel File',
+        'CDC': 'CDC Excel File',
+        'Census': 'Census Excel File'
+    }
+
+    def __init__(self):
+        """
+        Initialize the JsdDataSelectionGroupBox.
+
+        This method sets up the data selection group box by creating labels and combo boxes for data files and a category combo box.
+        """
+        super().__init__()
+
+        self.setTitle('Data Selection')
+
+        self.labels = [QLabel(f'Data File {x + 1}') for x in range(self.NUM_DATA_ITEMS)]
+        self.file_comboboxes = [QComboBox() for _ in range(self.NUM_DATA_ITEMS)]
+        self.category_label = QLabel('Category')
+        self.category_combobox = QComboBox()
+        self.set_layout()
+
+    def set_layout(self):
+        """
+        Sets the layout for the widget.
+        """
+        # Create the form layout
+        form_layout = QFormLayout()
+
+        # Add the file comboboxes and labels to the form layout
+        items = [(v, k) for k, v in self.FILE_TYPES.items()]
+        for combobox_index, combobox in enumerate(self.file_comboboxes):
+            for combobox_item in items:
+                combobox.addItem(combobox_item[0], userData=combobox_item[1])
+            combobox.setCurrentIndex(combobox_index)
+            form_layout.addRow(self.labels[combobox_index], combobox)
+
+        # Add the category label and combobox to the form layout
+        form_layout.addRow(self.category_label, self.category_combobox)
+
+        # Set the layout for the widget
+        self.setLayout(form_layout)
+
+    def updateCategoryComboBox(self, categorylist, categoryindex):
+        with QSignalBlocker(self.category_combobox):
+            self.category_combobox.clear()
+            self.category_combobox.addItems(categorylist)
+            self.category_combobox.setCurrentIndex(categoryindex)
 
 
 class JsdWindow(QMainWindow):
@@ -52,7 +100,6 @@ class JsdWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.spider_chart_dock_widget)
 
         self.setWindowTitle(JsdWindow.WINDOW_TITLE)
-
 
     def createMainLayout(self) -> QVBoxLayout:
         """
@@ -313,7 +360,7 @@ class JsdWindow(QMainWindow):
     def updateJsdTimelinePlot(self, jsd_model):
         self.table_view.setModel(jsd_model)
         self.jsd_timeline_chart.removeAllSeries()
-        jsd_model.clear_mapping()
+        jsd_model.clear_color_mapping()
         series = QLineSeries()
         series.setName(f"{self._dataselectiongroupbox.file_comboboxes[0].currentData()} vs "
                        f"{self._dataselectiongroupbox.file_comboboxes[1].currentData()} "
@@ -325,7 +372,7 @@ class JsdWindow(QMainWindow):
             if timepoint is not None:
                 series.append(convert_date_to_milliseconds(timepoint), jsd_model.input_data[i][col + 1])
         self.jsd_timeline_chart.addSeries(series)
-        jsd_model.add_mapping(series.pen().color().name(), QRect(0, 0, 2, row_count))
+        jsd_model.add_color_mapping(series.pen().color().name(), QRect(0, 0, 2, row_count))
 
         self.jsd_timeline_chart.removeAxis(self.jsd_timeline_chart.axisX())
         axisX = QDateTimeAxis()
@@ -360,58 +407,6 @@ class JsdWindow(QMainWindow):
         else:
             self.jsd_timeline_chart.setAnimationOptions(QChart.NoAnimation)
         return True
-
-
-class JsdDataSelectionGroupBox(QGroupBox):
-    NUM_DATA_ITEMS = 2
-    FILE_TYPES = {
-        'MIDRC': 'MIDRC Excel File',
-        'CDC': 'CDC Excel File',
-        'Census': 'Census Excel File'
-    }
-
-    def __init__(self):
-        """
-        Initialize the JsdDataSelectionGroupBox.
-
-        This method sets up the data selection group box by creating labels and combo boxes for data files and a category combo box.
-        """
-        super().__init__()
-
-        self.setTitle('Data Selection')
-
-        self.labels = [QLabel(f'Data File {x + 1}') for x in range(self.NUM_DATA_ITEMS)]
-        self.file_comboboxes = [QComboBox() for _ in range(self.NUM_DATA_ITEMS)]
-        self.category_label = QLabel('Category')
-        self.category_combobox = QComboBox()
-        self.set_layout()
-
-    def set_layout(self):
-        """
-        Sets the layout for the widget.
-        """
-        # Create the form layout
-        form_layout = QFormLayout()
-
-        # Add the file comboboxes and labels to the form layout
-        items = [(v, k) for k, v in self.FILE_TYPES.items()]
-        for combobox_index, combobox in enumerate(self.file_comboboxes):
-            for combobox_item in items:
-                combobox.addItem(combobox_item[0], userData=combobox_item[1])
-            combobox.setCurrentIndex(combobox_index)
-            form_layout.addRow(self.labels[combobox_index], combobox)
-
-        # Add the category label and combobox to the form layout
-        form_layout.addRow(self.category_label, self.category_combobox)
-
-        # Set the layout for the widget
-        self.setLayout(form_layout)
-
-    def updateCategoryComboBox(self, categorylist, categoryindex):
-        with QSignalBlocker(self.category_combobox):
-            self.category_combobox.clear()
-            self.category_combobox.addItems(categorylist)
-            self.category_combobox.setCurrentIndex(categoryindex)
 
 
 class JsdChart (QChart):
