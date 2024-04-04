@@ -53,9 +53,9 @@ class JSDController(QObject):
         Connects signals for file and category comboboxes.
         """
         jsd_view = self.jsd_view  # Store the result of jsd_view() in a variable
-        for f_c in jsd_view.get_dataselectiongroupbox().file_comboboxes:
+        for f_c in jsd_view.dataselectiongroupbox.file_comboboxes:
             f_c.currentIndexChanged.connect(self.fileChanged)
-        jsd_view.get_dataselectiongroupbox().category_combobox.currentIndexChanged.connect(self.categoryChanged)
+        jsd_view.dataselectiongroupbox.category_combobox.currentIndexChanged.connect(self.categoryChanged)
 
     @property
     def jsd_view(self) -> JsdWindow:
@@ -106,7 +106,7 @@ class JSDController(QObject):
     def fileChanged(self, _, newcategoryindex = None):
         jsd_view = self.jsd_view
         jsd_model = self.jsd_model
-        dataselectiongroupbox = jsd_view.get_dataselectiongroupbox()
+        dataselectiongroupbox = jsd_view.dataselectiongroupbox
         categoryindex = dataselectiongroupbox.category_combobox.currentIndex()
         if newcategoryindex is not None:
             categoryindex = newcategoryindex
@@ -137,10 +137,10 @@ class JSDController(QObject):
         Returns:
             dict: A dictionary containing the sheets from the selected file.
         """
-        if index < 0 or index >= len(self.jsd_view.get_dataselectiongroupbox().file_comboboxes):
+        if index < 0 or index >= len(self.jsd_view.dataselectiongroupbox.file_comboboxes):
             raise IndexError("Index out of range")
 
-        cbox = self.jsd_view.get_dataselectiongroupbox().file_comboboxes[index]
+        cbox = self.jsd_view.dataselectiongroupbox.file_comboboxes[index]
         current_data = cbox.currentData()
 
         jsd_model = self.jsd_model
@@ -153,7 +153,7 @@ class JSDController(QObject):
     def categoryChanged(self):
         jsd_view = self.jsd_view
         jsd_model = self.jsd_model
-        dataselectiongroupbox = jsd_view.get_dataselectiongroupbox()
+        dataselectiongroupbox = jsd_view.dataselectiongroupbox
         cat = dataselectiongroupbox.category_combobox.currentText()
         # cbox0 = dataselectiongroupbox.file_comboboxes[0]
 
@@ -247,7 +247,7 @@ class JSDController(QObject):
 
         file_cbox_index = 0
         sheets = self.get_file_sheets_from_combobox(file_cbox_index)
-        filename = self.jsd_view.get_dataselectiongroupbox().file_comboboxes[file_cbox_index].currentData()
+        filename = self.jsd_view.dataselectiongroupbox.file_comboboxes[file_cbox_index].currentData()
         self.jsd_view.updateAreaChart(sheets, filename)
         return True
 
@@ -268,7 +268,7 @@ class JSDController(QObject):
             calcdate = np.datetime64('today')
 
         jsd_view = self.jsd_view
-        dataselectiongroupbox = jsd_view.get_dataselectiongroupbox()
+        dataselectiongroupbox = jsd_view.dataselectiongroupbox
         categories = [dataselectiongroupbox.category_combobox.itemText(i) for i in
                       range(dataselectiongroupbox.category_combobox.count())]
 

@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Type, Union, List, Tuple
 from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF, Signal
 from PySide6.QtGui import QColor, QPainter, QAction
 from PySide6.QtWidgets import (QGridLayout, QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu,
@@ -15,7 +15,7 @@ class JsdDataSelectionGroupBox:
 
 
 class JsdWindow(QMainWindow):
-    WINDOW_TITLE = 'MIDRC Diversity Calculator'
+    WINDOW_TITLE: str = 'MIDRC Diversity Calculator'
 
     def __init__(self):
         """
@@ -65,8 +65,11 @@ class JsdWindow(QMainWindow):
         main_layout.addWidget(self.jsd_timeline_chart_view)
         return main_layout
 
-    def get_dataselectiongroupbox(self) -> JsdDataSelectionGroupBox:
-        # Get the Data Selection GroupBox object.
+    @property
+    def dataselectiongroupbox(self) -> JsdDataSelectionGroupBox:
+        """
+        Get the Data Selection GroupBox object.
+        """
         return self._dataselectiongroupbox
 
     def createMenuBar(self) -> QMenuBar:
@@ -126,7 +129,7 @@ class JsdWindow(QMainWindow):
         w = QWidget()
         w.setLayout(layout)
         dock_widget.setWidget(w)
-        assert isinstance(title, str), "The 'title' argument must be a string."
+        assert isinstance(title, str), f"The 'title' argument must be a string. Got {type(title).__name__} instead."
         dock_widget.setWindowTitle(title)
         return dock_widget
 
@@ -141,7 +144,7 @@ class JsdWindow(QMainWindow):
         Returns:
             The created QDockWidget.
         """
-        assert isinstance(title, str), "The 'title' argument must be a string."
+        assert isinstance(title, str), f"The 'title' argument must be a string. Got {type(title).__name__} instead."
         spider_chart_dock_widget = QDockWidget()
         spider_chart_dock_widget.setWidget(spider_chart_vbox)
         self.addAreaChartView()
