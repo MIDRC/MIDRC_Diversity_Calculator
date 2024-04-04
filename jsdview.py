@@ -1,13 +1,12 @@
 from typing import Type, Union, List, Tuple
-from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF, Signal
-from PySide6.QtGui import QColor, QPainter, QAction
-from PySide6.QtWidgets import (QGridLayout, QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu,
+from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker
+from PySide6.QtGui import QPainter, QAction
+from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
                                QLayout, QFormLayout)
-from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QVXYModelMapper, QDateTimeAxis, QValueAxis,
+from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
-from jsdmodel import JSDTableModel
 
 
 class JsdDataSelectionGroupBox:
@@ -407,6 +406,12 @@ class JsdDataSelectionGroupBox(QGroupBox):
 
         # Set the layout for the widget
         self.setLayout(form_layout)
+
+    def updateCategoryComboBox(self, categorylist, categoryindex):
+        with QSignalBlocker(self.category_combobox):
+            self.category_combobox.clear()
+            self.category_combobox.addItems(categorylist)
+            self.category_combobox.setCurrentIndex(categoryindex)
 
 
 class JsdChart (QChart):

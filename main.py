@@ -1,7 +1,7 @@
 import sys
 from typing import Optional
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QLabel, QSplashScreen, QWidget
+from PySide6.QtWidgets import QApplication, QSplashScreen, QWidget
 from PySide6.QtGui import QPixmap, QPainter, QColor, QFont
 from jsdcontroller import JSDController
 from jsdmodel import JSDTableModel
