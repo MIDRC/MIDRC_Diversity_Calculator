@@ -10,7 +10,7 @@ def excelparse(filename, sheet_name):
     """
 
     # This opens the file and creates a list of sheet names, along with necessary readers
-    # TODO: this should probably be separate in case wse want multiple sheets
+    # TODO: this should probably be separate in case we want multiple sheets
     xls = pd.ExcelFile(filename)
 
     # This reads all Excel sheets, probably not worth it
