@@ -54,7 +54,7 @@ def launch_diversity_calculator():
     q_app.processEvents()
 
     w = JsdWindow()
-    RAW_DATA_KEYS = ['MIDRC', 'CDC', 'Census']
+    RAW_DATA_KEYS = ['MIDRC', 'CDC', 'Census', 'MIDRC COVID+']
     w.jsd_controller = JSDController(w, JSDTableModel(RAW_DATA_KEYS))
     w.show()
 

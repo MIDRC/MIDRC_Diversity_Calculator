@@ -14,7 +14,8 @@ class JsdDataSelectionGroupBox(QGroupBox):
     FILE_TYPES = {
         'MIDRC': 'MIDRC Excel File',
         'CDC': 'CDC Excel File',
-        'Census': 'Census Excel File'
+        'Census': 'Census Excel File',
+        'MIDRC COVID+': 'MIDRC COVID+ Excel File',
     }
 
     def __init__(self):

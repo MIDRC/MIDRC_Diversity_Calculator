@@ -8,7 +8,9 @@ import math
 class WhitneyPaper:
     FileNames = {'MIDRC': 'MIDRC Open A1 and R1 - cumulative by batch.xlsx',
                  'CDC': 'CDC_COVIDpos - cumulative by month.xlsx',
-                 'Census': 'Census_all.xlsx'}
+                 'Census': 'Census_all.xlsx',
+                 'MIDRC COVID+': 'MIDRC Open A1 and R1 COVIDpos only - cumulative by batch.xlsx',
+                 }
 
     SheetNames = ['Age at Index',
                   'Sex',
@@ -84,7 +86,7 @@ class DataSheet:
             self.columns['date'] = cols[0]
             for col in cols[1:]:
                 colname = col
-                if datasource.name == 'MIDRC':
+                if datasource.name in ['MIDRC', 'MIDRC COVID+']:
                     colname = str(col).split('(CUSUM)')[0]
                     self.df[colname.rstrip()] = self.df[col]
                 self.columns[colname.rstrip()] = col
