@@ -284,9 +284,11 @@ class JSDController(QObject):
 
 def calculate_jsd(df1, df2, cols_to_use, calcdate):
     """
-    Calculate the Jensen-Shannon divergence between two dataframes for a given date.
+    Calculate the Jensen-Shannon distance between two dataframes for a given date.
 
     There is an assumption that the date column of the dataframes are sorted from smallest to largest.
+
+    Note: The Jensen-Shannon distance returned is the square root of the Jensen-Shannon divergence.
 
     Parameters:
     df1 (pd.DataFrame): First dataframe.
@@ -295,7 +297,7 @@ def calculate_jsd(df1, df2, cols_to_use, calcdate):
     calcdate (pd.Timestamp): Date for which the calculation is performed.
 
     Returns:
-    float: Jensen-Shannon divergence between the two dataframes.
+    float: Jensen-Shannon distance between the two dataframes.
     """
     if df1.empty or df2.empty:
         return None
