@@ -1,25 +1,7 @@
 import re
 import warnings
-# Class structures for Excel spreadsheets
-
 import pandas as pd
 import math
-
-
-class WhitneyPaper:
-    FileNames = {'MIDRC': 'MIDRC Open A1 and R1 - cumulative by batch.xlsx',
-                 'CDC': 'CDC_COVIDpos - cumulative by month.xlsx',
-                 'Census': 'Census_all.xlsx',
-                 'MIDRC COVID+': 'MIDRC Open A1 and R1 COVIDpos only - cumulative by batch.xlsx',
-                 }
-
-    SheetNames = ['Age at Index',
-                  'Sex',
-                  'Race',
-                  'Ethnicity',
-                  'Race and Ethnicity']
-
-    CustomAgeColumns = [[0, 17], [18, 49], [50, 64], [65, math.inf]]
 
 
 class DataSource:

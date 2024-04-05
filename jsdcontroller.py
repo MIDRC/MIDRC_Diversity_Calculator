@@ -237,13 +237,13 @@ class JSDController(QObject):
             List of columns in the current sheet category
         """
         NOT_REPORTED = 'Not reported'
-        AGE_AT_INDEX_CATEGORY = 'Age at Index'
-    
+
         cols_to_use = self.jsd_model.data_sources[cbox.currentData()].sheets[category].data_columns
 
-        if category == AGE_AT_INDEX_CATEGORY:
-            cols_to_use = [f'{agerange[0]}-{agerange[1]} Custom' for
-                           agerange in ExcelLayout.WhitneyPaper.CustomAgeColumns] + [NOT_REPORTED]
+        custom_age_ranges = self._config.data.get('custom age ranges', None)
+        if custom_age_ranges and category in custom_age_ranges:
+            cols_to_use = [f'{age_range[0]}-{age_range[1]} Custom' for
+                           age_range in custom_age_ranges[category]] + [NOT_REPORTED]
 
         return cols_to_use
 
