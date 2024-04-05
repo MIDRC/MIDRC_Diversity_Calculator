@@ -11,14 +11,8 @@ from datetimetools import numpy_datetime64_to_qdate, convert_date_to_millisecond
 
 class JsdDataSelectionGroupBox(QGroupBox):
     NUM_DATA_ITEMS = 2
-    FILE_TYPES = {
-        'MIDRC': 'MIDRC Excel File',
-        'CDC': 'CDC Excel File',
-        'Census': 'Census Excel File',
-        'MIDRC COVID+': 'MIDRC COVID+ Excel File',
-    }
 
-    def __init__(self):
+    def __init__(self, data_sources):
         """
         Initialize the JsdDataSelectionGroupBox.
 
@@ -33,9 +27,9 @@ class JsdDataSelectionGroupBox(QGroupBox):
         self.file_comboboxes = [QComboBox() for _ in range(self.NUM_DATA_ITEMS)]
         self.category_label = QLabel('Category')
         self.category_combobox = QComboBox()
-        self.set_layout()
+        self.set_layout(data_sources)
 
-    def set_layout(self):
+    def set_layout(self, data_sources):
         """
         Sets the layout for the widget.
         """
@@ -43,7 +37,7 @@ class JsdDataSelectionGroupBox(QGroupBox):
         form_layout = QFormLayout()
 
         # Add the file comboboxes and labels to the form layout
-        items = [(v, k) for k, v in self.FILE_TYPES.items()]
+        items = [(d['description'], d['name']) for d in data_sources]
         for combobox_index, combobox in enumerate(self.file_comboboxes):
             for combobox_item in items:
                 combobox.addItem(combobox_item[0], userData=combobox_item[1])
@@ -66,7 +60,7 @@ class JsdDataSelectionGroupBox(QGroupBox):
 class JsdWindow(QMainWindow):
     WINDOW_TITLE: str = 'MIDRC Diversity Calculator'
 
-    def __init__(self):
+    def __init__(self, data_sources):
         """
         Initialize the JsdWindow.
 
@@ -75,7 +69,7 @@ class JsdWindow(QMainWindow):
         super().__init__()
 
         # Set up graphical layout
-        self._dataselectiongroupbox = JsdDataSelectionGroupBox()
+        self._dataselectiongroupbox = JsdDataSelectionGroupBox(data_sources)
 
         self.table_view = QTableView()
         self.addDockWidget(Qt.LeftDockWidgetArea,

@@ -6,13 +6,14 @@ from scipy.spatial import distance
 from datetimetools import pandas_date_to_qdate
 from jsdmodel import JSDTableModel
 from jsdview import JsdWindow
+from jsdconfig import JSDConfig
 
 
 class JSDController(QObject):
     modelChanged = Signal()
     fileChangedSignal = Signal()
     
-    def __init__(self, jsd_view, jsd_model):
+    def __init__(self, jsd_view, jsd_model, config):
         """
         Initialize the JSDController.
 
@@ -30,6 +31,7 @@ class JSDController(QObject):
             raise ValueError("jsd_model must be a valid JSDTableModel instance")
         self._jsd_view = jsd_view
         self._jsd_model = jsd_model
+        self._config = config
 
         self.initialize()
 
@@ -88,7 +90,7 @@ class JSDController(QObject):
         return self._jsd_model
 
     @jsd_model.setter
-    def jsd_model(self, jsd_model: JSDTableModel) -> None:
+    def jsd_model(self, config: JSDConfig, jsd_model: JSDTableModel) -> None:
         """
         Set the JSD model object.
 

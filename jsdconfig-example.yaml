@@ -1,0 +1,29 @@
+data sources:
+  # The data sources will be loaded in the order they are populated here
+  - name: MIDRC
+    description: MIDRC Excel File
+    data type: file
+    filename: MIDRC Open A1 and R1 - cumulative by batch.xlsx
+    remove column name text: [(CUSUM)]
+
+  - name: CDC
+    description: CDC Excel File
+    data type: file
+    filename: CDC_COVIDpos - cumulative by month.xlsx
+
+  - name: Census
+    description: Census Excel File
+    data type: file
+    filename: Census_all.xlsx
+    date: '2010-01-01' # The census file does not have a date column, so we specify the date here
+
+  - name: MIDRC COVID+
+    description: MIDRC COVID+ Excel File
+    data type: file
+    filename: MIDRC Open A1 and R1 COVIDpos only - cumulative by batch.xlsx
+    remove column name text: [(CUSUM)]
+
+# TODO: The following should be moved into QSettings for modifications within the GUI
+# For custom age columns, please use .inf as the maximum age in the final age group
+custom age ranges:
+  Age at Index: [ [0, 17], [18, 49], [50, 64], [65, .inf] ]

@@ -23,60 +23,60 @@ class WhitneyPaper:
 
 
 class DataSource:
-    def __init__(self, name):
+    def __init__(self, data_source, custom_age_ranges=None):
         """
         Initializes a new instance of the DataSource class.
 
         Args:
             name (str): The name for this DataSource.
         """
-        self.name = name
+        self.name = data_source['name']
         self.sheets = {}
-        self.filename = None
-        self.file = None
-        if self.name in WhitneyPaper.FileNames:
-            self.buildwhitneydataframes()
+        self.datatype = data_source['data type']
+        self.filename = data_source['filename']
+        self.data_source = data_source
+        self.custom_age_ranges = custom_age_ranges
+        if self.datatype == 'file' and self.filename:
+            self.build_data_frames(self.filename)
 
-    def buildwhitneydataframes(self):
+    def build_data_frames(self, filename: str):
         """
-        Builds Whitney dataframes.
+        Builds dataframes.
         """
-        if self.name in WhitneyPaper.FileNames:
-            self.filename = WhitneyPaper.FileNames[self.name]
-            self.file = pd.ExcelFile(self.filename)
-            if self.file is not None:
-                self.createsheets()
+        file = pd.ExcelFile(filename)
+        if file is not None:
+            self.create_sheets(file)
 
-    def createsheets(self):
+    def create_sheets(self, file: pd.ExcelFile):
         """
-        Creates sheets for Whitney dataframes.
+        Creates sheets from a given file.
         """
-        if self.name in WhitneyPaper.FileNames:
-            for s in WhitneyPaper.SheetNames:
-                self.sheets[s] = DataSheet(s, self, is_excel=True)
+        for s in file.sheet_names:
+            self.sheets[s] = DataSheet(s, self.data_source, self.custom_age_ranges, is_excel=True, file=file)
 
 
 class DataSheet:
-    def __init__(self, sheet_name, datasource, is_excel=False):
+    def __init__(self, sheet_name, data_source, custom_age_ranges, is_excel=False, file=None):
         """
         Initialize the DataSheet object.
 
         Args:
             sheet_name (str): The name of the sheet in the Excel file to parse.
-            datasource (DataSource): The data source object.
+            datasource_name (str): The name of the data source object.
             is_excel (bool, optional): Flag indicating whether the data source is an Excel file. Defaults to False.
+            file (pd.ExcelFile, optional): The excel file to read the sheet from
         """
         self.name = sheet_name
         self.columns = {}
         self.data_columns = []
 
         if is_excel:
-            self.df = pd.read_excel(datasource.file, sheet_name, usecols=lambda x: '(%)' not in x, engine='openpyxl')
+            self.df = pd.read_excel(file, sheet_name, usecols=lambda x: '(%)' not in x, engine='openpyxl')
             cols = [col for col in self.df.columns]
 
-            if datasource.name == 'Census':
+            if data_source.get('date', None):
                 cols = ['date'] + cols[1:]
-                self.df.insert(0, 'date', '2010-01-01', False)
+                self.df.insert(0, 'date', data_source['date'], False)
 
             self.df['date'] = pd.to_datetime(self.df['date'], errors='coerce')
 
@@ -87,45 +87,43 @@ class DataSheet:
             self.columns['date'] = cols[0]
             for col in cols[1:]:
                 colname = col
-                if datasource.name in ['MIDRC', 'MIDRC COVID+']:
-                    colname = str(col).split('(CUSUM)')[0]
-                    self.df[colname.rstrip()] = self.df[col]
+                if data_source.get('remove column name text', None):
+                    for txt in data_source['remove column name text']:
+                        colname = str(col).split(txt)[0]
+                        self.df[colname.rstrip()] = self.df[col]
                 self.columns[colname.rstrip()] = col
 
             self.data_columns = list(self.columns.keys())[1:]
 
-        if self.name == 'Age at Index':
-            self.create_custom_age_columns()
+        if custom_age_ranges and self.name in custom_age_ranges:
+            self.create_custom_age_columns(custom_age_ranges[self.name])
 
-    def create_custom_age_columns(self, age_ranges=None):
+    def create_custom_age_columns(self, age_ranges):
         """
         Scans the column headers in the age category to build consistent age columns.
         """
         # Drop previously created custom columns
-        if age_ranges is None:
-            age_ranges = WhitneyPaper.CustomAgeColumns
         cols_to_drop = [col for col in self.df.columns if 'Custom' in col]
         self.df.drop(columns=cols_to_drop, inplace=True)
 
         # The 'Age at Index' columns need alteration for JSD calculation
-        if self.name == 'Age at Index':
-            cols = [col for col in self.df.columns if '(%)' not in col and '(CUSUM)' not in col and col[0].isdigit()]
-            cols_used = []
-            for agerange in age_ranges:
-                cols_to_sum = []
-                for col in cols:
-                    colrange = re.findall(r'\d+', col)
-                    skip_col = (agerange[0] > int(colrange[0]) or
-                                agerange[1] < int(colrange[0]) or
-                                (len(colrange) == 1 and not math.isinf(agerange[1])) or
-                                (len(colrange) > 1 and agerange[1] < int(colrange[1])))
-
-                    if not skip_col:
-                        cols_to_sum.append(col)
-                cols_used.extend(cols_to_sum)
-                self.df[f'{agerange[0]}-{agerange[1]} Custom'] = self.df[cols_to_sum].sum(axis=1)
-
-            # Check to make sure all columns get used
+        cols = [col for col in self.df.columns if '(%)' not in col and '(CUSUM)' not in col and col[0].isdigit()]
+        cols_used = []
+        for agerange in age_ranges:
+            cols_to_sum = []
             for col in cols:
-                if col not in cols_used:
-                    warnings.warn(f"Column '{col}' not used!!!")
+                colrange = re.findall(r'\d+', col)
+                skip_col = (agerange[0] > int(colrange[0]) or
+                            agerange[1] < int(colrange[0]) or
+                            (len(colrange) == 1 and not math.isinf(agerange[1])) or
+                            (len(colrange) > 1 and agerange[1] < int(colrange[1])))
+
+                if not skip_col:
+                    cols_to_sum.append(col)
+            cols_used.extend(cols_to_sum)
+            self.df[f'{agerange[0]}-{agerange[1]} Custom'] = self.df[cols_to_sum].sum(axis=1)
+
+        # Check to make sure all columns get used
+        for col in cols:
+            if col not in cols_used:
+                warnings.warn(f"Column '{col}' not used!!!")

@@ -6,6 +6,7 @@ from PySide6.QtGui import QPixmap, QPainter, QColor, QFont
 from jsdcontroller import JSDController
 from jsdmodel import JSDTableModel
 from jsdview import JsdWindow
+from jsdconfig import JSDConfig
 
 
 class SplashScreen(QSplashScreen):
@@ -53,9 +54,12 @@ def launch_diversity_calculator():
     splash.show()
     q_app.processEvents()
 
-    w = JsdWindow()
-    RAW_DATA_KEYS = ['MIDRC', 'CDC', 'Census', 'MIDRC COVID+']
-    w.jsd_controller = JSDController(w, JSDTableModel(RAW_DATA_KEYS))
+    config = JSDConfig()
+    data_source_list = config.data['data sources']
+    w = JsdWindow(data_source_list)  # Note: We should have the controller populate this once the tablemodel is loaded
+    w.jsd_controller = JSDController(w,
+                                     JSDTableModel(data_source_list, config.data.get('custom age ranges', None)),
+                                     config)
     w.show()
 
     splash.finish(w)

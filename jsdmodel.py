@@ -10,7 +10,7 @@ class JSDTableModel(QAbstractTableModel):
         "JSD"
     ]
 
-    def __init__(self, raw_data_keys: Optional[List[str]] = None):
+    def __init__(self, data_source_list=None, custom_age_ranges=None):
         """
         Initialize the JSDTableModel.
 
@@ -27,10 +27,10 @@ class JSDTableModel(QAbstractTableModel):
         self._color_mapping = {}
         self._color_cache = {}
 
-        if raw_data_keys is not None:
+        if data_source_list is not None:
             self.data_sources = {}
-            for key in raw_data_keys:
-                self.data_sources[key] = DataSource(key)
+            for data_source in data_source_list:
+                self.data_sources[data_source['name']] = DataSource(data_source, custom_age_ranges)
 
     def rowCount(self, parent: QModelIndex = None) -> int:
         """
