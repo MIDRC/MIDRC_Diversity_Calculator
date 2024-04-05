@@ -1,8 +1,9 @@
 from PySide6.QtCore import QDateTime, QDate
-from datetimetools import convert_date_to_milliseconds
+from datetimetools import convert_date_to_milliseconds, pandas_date_to_qdate, numpy_datetime64_to_qdate
 import numpy as np
 import pandas as pd
 import pytest
+
 
 class TestConvertDateToMilliseconds:
 
@@ -63,7 +64,8 @@ class TestConvertDateToMilliseconds:
         with pytest.raises(TypeError):
             convert_date_to_milliseconds(date)
 
-    #  The function returns the correct number of milliseconds since epoch for the earliest possible date input (January 1, 1).
+    #  The function returns the correct number of milliseconds since epoch for the earliest possible
+    #  date input (January 1, 1).
     def test_earliest_possible_date_input(self):
         # Arrange
         date = QDate(1, 1, 1)
@@ -75,7 +77,8 @@ class TestConvertDateToMilliseconds:
         assert isinstance(result, int)
         assert result == -62135596800000
 
-    #  The function returns the correct number of milliseconds since epoch for the latest possible date input (December 31, 9999).
+    #  The function returns the correct number of milliseconds since epoch for the latest possible
+    #  date input (December 31, 9999).
     def test_latest_possible_date_input(self):
         # Arrange
         date = QDate(9999, 12, 31)
@@ -87,7 +90,8 @@ class TestConvertDateToMilliseconds:
         assert isinstance(result, int)
         assert result == 253402214400000
 
-    #  The function returns the correct number of milliseconds since epoch for a date input with the maximum allowed year (9999).
+    #  The function returns the correct number of milliseconds since epoch for a date input with the
+    #  maximum allowed year (9999).
     def test_date_input_with_maximum_year(self):
         # Arrange
         date = QDate(9999, 1, 1)
@@ -99,8 +103,6 @@ class TestConvertDateToMilliseconds:
         assert isinstance(result, int)
         assert result == 253370764800000
 
-
-from datetimetools import pandas_date_to_qdate
 
 
 class TestPandasDateToQdate:
@@ -207,8 +209,6 @@ class TestPandasDateToQdate:
         assert result.month() == 4
         assert result.day() == 11
 
-
-from datetimetools import numpy_datetime64_to_qdate
 
 class TestNumpyDatetime64ToQdate:
 

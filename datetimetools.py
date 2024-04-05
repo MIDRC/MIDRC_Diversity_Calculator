@@ -15,7 +15,7 @@ def pandas_date_to_qdate(pandas_date):
     Convert a pandas Timestamp or datetime object to a PySide2 QDate object.
 
     Parameters:
-        pandas_date (pd.Timestamp or datetime): Pandas Timestamp or datetime object.
+        pandas_date (pd.Timestamp or datetime64): Pandas Timestamp or datetime object.
 
     Returns:
         QDate: PySide2 QDate object representing the same date.

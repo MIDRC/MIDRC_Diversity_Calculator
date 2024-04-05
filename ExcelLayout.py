@@ -5,6 +5,7 @@ import warnings
 import pandas as pd
 import math
 
+
 class WhitneyPaper:
     FileNames = {'MIDRC': 'MIDRC Open A1 and R1 - cumulative by batch.xlsx',
                  'CDC': 'CDC_COVIDpos - cumulative by month.xlsx',
@@ -75,7 +76,7 @@ class DataSheet:
 
             if datasource.name == 'Census':
                 cols = ['date'] + cols[1:]
-                self.df.insert(0, 'date', ['2010-01-01'], False)
+                self.df.insert(0, 'date', '2010-01-01', False)
 
             self.df['date'] = pd.to_datetime(self.df['date'], errors='coerce')
 
@@ -94,13 +95,15 @@ class DataSheet:
             self.data_columns = list(self.columns.keys())[1:]
 
         if self.name == 'Age at Index':
-            self.createCustomAgeColumns()
+            self.create_custom_age_columns()
 
-    def createCustomAgeColumns(self, age_ranges=WhitneyPaper.CustomAgeColumns):
+    def create_custom_age_columns(self, age_ranges=None):
         """
         Scans the column headers in the age category to build consistent age columns.
         """
         # Drop previously created custom columns
+        if age_ranges is None:
+            age_ranges = WhitneyPaper.CustomAgeColumns
         cols_to_drop = [col for col in self.df.columns if 'Custom' in col]
         self.df.drop(columns=cols_to_drop, inplace=True)
 

@@ -22,7 +22,8 @@ class JsdDataSelectionGroupBox(QGroupBox):
         """
         Initialize the JsdDataSelectionGroupBox.
 
-        This method sets up the data selection group box by creating labels and combo boxes for data files and a category combo box.
+        This method sets up the data selection group box by creating labels and combo boxes for data files and a
+        category combo box.
         """
         super().__init__()
 
@@ -55,7 +56,7 @@ class JsdDataSelectionGroupBox(QGroupBox):
         # Set the layout for the widget
         self.setLayout(form_layout)
 
-    def updateCategoryComboBox(self, categorylist, categoryindex):
+    def update_category_combo_box(self, categorylist, categoryindex):
         with QSignalBlocker(self.category_combobox):
             self.category_combobox.clear()
             self.category_combobox.addItems(categorylist)
@@ -69,7 +70,7 @@ class JsdWindow(QMainWindow):
         """
         Initialize the JsdWindow.
 
-        This method sets up the main window and all of the component widgets.
+        This method sets up the main window and all the component widgets.
         """
         super().__init__()
 
@@ -77,7 +78,8 @@ class JsdWindow(QMainWindow):
         self._dataselectiongroupbox = JsdDataSelectionGroupBox()
 
         self.table_view = QTableView()
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.createTableDockWidget(self.table_view, 'JSD Table - ' + JsdWindow.WINDOW_TITLE))
+        self.addDockWidget(Qt.LeftDockWidgetArea,
+                           self.create_table_dock_widget(self.table_view, 'JSD Table - ' + JsdWindow.WINDOW_TITLE))
 
         self.jsd_timeline_chart = JsdChart()
         self.jsd_timeline_chart_view = QChartView(self.jsd_timeline_chart)
@@ -85,24 +87,26 @@ class JsdWindow(QMainWindow):
         self.jsd_timeline_chart_view.setMinimumSize(640, 480)
 
         self.setCentralWidget(QWidget())
-        self.centralWidget().setLayout(self.createMainLayout())
+        self.centralWidget().setLayout(self.create_main_layout())
 
-        self.setMenuBar(self.createMenuBar())
+        self.setMenuBar(self.create_menu_bar())
 
         self.pie_chart_views = {}
         self.pie_chart_hbox = QHBoxLayout()
-        self.pie_chart_dock_widget = self.createPieChartDockWidget(self.pie_chart_hbox, 'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
+        self.pie_chart_dock_widget = self.create_pie_chart_dock_widget(self.pie_chart_hbox,
+                                                                   'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.pie_chart_dock_widget)
 
         self.spider_chart = QPolarChart()
         self.area_chart = QChart()
         self.spider_chart_vbox = QSplitter(Qt.Vertical)
-        self.spider_chart_dock_widget = self.createSpiderChartDockWidget(self.spider_chart_vbox, 'Diversity Charts - ' + JsdWindow.WINDOW_TITLE)
+        self.spider_chart_dock_widget = self.create_spider_chart_dock_widget(self.spider_chart_vbox,
+                                                                         'Diversity Charts - ' + JsdWindow.WINDOW_TITLE)
         self.addDockWidget(Qt.RightDockWidgetArea, self.spider_chart_dock_widget)
 
         self.setWindowTitle(JsdWindow.WINDOW_TITLE)
 
-    def createMainLayout(self) -> QVBoxLayout:
+    def create_main_layout(self) -> QVBoxLayout:
         """
         Create the main layout for the application.
         This layout includes the data selection group box and the JSD timeline chart view.
@@ -117,31 +121,32 @@ class JsdWindow(QMainWindow):
         # Get the Data Selection GroupBox object.
         return self._dataselectiongroupbox
 
-    def createMenuBar(self) -> QMenuBar:
+    def create_menu_bar(self) -> QMenuBar:
         """
         Create the menu bar.
         """
         menu_bar: QMenuBar = QMenuBar()
 
         # Add the 'File' menu
-        fileMenu: QMenu = menu_bar.addMenu("File")
+        file_menu: QMenu = menu_bar.addMenu("File")
 
         # Add the 'Settings' menu
-        settingsMenu: QMenu = menu_bar.addMenu("Settings")
+        settings_menu: QMenu = menu_bar.addMenu("Settings")
 
         # Create the 'Chart Animations' action
         chartanimationsetting: QAction = QAction("Chart Animations", self)
         chartanimationsetting.setCheckable(True)
         chartanimationsetting.setChecked(True)
-        chartanimationsetting.toggled.connect(lambda checked: self.setAnimationOptions(checked))
+        chartanimationsetting.toggled.connect(lambda checked: self.set_animation_options(checked))
 
         # Add the 'Chart Animations' action to the 'Settings' menu
-        settingsMenu.addAction(chartanimationsetting)
+        settings_menu.addAction(chartanimationsetting)
 
         # Return the menu bar
         return menu_bar
 
-    def createTableDockWidget(self, table_view: QTableView, title: str) -> QDockWidget:
+    @staticmethod
+    def create_table_dock_widget(table_view: QTableView, title: str) -> QDockWidget:
         """
         Creates a dock widget with a table view.
 
@@ -159,7 +164,8 @@ class JsdWindow(QMainWindow):
         table_dock_widget.setWindowTitle(title)
         return table_dock_widget
 
-    def createPieChartDockWidget(self, layout: QLayout, title: str) -> QDockWidget:
+    @staticmethod
+    def create_pie_chart_dock_widget(layout: QLayout, title: str) -> QDockWidget:
         """
         Creates a dock widget with a given widget.
 
@@ -178,7 +184,7 @@ class JsdWindow(QMainWindow):
         dock_widget.setWindowTitle(title)
         return dock_widget
 
-    def createSpiderChartDockWidget(self, spider_chart_vbox: QSplitter, title: str) -> QDockWidget:
+    def create_spider_chart_dock_widget(self, spider_chart_vbox: QSplitter, title: str) -> QDockWidget:
         """
         Create a dock widget with an area chart and a spider chart.
 
@@ -192,12 +198,12 @@ class JsdWindow(QMainWindow):
         assert isinstance(title, str), f"The 'title' argument must be a string. Got {type(title).__name__} instead."
         spider_chart_dock_widget = QDockWidget()
         spider_chart_dock_widget.setWidget(spider_chart_vbox)
-        self.addAreaChartView()
-        self.addSpiderChartView()
+        self.add_area_chart_view()
+        self.add_spider_chart_view()
         spider_chart_dock_widget.setWindowTitle(title)
         return spider_chart_dock_widget
 
-    def addAreaChartView(self):
+    def add_area_chart_view(self):
         """
         Add an area chart view to the spider chart dock widget.
 
@@ -211,7 +217,7 @@ class JsdWindow(QMainWindow):
         self.spider_chart_vbox.addWidget(area_chart_view)
         return area_chart_view
 
-    def addSpiderChartView(self):
+    def add_spider_chart_view(self):
         """
         Add a spider chart view to the spider chart vbox layout.
     
@@ -222,7 +228,7 @@ class JsdWindow(QMainWindow):
         self.spider_chart_vbox.addWidget(spider_chart_view)
         return spider_chart_view
 
-    def updatePieChartDock(self, sheets):
+    def update_pie_chart_dock(self, sheets):
         """
         Update the pie chart dock with new data.
         """
@@ -231,7 +237,6 @@ class JsdWindow(QMainWindow):
             self.pie_chart_dock_widget.layout().removeWidget(pv)
             pv.deleteLater()
         self.pie_chart_views = {}
-        charts = {}
 
         # For now, just use the file in the first combobox
         categories = list(sheets)
@@ -249,13 +254,13 @@ class JsdWindow(QMainWindow):
             series = QPieSeries(chart)
             for col in cols_to_use:
                 if df[col].iloc[timepoint] > 0:
-                    slc = series.append(col, df[col].iloc[timepoint])
+                    series.append(col, df[col].iloc[timepoint])
             chart.addSeries(series)
             chart.legend().setAlignment(Qt.AlignRight)
             self.pie_chart_hbox.addWidget(new_pie_chart_views[category], stretch=1)
         self.pie_chart_views = new_pie_chart_views
 
-    def updateSpiderChart(self, spider_plot_values):
+    def update_spider_chart(self, spider_plot_values):
         """
         Update the spider chart with new data.
         """
@@ -266,7 +271,7 @@ class JsdWindow(QMainWindow):
         for axis in self.spider_chart.axes():
             self.spider_chart.removeAxis(axis)
 
-        self.updateSpiderChartTitle(file1_data, file2_data)
+        self.update_spider_chart_title(file1_data, file2_data)
 
         labels = spider_plot_values.keys()
         series = QLineSeries()
@@ -295,7 +300,7 @@ class JsdWindow(QMainWindow):
 
         return True
 
-    def updateSpiderChartTitle(self, file1_data: str = 'File 1', file2_data: str = 'File 2'):
+    def update_spider_chart_title(self, file1_data: str = 'File 1', file2_data: str = 'File 2'):
         """
         Set the title of the spider chart.
 
@@ -306,7 +311,7 @@ class JsdWindow(QMainWindow):
         title = f"Comparison of {file1_data} and {file2_data} - JSD per category"
         self.spider_chart.setTitle(title)
 
-    def updateAreaChart(self, sheets, filename):
+    def update_area_chart(self, sheets, filename):
         """
         Update the area chart with new data.
         """
@@ -343,22 +348,22 @@ class JsdWindow(QMainWindow):
         self.area_chart.createDefaultAxes()
 
         self.area_chart.removeAxis(self.area_chart.axisX())
-        axisX = QDateTimeAxis()
-        axisX.setTickCount(10)
-        axisX.setFormat("MMM yyyy")
-        axisX.setTitleText("Date")
-        axisX.setRange(dates[0], dates[-1] if len(dates) > 1 else dates[0].addMSecs(1))
-        self.area_chart.addAxis(axisX, Qt.AlignBottom)
+        axis_x = QDateTimeAxis()
+        axis_x.setTickCount(10)
+        axis_x.setFormat("MMM yyyy")
+        axis_x.setTitleText("Date")
+        axis_x.setRange(dates[0], dates[-1] if len(dates) > 1 else dates[0].addMSecs(1))
+        self.area_chart.addAxis(axis_x, Qt.AlignBottom)
 
-        axisY = self.area_chart.axisY()
-        axisY.setTitleText("Percent of total")
-        axisY.setLabelFormat('%.0f%')
-        axisY.setRange(0, 100)
+        axis_y = self.area_chart.axisY()
+        axis_y.setTitleText("Percent of total")
+        axis_y.setLabelFormat('%.0f%')
+        axis_y.setRange(0, 100)
         self.area_chart.setProperty("current_data", filename)
 
         return True
 
-    def updateJsdTimelinePlot(self, jsd_model):
+    def update_jsd_timeline_plot(self, jsd_model):
         self.table_view.setModel(jsd_model)
         self.jsd_timeline_chart.removeAllSeries()
         jsd_model.clear_color_mapping()
@@ -376,27 +381,27 @@ class JsdWindow(QMainWindow):
         jsd_model.add_color_mapping(series.pen().color().name(), QRect(0, 0, 2, row_count))
 
         self.jsd_timeline_chart.removeAxis(self.jsd_timeline_chart.axisX())
-        axisX = QDateTimeAxis()
-        axisX.setTickCount(10)
-        axisX.setFormat("MMM yyyy")
-        axisX.setTitleText("Date")
-        self.jsd_timeline_chart.addAxis(axisX, Qt.AlignBottom)
-        series.attachAxis(axisX)
+        axis_x = QDateTimeAxis()
+        axis_x.setTickCount(10)
+        axis_x.setFormat("MMM yyyy")
+        axis_x.setTitleText("Date")
+        self.jsd_timeline_chart.addAxis(axis_x, Qt.AlignBottom)
+        series.attachAxis(axis_x)
 
-        axisY = self.jsd_timeline_chart.axisY()
-        if axisY is None:
-            axisY = QValueAxis()
-            axisY.setTitleText("JSD value")
-            axisY.setRange(0, 1)
-            axisY.setTickCount(11)
-            self.jsd_timeline_chart.addAxis(axisY, Qt.AlignLeft)
-        series.attachAxis(axisY)
+        axis_y = self.jsd_timeline_chart.axisY()
+        if axis_y is None:
+            axis_y = QValueAxis()
+            axis_y.setTitleText("JSD value")
+            axis_y.setRange(0, 1)
+            axis_y.setTickCount(11)
+            self.jsd_timeline_chart.addAxis(axis_y, Qt.AlignLeft)
+        series.attachAxis(axis_y)
 
         self.jsd_timeline_chart_view.setChart(self.jsd_timeline_chart)
 
         return True
 
-    def setAnimationOptions(self, enable_animations: bool):
+    def set_animation_options(self, enable_animations: bool):
         """
         Set the animation options for the JSD timeline chart.
 

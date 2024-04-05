@@ -1,5 +1,4 @@
 from bisect import bisect_left
-import pandas as pd
 import ExcelLayout
 from PySide6.QtCore import Qt, QObject, Signal
 import numpy as np
@@ -38,14 +37,11 @@ class JSDController(QObject):
         """
         Initialize the JSDController.
 
-        Parameters:
-            None
-
         Returns:
             None
         """
         self.connect_signals()
-        self.fileChanged(None, newcategoryindex=0)
+        self.file_changed(None, newcategoryindex=0)
 
     def connect_signals(self):
         """
@@ -53,11 +49,11 @@ class JSDController(QObject):
         """
         jsd_view = self.jsd_view  # Store the result of jsd_view() in a variable
         for f_c in jsd_view.dataselectiongroupbox.file_comboboxes:
-            f_c.currentIndexChanged.connect(self.fileChanged)
-        jsd_view.dataselectiongroupbox.category_combobox.currentIndexChanged.connect(self.categoryChanged)
+            f_c.currentIndexChanged.connect(self.file_changed)
+        jsd_view.dataselectiongroupbox.category_combobox.currentIndexChanged.connect(self.category_changed)
 
-        self.fileChangedSignal.connect(self.updateFileBasedCharts)
-        self.fileChangedSignal.connect(self.categoryChanged)
+        self.fileChangedSignal.connect(self.update_file_based_charts)
+        self.fileChangedSignal.connect(self.category_changed)
 
     @property
     def jsd_view(self) -> JsdWindow:
@@ -105,7 +101,7 @@ class JSDController(QObject):
             self._jsd_model = jsd_model
             self.modelChanged.emit()
 
-    def fileChanged(self, _, newcategoryindex=None):
+    def file_changed(self, _, newcategoryindex=None):
         """
         Parses the categories from the files selected in the comboboxes and updates the category box appropriately.
         Emits the fileChangedSignal signal upon completion.
@@ -126,7 +122,7 @@ class JSDController(QObject):
             categorylist2 = self.jsd_model.data_sources[cbox2.currentData()].sheets.keys()
             categorylist = [value for value in categorylist if value in categorylist2]
 
-        dataselectiongroupbox.updateCategoryComboBox(categorylist, categoryindex)
+        dataselectiongroupbox.update_category_combo_box(categorylist, categoryindex)
 
         self.fileChangedSignal.emit()
 
@@ -148,7 +144,7 @@ class JSDController(QObject):
         sheets = self.jsd_model.data_sources[current_data].sheets
         return sheets
 
-    def categoryChanged(self):
+    def category_changed(self):
         """
         Parses the dates from all files for the current category, and updates the data in the model appropriately.
         """
@@ -173,10 +169,10 @@ class JSDController(QObject):
                                float(calculate_jsd(df1, df2, cols_to_use, calcdate))] for calcdate in date_list]
                 jsd_model.input_data.extend(input_data)
 
-        self.updateCategoryPlots()
+        self.update_category_plots()
         jsd_model.layoutChanged.emit()
 
-    def updateFileBasedCharts(self):
+    def update_file_based_charts(self):
         """
         Update the file-based charts.
 
@@ -196,33 +192,30 @@ class JSDController(QObject):
         spider_plot_date = None
         sheets = self.get_file_sheets_from_combobox(file_cbox_index)
         try:
-            self.jsd_view.updatePieChartDock(sheets)
+            self.jsd_view.update_pie_chart_dock(sheets)
             spider_plot_values = self.get_spider_plot_values(spider_plot_date)
-            self.jsd_view.updateSpiderChart(spider_plot_values)
+            self.jsd_view.update_spider_chart(spider_plot_values)
         except Exception:
             return False
 
         return True
 
-    def updateCategoryPlots(self):
+    def update_category_plots(self):
         """
         Update the category plots.
 
         This method updates the JSD timeline plot and the area chart.
 
-        Parameters:
-            None
-
         Returns:
             True if the update was successful, False otherwise
         """
         try:
-            self.jsd_view.updateJsdTimelinePlot(self.jsd_model)
+            self.jsd_view.update_jsd_timeline_plot(self.jsd_model)
 
             file_cbox_index = 0
             sheets = self.get_file_sheets_from_combobox(file_cbox_index)
             filename = self.jsd_view.dataselectiongroupbox.file_comboboxes[file_cbox_index].currentData()
-            self.jsd_view.updateAreaChart(sheets, filename)
+            self.jsd_view.update_area_chart(sheets, filename)
             return True
         except Exception as e:
             print(f"An error occurred during the update of category plots: {e}")
@@ -247,7 +240,8 @@ class JSDController(QObject):
         cols_to_use = self.jsd_model.data_sources[cbox.currentData()].sheets[category].data_columns
 
         if category == AGE_AT_INDEX_CATEGORY:
-            cols_to_use = [f'{agerange[0]}-{agerange[1]} Custom' for agerange in ExcelLayout.WhitneyPaper.CustomAgeColumns] + [NOT_REPORTED]
+            cols_to_use = [f'{agerange[0]}-{agerange[1]} Custom' for
+                           agerange in ExcelLayout.WhitneyPaper.CustomAgeColumns] + [NOT_REPORTED]
 
         return cols_to_use
 
