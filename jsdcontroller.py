@@ -190,11 +190,16 @@ class JSDController(QObject):
         Raises:
             None
         """
-        file_cbox_index = 0
+        # file_cbox_index = 0
         spider_plot_date = None
-        sheets = self.get_file_sheets_from_combobox(file_cbox_index)
+        sheet_list = []
+        for i in range(len(self.jsd_view.dataselectiongroupbox.file_comboboxes)):
+            sheet_list.append(self.get_file_sheets_from_combobox(i))
+            print("added sheets to list")
+
+        self.jsd_view.update_pie_chart_dock(sheet_list)
+
         try:
-            self.jsd_view.update_pie_chart_dock(sheets)
             spider_plot_values = self.get_spider_plot_values(spider_plot_date)
             self.jsd_view.update_spider_chart(spider_plot_values)
         except Exception:

@@ -3,7 +3,7 @@ from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker
 from PySide6.QtGui import QPainter, QAction
 from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
-                               QLayout, QFormLayout)
+                               QLayout, QFormLayout, QGridLayout)
 from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
@@ -86,8 +86,10 @@ class JsdWindow(QMainWindow):
         self.setMenuBar(self.create_menu_bar())
 
         self.pie_chart_views = {}
-        self.pie_chart_hbox = QHBoxLayout()
-        self.pie_chart_dock_widget = self.create_pie_chart_dock_widget(self.pie_chart_hbox,
+        self.pie_chart_hboxes = {}
+        self.pie_chart_hbox_labels = {}
+        self.pie_chart_grid = QGridLayout()
+        self.pie_chart_dock_widget = self.create_pie_chart_dock_widget(self.pie_chart_grid,
                                                                    'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.pie_chart_dock_widget)
 
@@ -222,37 +224,55 @@ class JsdWindow(QMainWindow):
         self.spider_chart_vbox.addWidget(spider_chart_view)
         return spider_chart_view
 
-    def update_pie_chart_dock(self, sheets):
+    def update_pie_chart_dock(self, sheet_list):
         """
         Update the pie chart dock with new data.
         """
         # First, get rid of the old stuff just to be safe
-        for c, pv in self.pie_chart_views.items():
-            self.pie_chart_dock_widget.layout().removeWidget(pv)
-            pv.deleteLater()
+        print('update pie chart dock')
+        clear_layout(self.pie_chart_grid)
         self.pie_chart_views = {}
+        self.pie_chart_hboxes = {}
+        self.pie_chart_hbox_labels = {}
 
-        # For now, just use the file in the first combobox
-        categories = list(sheets)
+        print('get categories')
+        categories = [self.dataselectiongroupbox.category_combobox.itemText(i) for i in
+                      range(self.dataselectiongroupbox.category_combobox.count())]
+        print('categories:', categories)
 
         # Set the timepoint to the last timepoint in the series for now
         timepoint = -1
 
         new_pie_chart_views = {}
-        for category in categories:
-            chart = QChart()
-            new_pie_chart_views[category] = QChartView(chart)
-            chart.setTitle(category)
-            df = sheets[category].df
-            cols_to_use = sheets[category].data_columns
-            series = QPieSeries(chart)
-            for col in cols_to_use:
-                if df[col].iloc[timepoint] > 0:
-                    series.append(col, df[col].iloc[timepoint])
-            chart.addSeries(series)
-            chart.legend().setAlignment(Qt.AlignRight)
-            self.pie_chart_hbox.addWidget(new_pie_chart_views[category], stretch=1)
+        print('len(sheet_list):', len(sheet_list))
+        hbox_labels = {}
+        for i in range(len(sheet_list)):
+            sheets = sheet_list[i]
+            # hbox[i] = QHBoxLayout(parent=self.pie_chart_vbox)
+            hbox_labels[i] = QLabel(self.dataselectiongroupbox.file_comboboxes[i].currentText() + ':')
+            self.pie_chart_grid.addWidget(hbox_labels[i], i, 0)
+            print("Pie Chart row", i)
+            print("File Being Used:", self.dataselectiongroupbox.file_comboboxes[i].currentText())
+            # new_pie_chart_views[i] = {}
+            for j, category in enumerate(categories):
+                print('category:', category)
+                chart = QChart()
+                new_pie_chart_views[(category, i)] = QChartView(chart)
+                chart.setTitle(category)
+                df = sheets[category].df
+                cols_to_use = sheets[category].data_columns
+                series = QPieSeries(chart)
+                for col in cols_to_use:
+                    if df[col].iloc[timepoint] > 0:
+                        series.append(col, df[col].iloc[timepoint])
+                chart.addSeries(series)
+                chart.legend().setAlignment(Qt.AlignRight)
+                self.pie_chart_grid.addWidget(new_pie_chart_views[(category, i)], i, j+1)
+
+        # self.pie_chart_hboxes = hbox
         self.pie_chart_views = new_pie_chart_views
+        self.pie_chart_hbox_labels = hbox_labels
+        print('end update pie chart dock')
 
     def update_spider_chart(self, spider_plot_values):
         """
@@ -423,3 +443,13 @@ class JsdChart (QChart):
         """
         super().__init__()
         self.setAnimationOptions(animation_options)
+
+
+def clear_layout(layout):
+    if layout is not None:
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget() is not None:
+                child.widget().deleteLater()
+            elif child.layout() is not None:
+                clear_layout(child.layout())
