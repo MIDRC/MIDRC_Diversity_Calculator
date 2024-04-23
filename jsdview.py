@@ -94,7 +94,10 @@ class JsdWindow(QMainWindow):
         self.addDockWidget(Qt.BottomDockWidgetArea, self.pie_chart_dock_widget)
 
         self.spider_chart = QPolarChart()
-        self.area_chart = QChart()
+        self.area_chart_widget = QWidget()
+        # self.area_chart_layout = QVBoxLayout()
+        self.area_chart_widget.setLayout(QVBoxLayout())
+        self.area_charts = {}
         self.spider_chart_vbox = QSplitter(Qt.Vertical)
         self.spider_chart_dock_widget = self.create_spider_chart_dock_widget(self.spider_chart_vbox,
                                                                          'Diversity Charts - ' + JsdWindow.WINDOW_TITLE)
@@ -194,12 +197,12 @@ class JsdWindow(QMainWindow):
         assert isinstance(title, str), f"The 'title' argument must be a string. Got {type(title).__name__} instead."
         spider_chart_dock_widget = QDockWidget()
         spider_chart_dock_widget.setWidget(spider_chart_vbox)
-        self.add_area_chart_view()
+        self.spider_chart_vbox.addWidget(self.area_chart_widget)
         self.add_spider_chart_view()
         spider_chart_dock_widget.setWindowTitle(title)
         return spider_chart_dock_widget
 
-    def add_area_chart_view(self):
+    def add_area_chart_view(self, area_chart):
         """
         Add an area chart view to the spider chart dock widget.
 
@@ -209,8 +212,8 @@ class JsdWindow(QMainWindow):
         Raises:
             None
         """
-        area_chart_view = QChartView(self.area_chart)
-        self.spider_chart_vbox.addWidget(area_chart_view)
+        area_chart_view = QChartView(area_chart)
+        self.area_chart_widget.layout().addWidget(area_chart_view, stretch=1)
         return area_chart_view
 
     def add_spider_chart_view(self):
@@ -268,6 +271,8 @@ class JsdWindow(QMainWindow):
                 chart.addSeries(series)
                 chart.legend().setAlignment(Qt.AlignRight)
                 self.pie_chart_grid.addWidget(new_pie_chart_views[(category, i)], i, j+1)
+                self.pie_chart_grid.setColumnStretch(j+1, 1)
+            self.pie_chart_grid.setRowStretch(i, 1)
 
         # self.pie_chart_hboxes = hbox
         self.pie_chart_views = new_pie_chart_views
@@ -325,55 +330,66 @@ class JsdWindow(QMainWindow):
         title = f"Comparison of {file1_data} and {file2_data} - JSD per category"
         self.spider_chart.setTitle(title)
 
-    def update_area_chart(self, sheets, filename):
+    def update_area_chart(self, sheet_list):
         """
         Update the area chart with new data.
         """
         category = self._dataselectiongroupbox.category_combobox.currentText()
 
-        self.area_chart.removeAllSeries()
-        self.area_chart.setTitle(f'{filename} {category} distribution over time')
+        clear_layout(self.area_chart_widget.layout())
 
-        df = sheets[category].df
-        cols_to_use = sheets[category].data_columns
-        total_counts = df[cols_to_use].sum(axis=1)
-        upper_counts = df[cols_to_use].cumsum(axis=1)
-        upper_counts = upper_counts.apply(lambda x: 100.0 * x / total_counts)
-        dates = [QDateTime(numpy_datetime64_to_qdate(date), QTime()) for date in df.date.values]
-        lower_series = None
-        for index, col in enumerate(cols_to_use):
-            if df[col].iloc[-1] == 0:
-                continue
+        self.area_charts = {}
 
-            points = [QPointF(dates[j].toMSecsSinceEpoch(), upper_counts.iloc[j][col]) for j in range(len(dates))]
-            if len(dates) == 1:
-                points.append(QPointF(dates[0].toMSecsSinceEpoch() + 1, upper_counts.iloc[0][col]))
+        for i in range(len(sheet_list)):
+            area_chart = QChart()
+            filename = self.dataselectiongroupbox.file_comboboxes[i].currentData()
+            area_chart.setTitle(f'{filename} {category} distribution over time')
+            sheets = sheet_list[i]
 
-            upper_series = QLineSeries(self.area_chart)
-            upper_series.append(points)
+            df = sheets[category].df
+            cols_to_use = sheets[category].data_columns
+            total_counts = df[cols_to_use].sum(axis=1)
+            upper_counts = df[cols_to_use].cumsum(axis=1)
+            upper_counts = upper_counts.apply(lambda x: 100.0 * x / total_counts)
+            dates = [QDateTime(numpy_datetime64_to_qdate(date), QTime()) for date in df.date.values]
+            lower_series = None
+            for index, col in enumerate(cols_to_use):
+                if df[col].iloc[-1] == 0:
+                    continue
 
-            area = QAreaSeries(upper_series, lower_series)
-            area.setName(col)
-            self.area_chart.addSeries(area)
-            lower_series = upper_series
+                points = [QPointF(dates[j].toMSecsSinceEpoch(), upper_counts.iloc[j][col]) for j in range(len(dates))]
+                if len(dates) == 1:
+                    points.append(QPointF(dates[0].toMSecsSinceEpoch() + 1, upper_counts.iloc[0][col]))
 
-        for axis in self.area_chart.axes():
-            self.area_chart.removeAxis(axis)
-        self.area_chart.createDefaultAxes()
+                upper_series = QLineSeries(area_chart)
+                upper_series.append(points)
 
-        self.area_chart.removeAxis(self.area_chart.axisX())
-        axis_x = QDateTimeAxis()
-        axis_x.setTickCount(10)
-        axis_x.setFormat("MMM yyyy")
-        axis_x.setTitleText("Date")
-        axis_x.setRange(dates[0], dates[-1] if len(dates) > 1 else dates[0].addMSecs(1))
-        self.area_chart.addAxis(axis_x, Qt.AlignBottom)
+                area = QAreaSeries(upper_series, lower_series)
+                area.setName(col)
+                area_chart.addSeries(area)
+                lower_series = upper_series
 
-        axis_y = self.area_chart.axisY()
-        axis_y.setTitleText("Percent of total")
-        axis_y.setLabelFormat('%.0f%')
-        axis_y.setRange(0, 100)
-        self.area_chart.setProperty("current_data", filename)
+            for axis in area_chart.axes():
+                area_chart.removeAxis(axis)
+            area_chart.createDefaultAxes()
+
+            area_chart.removeAxis(area_chart.axisX())
+            axis_x = QDateTimeAxis()
+            axis_x.setTickCount(10)
+            axis_x.setFormat("MMM yyyy")
+            axis_x.setTitleText("Date")
+            axis_x.setRange(dates[0], dates[-1] if len(dates) > 1 else dates[0].addMSecs(1))
+            area_chart.addAxis(axis_x, Qt.AlignBottom)
+
+            axis_y = area_chart.axisY()
+            axis_y.setTitleText("Percent of total")
+            axis_y.setLabelFormat('%.0f%')
+            axis_y.setRange(0, 100)
+            area_chart.setProperty("current_data", filename)
+
+            self.add_area_chart_view(area_chart)
+
+            self.area_charts[i] = area_chart
 
         return True
 

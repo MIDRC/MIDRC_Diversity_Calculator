@@ -195,13 +195,12 @@ class JSDController(QObject):
         sheet_list = []
         for i in range(len(self.jsd_view.dataselectiongroupbox.file_comboboxes)):
             sheet_list.append(self.get_file_sheets_from_combobox(i))
-            print("added sheets to list")
 
-        self.jsd_view.update_pie_chart_dock(sheet_list)
+        spider_plot_values = self.get_spider_plot_values(spider_plot_date)
+        self.jsd_view.update_spider_chart(spider_plot_values)
 
         try:
-            spider_plot_values = self.get_spider_plot_values(spider_plot_date)
-            self.jsd_view.update_spider_chart(spider_plot_values)
+            self.jsd_view.update_pie_chart_dock(sheet_list)
         except Exception:
             return False
 
@@ -216,13 +215,16 @@ class JSDController(QObject):
         Returns:
             True if the update was successful, False otherwise
         """
+        sheet_list = []
+        for i in range(len(self.jsd_view.dataselectiongroupbox.file_comboboxes)):
+            sheet_list.append(self.get_file_sheets_from_combobox(i))
+
         try:
             self.jsd_view.update_jsd_timeline_plot(self.jsd_model)
 
             file_cbox_index = 0
-            sheets = self.get_file_sheets_from_combobox(file_cbox_index)
-            filename = self.jsd_view.dataselectiongroupbox.file_comboboxes[file_cbox_index].currentData()
-            self.jsd_view.update_area_chart(sheets, filename)
+            # sheets = self.get_file_sheets_from_combobox(file_cbox_index)
+            self.jsd_view.update_area_chart(sheet_list)
             return True
         except Exception as e:
             print(f"An error occurred during the update of category plots: {e}")
