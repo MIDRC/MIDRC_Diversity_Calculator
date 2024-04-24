@@ -10,6 +10,22 @@ from datetimetools import numpy_datetime64_to_qdate, convert_date_to_millisecond
 
 
 class JsdDataSelectionGroupBox(QGroupBox):
+    """
+    Class: JsdDataSelectionGroupBox
+
+    This class represents a group box widget for data selection. It provides functionality for creating labels and
+    combo boxes for data files and a category combo box. The class has methods for setting up the layout,
+    updating the category combo box, and initializing the widget.
+
+    Attributes:
+    - NUM_DATA_ITEMS (int): The number of data items.
+
+    Methods:
+    - __init__(self, data_sources): Initializes the JsdDataSelectionGroupBox.
+    - set_layout(self, data_sources): Sets the layout for the widget.
+    - update_category_combo_box(self, categorylist, categoryindex): Updates the category combo box with the given
+      category list and sets the selected index to the specified category index.
+    """
     NUM_DATA_ITEMS = 2
 
     def __init__(self, data_sources):
@@ -51,6 +67,17 @@ class JsdDataSelectionGroupBox(QGroupBox):
         self.setLayout(form_layout)
 
     def update_category_combo_box(self, categorylist, categoryindex):
+        """
+        Update the category combo box with the given category list and set the selected index to the specified
+        category index.
+
+        Parameters:
+        - categorylist (list): The list of categories to populate the combo box.
+        - categoryindex (int): The index of the category to select in the combo box.
+
+        Returns:
+        None
+        """
         with QSignalBlocker(self.category_combobox):
             self.category_combobox.clear()
             self.category_combobox.addItems(categorylist)
@@ -87,7 +114,7 @@ class JsdWindow(QMainWindow):
 
         self.pie_chart_views = {}
         self.pie_chart_hbox = QHBoxLayout()
-        self.pie_chart_dock_widget = self.create_pie_chart_dock_widget(self.pie_chart_hbox,
+        self.pie_chart_dock_widget = self.create_dock_widget(self.pie_chart_hbox,
                                                                    'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.pie_chart_dock_widget)
 
@@ -112,12 +139,23 @@ class JsdWindow(QMainWindow):
 
     @property
     def dataselectiongroupbox(self) -> JsdDataSelectionGroupBox:
-        # Get the Data Selection GroupBox object.
+        """
+        Return an instance of JsdDataSelectionGroupBox.
+
+        This method returns an instance of the JsdDataSelectionGroupBox class, which is a widget used for data
+        selection. It takes no arguments and returns an initialized instance of the JsdDataSelectionGroupBox class.
+
+        Returns:
+            JsdDataSelectionGroupBox: An instance of the JsdDataSelectionGroupBox class.
+        """
         return self._dataselectiongroupbox
 
     def create_menu_bar(self) -> QMenuBar:
         """
-        Create the menu bar.
+        Create a menu bar.
+
+        Returns:
+            QMenuBar: The created menu bar.
         """
         menu_bar: QMenuBar = QMenuBar()
 
@@ -128,13 +166,13 @@ class JsdWindow(QMainWindow):
         settings_menu: QMenu = menu_bar.addMenu("Settings")
 
         # Create the 'Chart Animations' action
-        chartanimationsetting: QAction = QAction("Chart Animations", self)
-        chartanimationsetting.setCheckable(True)
-        chartanimationsetting.setChecked(True)
-        chartanimationsetting.toggled.connect(lambda checked: self.set_animation_options(checked))
+        chart_animation_setting: QAction = QAction("Chart Animations", self)
+        chart_animation_setting.setCheckable(True)
+        chart_animation_setting.setChecked(True)
+        chart_animation_setting.toggled.connect(lambda checked: self.set_animation_options(checked))
 
         # Add the 'Chart Animations' action to the 'Settings' menu
-        settings_menu.addAction(chartanimationsetting)
+        settings_menu.addAction(chart_animation_setting)
 
         # Return the menu bar
         return menu_bar
@@ -159,9 +197,9 @@ class JsdWindow(QMainWindow):
         return table_dock_widget
 
     @staticmethod
-    def create_pie_chart_dock_widget(layout: QLayout, title: str) -> QDockWidget:
+    def create_dock_widget(layout: QLayout, title: str) -> QDockWidget:
         """
-        Creates a dock widget with a given widget.
+        Creates a dock widget with a given layout and title.
 
         Args:
             layout (QLayout): The layout to be displayed in the dock widget.
@@ -178,7 +216,7 @@ class JsdWindow(QMainWindow):
         dock_widget.setWindowTitle(title)
         return dock_widget
 
-    def create_spider_chart_dock_widget(self, spider_chart_vbox: QSplitter, title: str) -> QDockWidget:
+    def create_spider_chart_dock_widget(self, spider_chart_vbox: QSplitter , title: str) -> QDockWidget:
         """
         Create a dock widget with an area chart and a spider chart.
 
