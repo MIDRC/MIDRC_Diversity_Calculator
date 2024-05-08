@@ -10,10 +10,22 @@ from jsdconfig import JSDConfig
 
 
 class SplashScreen(QSplashScreen):
+    """
+    Class: SplashScreen
+
+    This class is a subclass of QSplashScreen and represents a splash screen for a GUI application.
+    It provides a static method _create_pixmap() to create a pixmap with a centered splash screen message.
+    The __init__() method initializes the object and sets the pixmap.
+    """
     @staticmethod
     def _create_pixmap():
         """
+        Function: _create_pixmap
+
         Create a pixmap with the splash screen message centered on it.
+
+        Returns:
+            QPixmap: The created QPixmap object.
         """
         SPLASH_WIDTH = 800
         SPLASH_HEIGHT = 600
@@ -46,6 +58,20 @@ class SplashScreen(QSplashScreen):
 
 
 def launch_diversity_calculator():
+    """
+    Function: launch_diversity_calculator
+
+    This function launches the diversity calculator application.
+    * It checks if a QApplication instance already exists, and if not, creates one.
+    * It then creates a SplashScreen object and displays it.
+    * Next, it initializes a JSDConfig object and retrieves the data source list from the configuration.
+    * It creates a JsdWindow object with the data source list and sets the JSDController with a JSDTableModel and the
+    configuration.
+    * Finally, it shows the JsdWindow, finishes the SplashScreen, and exits the application.
+
+    Returns:
+        None
+    """
     q_app = QApplication.instance()
     if q_app is None:
         q_app = QApplication(sys.argv)

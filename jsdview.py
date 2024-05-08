@@ -47,7 +47,13 @@ class JsdDataSelectionGroupBox(QGroupBox):
 
     def set_layout(self, data_sources):
         """
-        Sets the layout for the widget.
+        Set the layout for the given data sources.
+
+        Parameters:
+        - data_sources: A list of data sources.
+
+        Returns:
+        None
         """
         # Create the form layout
         form_layout = QFormLayout()
@@ -85,6 +91,18 @@ class JsdDataSelectionGroupBox(QGroupBox):
 
 
 class JsdWindow(QMainWindow):
+    """
+    Class: JsdWindow
+
+    Represents the main window of the MIDRC Diversity Calculator application.
+
+    Attributes:
+    - WINDOW_TITLE: str - The title of the window.
+
+    Methods:
+    - None
+
+    """
     WINDOW_TITLE: str = 'MIDRC Diversity Calculator'
 
     def __init__(self, data_sources):
@@ -267,7 +285,16 @@ class JsdWindow(QMainWindow):
 
     def update_pie_chart_dock(self, sheet_list):
         """
-        Update the pie chart dock with new data.
+        Update the pie chart dock with the given sheet list.
+
+        Parameters:
+        - sheet_list (list): A list of sheets.
+
+        Returns:
+        - None
+
+        Raises:
+        - None
         """
         # First, get rid of the old stuff just to be safe
         print('update pie chart dock')
@@ -319,7 +346,16 @@ class JsdWindow(QMainWindow):
 
     def update_spider_chart(self, spider_plot_values):
         """
-        Update the spider chart with new data.
+        Update the spider chart with new values.
+
+        Parameters:
+        - spider_plot_values (list): A list of values to update the spider chart.
+
+        Returns:
+        - None
+
+        Raises:
+        - None
         """
         file1_data = self._dataselectiongroupbox.file_comboboxes[0].currentData()
         file2_data = self._dataselectiongroupbox.file_comboboxes[1].currentData()
@@ -371,6 +407,17 @@ class JsdWindow(QMainWindow):
     def update_area_chart(self, sheet_list):
         """
         Update the area chart with new data.
+
+        Parameters:
+        - sheet_list (list): A list of sheets containing data for the chart.
+
+        Returns:
+        - None
+
+        This method updates the area chart with new data provided in the sheet_list.
+        The area chart displays the data in a filled area format, allowing for easy visualization of
+        trends and patterns. The sheet_list parameter should be a list of sheets, where each sheet contains the
+        necessary data for the chart. After updating the chart, the method does not return any value.
         """
         category = self._dataselectiongroupbox.category_combobox.currentText()
 
@@ -432,6 +479,17 @@ class JsdWindow(QMainWindow):
         return True
 
     def update_jsd_timeline_plot(self, jsd_model):
+        """
+        Update the JSD timeline plot with the given JSD model.
+
+        Parameters:
+        - jsd_model (Type): The JSD model to update the plot with.
+
+        Returns:
+        - None
+
+        This method updates the table view's model with the provided JSD model, effectively updating the JSD timeline plot.
+        """
         self.table_view.setModel(jsd_model)
         self.jsd_timeline_chart.removeAllSeries()
         jsd_model.clear_color_mapping()
@@ -500,6 +558,16 @@ class JsdChart (QChart):
 
 
 def clear_layout(layout):
+    """
+    Clears all widgets and layouts from the given layout.
+
+    Parameters:
+        layout (QLayout): The layout to be cleared.
+
+    Returns:
+        None
+
+    """
     if layout is not None:
         while layout.count():
             child = layout.takeAt(0)
