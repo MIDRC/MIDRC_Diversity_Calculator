@@ -5,12 +5,32 @@ import math
 
 
 class DataSource:
+    """
+    Class representing a data source.
+
+    Attributes:
+        name (str): The name of the data source.
+        sheets (dict): A dictionary containing the sheets of the data source.
+        datatype (str): The type of the data source.
+        filename (str): The filename of the data source.
+        data_source (dict): The data source object.
+        custom_age_ranges (dict, optional): A dictionary containing custom age ranges.
+
+    Methods:
+        __init__(self, data_source, custom_age_ranges=None): Initializes a new instance of the DataSource class.
+        build_data_frames(self, filename: str): Builds dataframes.
+        create_sheets(self, file: pd.ExcelFile): Creates sheets from a given file.
+    """
     def __init__(self, data_source, custom_age_ranges=None):
         """
         Initializes a new instance of the DataSource class.
 
         Args:
-            name (str): The name for this DataSource.
+            data_source (dict): The data source object.
+            custom_age_ranges (dict, optional): A dictionary containing custom age ranges.
+
+        Returns:
+            None
         """
         self.name = data_source['name']
         self.sheets = {}
@@ -24,6 +44,12 @@ class DataSource:
     def build_data_frames(self, filename: str):
         """
         Builds dataframes.
+
+        Parameters:
+            filename (str): The filename of the Excel file.
+
+        Returns:
+            None
         """
         file = pd.ExcelFile(filename)
         if file is not None:
@@ -32,21 +58,42 @@ class DataSource:
     def create_sheets(self, file: pd.ExcelFile):
         """
         Creates sheets from a given file.
+
+        Parameters:
+            file (pd.ExcelFile): The Excel file object.
+
+        Returns:
+            None
         """
         for s in file.sheet_names:
             self.sheets[s] = DataSheet(s, self.data_source, self.custom_age_ranges, is_excel=True, file=file)
 
 
 class DataSheet:
+    """
+    Class representing a data sheet.
+
+    Attributes:
+        name (str): The name of the data sheet.
+        columns (dict): A dictionary containing the columns of the data sheet.
+        data_columns (list): A list of data columns in the data sheet.
+
+    Methods:
+        __init__(self, sheet_name, data_source, custom_age_ranges, is_excel=False, file=None): Initializes a new instance of the DataSheet class.
+        create_custom_age_columns(self, age_ranges): Scans the column headers in the age category to build consistent age columns.
+    """
     def __init__(self, sheet_name, data_source, custom_age_ranges, is_excel=False, file=None):
         """
         Initialize the DataSheet object.
 
         Args:
             sheet_name (str): The name of the sheet in the Excel file to parse.
-            datasource_name (str): The name of the data source object.
+            data_source (str): The data source object.
             is_excel (bool, optional): Flag indicating whether the data source is an Excel file. Defaults to False.
-            file (pd.ExcelFile, optional): The excel file to read the sheet from
+            file (pd.ExcelFile, optional): The Excel file to read the sheet from
+
+        Returns:
+            None
         """
         self.name = sheet_name
         self.columns = {}
@@ -83,6 +130,21 @@ class DataSheet:
     def create_custom_age_columns(self, age_ranges):
         """
         Scans the column headers in the age category to build consistent age columns.
+
+        Parameters:
+            age_ranges (list): A list of age ranges to be used for creating custom age columns.
+
+        Returns:
+            None
+
+        Raises:
+            None
+
+        Notes:
+            - This method drops any previously created custom age columns.
+            - It identifies the columns that need to be altered for JSD calculation.
+            - It sums the values of the identified columns for each age range and creates a new custom age column.
+            - It checks if all columns have been used and raises a warning if any column is not used.
         """
         # Drop previously created custom columns
         cols_to_drop = [col for col in self.df.columns if 'Custom' in col]

@@ -10,6 +10,18 @@ from jsdconfig import JSDConfig
 
 
 class JSDController(QObject):
+    """
+    Class JSDController
+
+    This class represents a JSD Controller. It emits a signal when the model changes.
+
+    Attributes:
+    - modelChanged: A Signal that is emitted when the model changes.
+
+    Methods:
+    - None
+
+    """
     modelChanged = Signal()
     fileChangedSignal = Signal()
     
@@ -149,6 +161,12 @@ class JSDController(QObject):
     def category_changed(self):
         """
         Parses the dates from all files for the current category, and updates the data in the model appropriately.
+
+        Returns:
+            None
+
+        Raises:
+            None
         """
         jsd_view = self.jsd_view
         jsd_model = self.jsd_model
@@ -183,10 +201,6 @@ class JSDController(QObject):
         Update the file-based charts.
 
         This method updates the pie chart dock and the spider chart.
-
-        Parameters:
-            file_cbox_index (int): The index of the file combobox. Default is 0.
-            spider_plot_date (Optional[datetime.date]): The date for the spider plot. Default is None.
 
         Returns:
             True if the update was successful, False otherwise
@@ -258,18 +272,18 @@ class JSDController(QObject):
 
         return cols_to_use
 
-    def get_spider_plot_values(self, calcdate):
+    def get_spider_plot_values(self, calc_date):
         """
         Compiles a dictionary of categories and JSD values for a given date.
 
         Parameters:
-            calcdate (Optional[datetime.date]): The date to use for JSD calculation. Default is None.
+            calc_date (Optional[datetime.date]): The date to use for JSD calculation. Default is None.
 
         Returns:
             A dictionary of categories and JSD values for a given date.
         """
-        if calcdate is None:
-            calcdate = np.datetime64('today')
+        if calc_date is None:
+            calc_date = np.datetime64('today')
 
         jsd_view = self.jsd_view
         dataselectiongroupbox = jsd_view.dataselectiongroupbox
@@ -284,12 +298,12 @@ class JSDController(QObject):
         jsd_values = {category: calculate_jsd(sheets0[category].df,
                                               sheets1[category].df,
                                               self.get_cols_to_use_for_jsd_calc(cbox0, category),
-                                              calcdate) for category in categories}
+                                              calc_date) for category in categories}
 
         return jsd_values
 
 
-def calculate_jsd(df1, df2, cols_to_use, calcdate):
+def calculate_jsd(df1, df2, cols_to_use, calc_date):
     """
     Calculate the Jensen-Shannon distance between two dataframes for a given date.
 
@@ -301,7 +315,7 @@ def calculate_jsd(df1, df2, cols_to_use, calcdate):
     df1 (pd.DataFrame): First dataframe.
     df2 (pd.DataFrame): Second dataframe.
     cols_to_use (list): List of columns to use for the calculation.
-    calcdate (pd.Timestamp): Date for which the calculation is performed.
+    calc_date (pd.Timestamp): Date for which the calculation is performed.
 
     Returns:
     float: Jensen-Shannon distance between the two dataframes.
@@ -309,8 +323,8 @@ def calculate_jsd(df1, df2, cols_to_use, calcdate):
     if df1.empty or df2.empty:
         return None
 
-    df1_row = df1.date.searchsorted(calcdate, side='right') - 1
-    df2_row = df2.date.searchsorted(calcdate, side='right') - 1
+    df1_row = df1.date.searchsorted(calc_date, side='right') - 1
+    df2_row = df2.date.searchsorted(calc_date, side='right') - 1
 
     df1_data = df1[cols_to_use].iloc[df1_row].values.astype(float)
     df2_data = df2[cols_to_use].iloc[df2_row].values.astype(float)
