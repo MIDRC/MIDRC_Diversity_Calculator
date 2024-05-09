@@ -15,7 +15,7 @@ data sources:
     description: Census Excel File
     data type: file
     filename: Census_all.xlsx
-    date: '2010-01-01' # The census file does not have a date column, so we specify the date here
+    date: '2020-01-01' # The census file does not have a date column, so we specify the date here
 
   - name: MIDRC COVID+
     description: MIDRC COVID+ Excel File

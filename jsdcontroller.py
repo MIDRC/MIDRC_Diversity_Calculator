@@ -169,7 +169,11 @@ class JSDController(QObject):
                 date_list = remove_elements_less_than_from_sorted_list(date_list, first_date)
                 input_data = [[pandas_date_to_qdate(calcdate),
                                float(calculate_jsd(df1, df2, cols_to_use, calcdate))] for calcdate in date_list]
+                # jsd_model.input_data.append([])
                 jsd_model.input_data.extend(input_data)
+
+        print(len(jsd_model.input_data))
+        print(len(jsd_model.input_data[-1]))
 
         self.update_category_plots()
         jsd_model.layoutChanged.emit()

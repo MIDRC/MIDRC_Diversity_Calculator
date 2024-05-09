@@ -26,7 +26,7 @@ class JsdDataSelectionGroupBox(QGroupBox):
     - update_category_combo_box(self, categorylist, categoryindex): Updates the category combo box with the given
       category list and sets the selected index to the specified category index.
     """
-    NUM_DATA_ITEMS = 2
+    NUM_DATA_ITEMS = 3
 
     def __init__(self, data_sources):
         """
@@ -117,7 +117,7 @@ class JsdWindow(QMainWindow):
         self.pie_chart_hbox_labels = {}
         self.pie_chart_grid = QGridLayout()
         self.pie_chart_dock_widget = self.create_dock_widget(self.pie_chart_grid,
-                                                                   'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
+                                                             'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.pie_chart_dock_widget)
 
         self.spider_chart = QPolarChart()
@@ -221,7 +221,7 @@ class JsdWindow(QMainWindow):
         dock_widget.setWindowTitle(title)
         return dock_widget
 
-    def create_spider_chart_dock_widget(self, spider_chart_vbox: QSplitter , title: str) -> QDockWidget:
+    def create_spider_chart_dock_widget(self, spider_chart_vbox: QSplitter, title: str) -> QDockWidget:
         """
         Create a dock widget with an area chart and a spider chart.
 
