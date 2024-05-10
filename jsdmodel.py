@@ -55,6 +55,7 @@ class JSDTableModel(QAbstractTableModel):
         """
         super().__init__()
         self.input_data = []
+        self.column_infos = [] # This is a list of dicts containing column metadata
         self._color_mapping = {}
         self._color_cache = {}
 
@@ -63,7 +64,7 @@ class JSDTableModel(QAbstractTableModel):
             for data_source in data_source_list:
                 self.data_sources[data_source['name']] = DataSource(data_source, custom_age_ranges)
 
-    def rowCount(self, parent: QModelIndex = None) -> int:
+    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
         """
         Get the number of rows in the model.
 
@@ -75,9 +76,10 @@ class JSDTableModel(QAbstractTableModel):
         Returns:
             int: The number of rows in the model.
         """
-        return len(self.input_data)
+        # return len(self.input_data)
+        return len(self.input_data[parent.column()])
 
-    def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
+    def columnCount(self, parent: QModelIndex = None) -> int:
         """
         Returns the number of columns in the model.
 
@@ -87,7 +89,8 @@ class JSDTableModel(QAbstractTableModel):
         Returns:
             int: The number of columns in the model.
         """
-        return len(self.input_data[parent.row()])
+        # return len(self.input_data[parent.row()])
+        return len(self.input_data)
 
     def headerData(self, section: int, orientation: int, role: int, *args, **kwargs) -> Any:
         """
@@ -128,7 +131,7 @@ class JSDTableModel(QAbstractTableModel):
             any of the above, it returns None.
         """
         if role in (Qt.DisplayRole, Qt.EditRole):
-            return self.input_data[index.row()][index.column()]
+            return self.input_data[index.column()][index.row()]
         elif role == Qt.BackgroundRole:
             row = index.row()
             column = index.column()
@@ -151,7 +154,7 @@ class JSDTableModel(QAbstractTableModel):
             bool: True if the data was successfully set, False otherwise.
         """
         if index.isValid() and role == Qt.EditRole:
-            self.input_data[index.row()][index.column()] = float(value)
+            self.input_data[index.column()][index.row()] = float(value)
             self.dataChanged.emit(index, index)
             return True
         return False

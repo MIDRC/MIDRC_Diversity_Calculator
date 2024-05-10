@@ -1,5 +1,6 @@
 from typing import Type, Union, List, Tuple
-from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker
+import math
+from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, QAbstractTableModel
 from PySide6.QtGui import QPainter, QAction
 from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
@@ -493,18 +494,29 @@ class JsdWindow(QMainWindow):
         self.table_view.setModel(jsd_model)
         self.jsd_timeline_chart.removeAllSeries()
         jsd_model.clear_color_mapping()
-        series = QLineSeries()
-        series.setName(f"{self._dataselectiongroupbox.file_comboboxes[0].currentData()} vs "
-                       f"{self._dataselectiongroupbox.file_comboboxes[1].currentData()} "
-                       f"{self._dataselectiongroupbox.category_combobox.currentText()} JSD")
-        col = 0
-        row_count = jsd_model.rowCount()
-        for i in range(row_count):
-            timepoint = jsd_model.input_data[i][col]
-            if timepoint is not None:
-                series.append(convert_date_to_milliseconds(timepoint), jsd_model.input_data[i][col + 1])
-        self.jsd_timeline_chart.addSeries(series)
-        jsd_model.add_color_mapping(series.pen().color().name(), QRect(0, 0, 2, row_count))
+        series_list = []
+        date_min = math.inf
+        date_max = -math.inf
+
+        # Use every other column since there are dates in every other column
+        for c, column_info in enumerate(jsd_model.column_infos):
+            col = c * 2
+            series = QLineSeries()
+            series.setName(f"{column_info['file1']} vs "
+                           f"{column_info['file2']} "
+                           f"{column_info['category']} JSD")
+            row_count = jsd_model.rowCount(jsd_model.createIndex(0, col))
+            for i in range(row_count):
+                time_point = convert_date_to_milliseconds(jsd_model.input_data[col][i])
+                if time_point is not None:
+                    series.append(time_point, jsd_model.input_data[col + 1][i])
+                    if i == 0 and time_point < date_min:
+                        date_min = time_point
+                    if i == row_count - 1 and time_point > date_max:
+                        date_max = time_point
+            series_list.append(series)
+            self.jsd_timeline_chart.addSeries(series)
+            jsd_model.add_color_mapping(series.pen().color().name(), QRect(col, 0, 2, row_count))
 
         self.jsd_timeline_chart.removeAxis(self.jsd_timeline_chart.axisX())
         axis_x = QDateTimeAxis()
@@ -512,7 +524,6 @@ class JsdWindow(QMainWindow):
         axis_x.setFormat("MMM yyyy")
         axis_x.setTitleText("Date")
         self.jsd_timeline_chart.addAxis(axis_x, Qt.AlignBottom)
-        series.attachAxis(axis_x)
 
         axis_y = self.jsd_timeline_chart.axisY()
         if axis_y is None:
@@ -521,7 +532,11 @@ class JsdWindow(QMainWindow):
             axis_y.setRange(0, 1)
             axis_y.setTickCount(11)
             self.jsd_timeline_chart.addAxis(axis_y, Qt.AlignLeft)
-        series.attachAxis(axis_y)
+
+        for series in series_list:
+            series.attachAxis(axis_x)
+            series.attachAxis(axis_y)
+        axis_x.setRange(QDateTime.fromMSecsSinceEpoch(date_min), QDateTime.fromMSecsSinceEpoch(date_max))
 
         self.jsd_timeline_chart_view.setChart(self.jsd_timeline_chart)
 

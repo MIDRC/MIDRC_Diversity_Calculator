@@ -174,24 +174,37 @@ class JSDController(QObject):
         cat = dataselectiongroupbox.category_combobox.currentText()
 
         jsd_model.input_data.clear()
+        jsd_model.column_infos.clear()
+
+        column_info = {'category': cat}
 
         for i, cbox1 in enumerate(dataselectiongroupbox.file_comboboxes):
-            df1 = jsd_model.data_sources[cbox1.currentData()].sheets[cat].df
+            column_info['index1'] = i
+            column_info['file1'] = cbox1.currentData()
+            df1 = jsd_model.data_sources[column_info['file1']].sheets[cat].df
             cols_to_use = self.get_cols_to_use_for_jsd_calc(cbox1, cat)
 
             for j, cbox2 in enumerate(dataselectiongroupbox.file_comboboxes[i+1:], start=i+1):
-                df2 = jsd_model.data_sources[cbox2.currentData()].sheets[cat].df
+                column_info['index2'] = j
+                column_info['file2'] = cbox2.currentData()
+                df2 = jsd_model.data_sources[column_info['file2']].sheets[cat].df
                 first_date = max(df1.date.values[0], df2.date.values[0])
                 date_list = np.concatenate((df1.date.values, df2.date.values))
                 date_list = sorted(set(date_list))
                 date_list = remove_elements_less_than_from_sorted_list(date_list, first_date)
-                input_data = [[pandas_date_to_qdate(calcdate),
-                               float(calculate_jsd(df1, df2, cols_to_use, calcdate))] for calcdate in date_list]
-                # jsd_model.input_data.append([])
-                jsd_model.input_data.extend(input_data)
+
+                # input_data = [[pandas_date_to_qdate(calcdate),
+                #                float(calculate_jsd(df1, df2, cols_to_use, calcdate))] for calcdate in date_list]
+                # jsd_model.input_data.extend(input_data)
+
+                input_data = [float(calculate_jsd(df1, df2, cols_to_use, calc_date)) for calc_date in date_list]
+                jsd_model.input_data.append([pandas_date_to_qdate(calc_date) for calc_date in date_list])
+                jsd_model.input_data.append(input_data)
+                # jsd_model.column_infos.append(copy.deepcopy(column_info)) # We shouldn't need to recursively copy
+                jsd_model.column_infos.append(column_info.copy())
 
         print(len(jsd_model.input_data))
-        print(len(jsd_model.input_data[-1]))
+        print([len(data) for data in jsd_model.input_data])
 
         self.update_category_plots()
         jsd_model.layoutChanged.emit()

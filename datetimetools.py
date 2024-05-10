@@ -7,6 +7,8 @@ def convert_date_to_milliseconds(date):
     """
     Converts a date to milliseconds since epoch.
     """
+    if date is None:
+        return None
     return QDateTime(date, QTime(), QTimeZone.utc()).toMSecsSinceEpoch()
 
 
