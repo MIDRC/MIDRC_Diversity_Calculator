@@ -2,9 +2,9 @@ from typing import Type, Union, List, Tuple
 import math
 from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, QAbstractTableModel
 from PySide6.QtGui import QPainter, QAction
-from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu,
+from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu, QFileDialog,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
-                               QLayout, QFormLayout, QGridLayout)
+                               QLayout, QFormLayout, QGridLayout, QLineEdit, QDialog, QDialogButtonBox)
 from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
@@ -129,7 +129,7 @@ class JsdWindow(QMainWindow):
         self.setCentralWidget(QWidget())
         self.centralWidget().setLayout(self.create_main_layout())
 
-        self.setMenuBar(self.create_menu_bar())
+        self.setMenuBar(self.create_menu_bar)
 
         self.pie_chart_views = {}
         self.pie_chart_hboxes = {}
@@ -174,6 +174,7 @@ class JsdWindow(QMainWindow):
         """
         return self._dataselectiongroupbox
 
+    @property
     def create_menu_bar(self) -> QMenuBar:
         """
         Create a menu bar.
@@ -185,6 +186,11 @@ class JsdWindow(QMainWindow):
 
         # Add the 'File' menu
         file_menu: QMenu = menu_bar.addMenu("File")
+
+        # Create the 'Open Excel File' action
+        open_excel_file_action: QAction = QAction("Open Excel File...", self)
+        open_excel_file_action.triggered.connect(self.open_excel_file)
+        file_menu.addAction(open_excel_file_action)
 
         # Add the 'Settings' menu
         settings_menu: QMenu = menu_bar.addMenu("Settings")
@@ -555,6 +561,11 @@ class JsdWindow(QMainWindow):
             self.jsd_timeline_chart.setAnimationOptions(QChart.NoAnimation)
         return True
 
+    def open_excel_file(self):
+        file_name = QFileDialog.getOpenFileName(self, "Open Excel File", "", "Excel Files (*.xls *.xlsx)")
+        file_options_dialog = FileOptionsDialog(self, file_name)
+        result = file_options_dialog.exec()
+
 
 class JsdChart (QChart):
     """
@@ -590,3 +601,24 @@ def clear_layout(layout):
                 child.widget().deleteLater()
             elif child.layout() is not None:
                 clear_layout(child.layout())
+
+class FileOptionsDialog (QDialog):
+    def __init__(self, parent, file_name: str):
+        super().__init__(parent)
+
+        self.setLayout(QVBoxLayout())
+
+        self.name_line_edit = QLineEdit()
+        self.description_line_edit = QLineEdit()
+        self.remove_column_text_line_edit = QLineEdit()
+
+        form_layout = QFormLayout()
+        form_layout.addRow("Name (Plot Titles)", name_line_edit)
+        form_layout.addRow("Description (Drop-Down Menu)", description_line_edit)
+        form_layout.addRow("Remove Column Text", remove_column_text_line_edit)
+
+        self.layout().addLayout(form_layout)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok)
+        button_box.accepted.connect(self.accept)
+        self.layout().addWidget(button_box)
