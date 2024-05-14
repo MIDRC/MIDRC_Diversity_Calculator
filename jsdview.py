@@ -40,8 +40,9 @@ class JsdDataSelectionGroupBox(QGroupBox):
 
         self.setTitle('Data Selection')
 
-        self.labels = [QLabel(f'Data File {x + 1}') for x in range(self.NUM_DATA_ITEMS)]
-        self.file_comboboxes = [QComboBox() for _ in range(self.NUM_DATA_ITEMS)]
+        self.labels = []
+        self.form_layout = QFormLayout()
+        self.file_comboboxes = []
         self.category_label = QLabel('Category')
         self.category_combobox = QComboBox()
         self.set_layout(data_sources)
@@ -57,21 +58,49 @@ class JsdDataSelectionGroupBox(QGroupBox):
         None
         """
         # Create the form layout
-        form_layout = QFormLayout()
+        form_layout = self.form_layout
 
-        # Add the file comboboxes and labels to the form layout
-        items = [(d['description'], d['name']) for d in data_sources]
-        for combobox_index, combobox in enumerate(self.file_comboboxes):
-            for combobox_item in items:
-                combobox.addItem(combobox_item[0], userData=combobox_item[1])
-            combobox.setCurrentIndex(combobox_index)
-            form_layout.addRow(self.labels[combobox_index], combobox)
+        # Set the layout for the widget
+        self.setLayout(form_layout)
 
         # Add the category label and combobox to the form layout
         form_layout.addRow(self.category_label, self.category_combobox)
 
-        # Set the layout for the widget
-        self.setLayout(form_layout)
+        # First, add the first combobox
+        self.add_file_combobox_to_layout(auto_populate=False)
+
+        # Add the file comboboxes and labels to the form layout
+        items = [(d['description'], d['name']) for d in data_sources]
+        for combobox_item in items:
+            self.add_file_to_comboboxes(combobox_item[0], combobox_item[1])
+        self.file_comboboxes[0].setCurrentIndex(0)
+
+        # Now we can copy the data from the first combobox to the rest of them
+        for i in range(1, self.NUM_DATA_ITEMS):
+            self.add_file_combobox_to_layout(auto_populate=True)
+
+    def add_file_combobox_to_layout(self, auto_populate: bool = True):
+        new_combobox = QComboBox()
+        index = self.form_layout.rowCount()
+        new_label = QLabel(f'Data File {index}')
+        self.form_layout.insertRow(index - 1, new_label, new_combobox)
+
+        self.labels.append(new_label)
+        self.file_comboboxes.append(new_combobox)
+
+        if auto_populate:
+            cbox: QComboBox = self.file_comboboxes[0]
+            for i in range(cbox.count()):
+                self.add_file_to_combobox(new_combobox, cbox.itemText(i), cbox.itemData(i))
+            new_combobox.setCurrentIndex(index - 1)
+
+    def add_file_to_comboboxes(self, description: str, name: str):
+        for combobox in self.file_comboboxes:
+            self.add_file_to_combobox(combobox, description, name)
+
+    def add_file_to_combobox(self, combobox, description, name):
+        combobox.addItem(description, userData=name)
+
 
     def update_category_combo_box(self, categorylist, categoryindex):
         """
