@@ -58,11 +58,15 @@ class JSDTableModel(QAbstractTableModel):
         self.column_infos = [] # This is a list of dicts containing column metadata
         self._color_mapping = {}
         self._color_cache = {}
+        self.custom_age_ranges = custom_age_ranges
 
         if data_source_list is not None:
             self.data_sources = {}
-            for data_source in data_source_list:
-                self.data_sources[data_source['name']] = DataSource(data_source, custom_age_ranges)
+            for data_source_dict in data_source_list:
+                self.add_data_source(data_source_dict)
+
+    def add_data_source(self, data_source_dict):
+        self.data_sources[data_source_dict['name']] = DataSource(data_source_dict, self.custom_age_ranges)
 
     def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
         """

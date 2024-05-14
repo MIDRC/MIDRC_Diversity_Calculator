@@ -1,6 +1,6 @@
 from typing import Type, Union, List, Tuple
 import math
-from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, QAbstractTableModel
+from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, QAbstractTableModel, Signal
 from PySide6.QtGui import QPainter, QAction
 from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu, QFileDialog,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
@@ -27,7 +27,7 @@ class JsdDataSelectionGroupBox(QGroupBox):
     - update_category_combo_box(self, categorylist, categoryindex): Updates the category combo box with the given
       category list and sets the selected index to the specified category index.
     """
-    NUM_DATA_ITEMS = 3
+    NUM_DATA_ITEMS = 2
 
     def __init__(self, data_sources):
         """
@@ -91,16 +91,12 @@ class JsdDataSelectionGroupBox(QGroupBox):
         if auto_populate:
             cbox: QComboBox = self.file_comboboxes[0]
             for i in range(cbox.count()):
-                self.add_file_to_combobox(new_combobox, cbox.itemText(i), cbox.itemData(i))
+                new_combobox.addItem(cbox.itemText(i), userData=cbox.itemData(i))
             new_combobox.setCurrentIndex(index - 1)
 
     def add_file_to_comboboxes(self, description: str, name: str):
         for combobox in self.file_comboboxes:
-            self.add_file_to_combobox(combobox, description, name)
-
-    def add_file_to_combobox(self, combobox, description, name):
-        combobox.addItem(description, userData=name)
-
+            combobox.addItem(description, userData=name)
 
     def update_category_combo_box(self, categorylist, categoryindex):
         """
@@ -134,6 +130,7 @@ class JsdWindow(QMainWindow):
 
     """
     WINDOW_TITLE: str = 'MIDRC Diversity Calculator'
+    add_data_source = Signal(dict)
 
     def __init__(self, data_sources):
         """
@@ -591,9 +588,16 @@ class JsdWindow(QMainWindow):
         return True
 
     def open_excel_file(self):
-        file_name = QFileDialog.getOpenFileName(self, "Open Excel File", "", "Excel Files (*.xls *.xlsx)")
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open Excel File", "", "Excel Files (*.xls *.xlsx)")
         file_options_dialog = FileOptionsDialog(self, file_name)
-        result = file_options_dialog.exec()
+        file_options_dialog.exec()
+        data_source_dict = {'name': file_options_dialog.name_line_edit.text(),
+                            'description': file_options_dialog.description_line_edit.text(),
+                            'data type': 'file',
+                            'filename': file_name,
+                            'remove column name text': file_options_dialog.remove_column_text_line_edit.text()}
+        self.add_data_source.emit(data_source_dict)
+        self._dataselectiongroupbox.add_file_to_comboboxes(data_source_dict['description'], data_source_dict['name'])
 
 
 class JsdChart (QChart):
@@ -631,6 +635,7 @@ def clear_layout(layout):
             elif child.layout() is not None:
                 clear_layout(child.layout())
 
+
 class FileOptionsDialog (QDialog):
     def __init__(self, parent, file_name: str):
         super().__init__(parent)
@@ -642,9 +647,9 @@ class FileOptionsDialog (QDialog):
         self.remove_column_text_line_edit = QLineEdit()
 
         form_layout = QFormLayout()
-        form_layout.addRow("Name (Plot Titles)", name_line_edit)
-        form_layout.addRow("Description (Drop-Down Menu)", description_line_edit)
-        form_layout.addRow("Remove Column Text", remove_column_text_line_edit)
+        form_layout.addRow("Name (Plot Titles)", self.name_line_edit)
+        form_layout.addRow("Description (Drop-Down Menu)", self.description_line_edit)
+        form_layout.addRow("Remove Column Text", self.remove_column_text_line_edit)
 
         self.layout().addLayout(form_layout)
 
