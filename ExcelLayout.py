@@ -79,8 +79,10 @@ class DataSheet:
         data_columns (list): A list of data columns in the data sheet.
 
     Methods:
-        __init__(self, sheet_name, data_source, custom_age_ranges, is_excel=False, file=None): Initializes a new instance of the DataSheet class.
-        create_custom_age_columns(self, age_ranges): Scans the column headers in the age category to build consistent age columns.
+        __init__(self, sheet_name, data_source, custom_age_ranges, is_excel=False, file=None):
+                    Initializes a new instance of the DataSheet class.
+        create_custom_age_columns(self, age_ranges): Scans the column headers in the age category to build consistent
+                                                     age columns.
     """
     def __init__(self, sheet_name, data_source, custom_age_ranges, is_excel=False, file=None):
         """

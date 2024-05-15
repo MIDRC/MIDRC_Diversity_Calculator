@@ -20,13 +20,19 @@ class JsdDataSelectionGroupBox(QGroupBox):
     updating the category combo box, and initializing the widget.
 
     Attributes:
-    - NUM_DATA_ITEMS (int): The number of data items.
+        num_data_items_changed (Signal): A signal emitted when the number of data items in the JsdDataSelectionGroupBox
+                                         changes.
+        NUM_DEFAULT_DATA_ITEMS (int): The default number of data items.
 
     Methods:
-    - __init__(self, data_sources): Initializes the JsdDataSelectionGroupBox.
-    - set_layout(self, data_sources): Sets the layout for the widget.
-    - update_category_combo_box(self, categorylist, categoryindex): Updates the category combo box with the given
-      category list and sets the selected index to the specified category index.
+        __init__(self, data_sources): Initializes the JsdDataSelectionGroupBox object.
+        set_layout(self, data_sources): Sets the layout for the given data sources.
+        add_file_combobox_to_layout(self, auto_populate: bool = True): Adds a file combobox to the layout.
+        remove_file_combobox_from_layout(self): Removes a file combobox from the layout.
+        set_num_data_items(self, count: int): Sets the number of data items in the JsdDataSelectionGroupBox.
+        add_file_to_comboboxes(self, description: str, name: str): Adds a file to the file comboboxes.
+        update_category_combo_box(self, categorylist, categoryindex): Updates the category combo box with the given
+                                                                      category list and selected index.
     """
     num_data_items_changed = Signal(int)
     NUM_DEFAULT_DATA_ITEMS = 2
@@ -81,6 +87,15 @@ class JsdDataSelectionGroupBox(QGroupBox):
         self.set_num_data_items(self.NUM_DEFAULT_DATA_ITEMS)
 
     def add_file_combobox_to_layout(self, auto_populate: bool = True):
+        """
+        Add a file combobox to the layout.
+
+        Parameters:
+        - auto_populate (bool): If True, the combobox will be populated with items from the first combobox.
+
+        Returns:
+        None
+        """
         new_combobox = QComboBox()
         index = self.form_layout.rowCount()
         new_label = QLabel(f'Data File {index}')
@@ -96,12 +111,42 @@ class JsdDataSelectionGroupBox(QGroupBox):
             new_combobox.setCurrentIndex(index - 1)
 
     def remove_file_combobox_from_layout(self):
+        """
+        Remove a file combobox from the layout.
+
+        This method removes the last file combobox from the layout, including its corresponding label. It updates the
+        form layout by removing the row at the specified index. It also removes the label and combobox from the
+        respective lists.
+
+        Parameters:
+        - None
+
+        Returns:
+        - None
+        """
         index = len(self.file_comboboxes) - 1
         self.form_layout.removeRow(index)
         self.labels.pop(index)
         self.file_comboboxes.pop(index)
 
     def set_num_data_items(self, count: int):
+        """
+        Set the number of data items in the JsdDataSelectionGroupBox.
+
+        This method adjusts the number of file comboboxes in the layout based on the given count.
+        * If the current number of file comboboxes is equal to the count, the method returns without making any changes.
+        * If the current number of file comboboxes is less than the count, the method adds file comboboxes to the layout
+          using the add_file_combobox_to_layout method.
+        * If the current number of file comboboxes is greater than the count, the method removes file comboboxes from
+          the layout using the remove_file_combobox_from_layout method.
+        * Finally, the method emits the num_data_items_changed signal with the updated count.
+
+        Parameters:
+        - count (int): The desired number of data items.
+
+        Returns:
+        None
+        """
         if len(self.file_comboboxes) == count:
             return
         while len(self.file_comboboxes) < count:
@@ -111,6 +156,20 @@ class JsdDataSelectionGroupBox(QGroupBox):
         self.num_data_items_changed.emit(count)
 
     def add_file_to_comboboxes(self, description: str, name: str):
+        """
+        Add a file to the file comboboxes.
+
+        This method adds a file to each of the file comboboxes in the JsdDataSelectionGroupBox.
+        The file is represented by a description and a name.
+        The description is displayed in the combobox as the item text, and the name is stored as the item data.
+
+        Parameters:
+        - description (str): The description of the file.
+        - name (str): The name of the file.
+
+        Returns:
+        None
+        """
         for combobox in self.file_comboboxes:
             combobox.addItem(description, userData=name)
 
@@ -350,33 +409,31 @@ class JsdWindow(QMainWindow):
         - None
         """
         # First, get rid of the old stuff just to be safe
-        print('update pie chart dock')
+        # print('update pie chart dock')
         clear_layout(self.pie_chart_grid)
         self.pie_chart_views = {}
         self.pie_chart_hboxes = {}
         self.pie_chart_hbox_labels = {}
 
-        print('get categories')
+        # print('get categories')
         categories = [self.dataselectiongroupbox.category_combobox.itemText(i) for i in
                       range(self.dataselectiongroupbox.category_combobox.count())]
-        print('categories:', categories)
+        # print('categories:', categories)
 
         # Set the timepoint to the last timepoint in the series for now
         timepoint = -1
 
         new_pie_chart_views = {}
-        print('len(sheet_list):', len(sheet_list))
+        # print('len(sheet_list):', len(sheet_list))
         hbox_labels = {}
         for i in range(len(sheet_list)):
             sheets = sheet_list[i]
-            # hbox[i] = QHBoxLayout(parent=self.pie_chart_vbox)
             hbox_labels[i] = QLabel(self.dataselectiongroupbox.file_comboboxes[i].currentText() + ':')
             self.pie_chart_grid.addWidget(hbox_labels[i], i, 0)
-            print("Pie Chart row", i)
-            print("File Being Used:", self.dataselectiongroupbox.file_comboboxes[i].currentText())
-            # new_pie_chart_views[i] = {}
+            # print("Pie Chart row", i)
+            # print("File Being Used:", self.dataselectiongroupbox.file_comboboxes[i].currentText())
             for j, category in enumerate(categories):
-                print('category:', category)
+                # print('category:', category)
                 chart = QChart()
                 new_pie_chart_views[(category, i)] = QChartView(chart)
                 chart.setTitle(category)
@@ -395,7 +452,7 @@ class JsdWindow(QMainWindow):
         # self.pie_chart_hboxes = hbox
         self.pie_chart_views = new_pie_chart_views
         self.pie_chart_hbox_labels = hbox_labels
-        print('end update pie chart dock')
+        # print('end update pie chart dock')
 
     def update_spider_chart(self, spider_plot_values):
         """
@@ -608,6 +665,24 @@ class JsdWindow(QMainWindow):
         return True
 
     def open_excel_file(self):
+        """
+        Open an Excel file and add it as a data source.
+
+        This method opens a file dialog to allow the user to select an Excel file. Once a file is selected, a dialog is
+        displayed to allow the user to enter additional information about the data source. The information includes
+        the name, description, data type, filename, and remove column name text. The data source dictionary is then
+        created using the entered information and emitted using the add_data_source signal. The file description and
+        name are also added to the file_comboboxes in the dataselectiongroupbox.
+
+        Parameters:
+        - None
+
+        Returns:
+        - None
+
+        Raises:
+        - None
+        """
         file_name, _ = QFileDialog.getOpenFileName(self, "Open Excel File", "", "Excel Files (*.xls *.xlsx)")
         file_options_dialog = FileOptionsDialog(self, file_name)
         file_options_dialog.exec()
@@ -620,6 +695,22 @@ class JsdWindow(QMainWindow):
         self._dataselectiongroupbox.add_file_to_comboboxes(data_source_dict['description'], data_source_dict['name'])
 
     def adjust_number_of_files_to_compare(self):
+        """
+        Adjusts the number of files to compare in the JsdWindow.
+
+        This method opens a dialog box that allows the user to adjust the number of files to compare in the JsdWindow.
+        The user can select a value between 2 and the number of files currently opened. The selected value is then used
+        to update the number of data items in the JsdDataSelectionGroupBox.
+
+        Parameters:
+        - None
+
+        Returns:
+        - None
+
+        Raises:
+        - None
+        """
         d = QDialog(self)
         d.setLayout(QVBoxLayout())
         f_l = QFormLayout()
@@ -680,7 +771,32 @@ def clear_layout(layout):
 
 
 class FileOptionsDialog (QDialog):
+    """
+    A dialog window for displaying and editing file options.
+
+    This class represents a dialog window that allows the user to view and modify various options related to a file.
+    It inherits from the QDialog class provided by the PySide6.QtWidgets module.
+
+    Attributes:
+        parent: The parent widget of the dialog.
+        file_name: The name of the file for which the options are being displayed.
+
+    Methods:
+        __init__(self, parent, file_name: str): Initializes the FileOptionsDialog object.
+    """
     def __init__(self, parent, file_name: str):
+        """
+        Initialize the JsdDataSelectionGroupBox.
+
+        This method sets up the data selection group box by creating labels and combo boxes for data files and a
+        category combo box.
+
+        Parameters:
+        - data_sources (list): A list of data sources.
+
+        Returns:
+        None
+        """
         super().__init__(parent)
 
         self.setLayout(QVBoxLayout())

@@ -173,8 +173,8 @@ class JSDController(QObject):
         dataselectiongroupbox = jsd_view.dataselectiongroupbox
         cat = dataselectiongroupbox.category_combobox.currentText()
 
-        jsd_model.input_data.clear()
-        jsd_model.column_infos.clear()
+        model_input_data = []
+        column_infos = []
 
         column_info = {'category': cat}
 
@@ -198,13 +198,14 @@ class JSDController(QObject):
                 # jsd_model.input_data.extend(input_data)
 
                 input_data = [float(calculate_jsd(df1, df2, cols_to_use, calc_date)) for calc_date in date_list]
-                jsd_model.input_data.append([pandas_date_to_qdate(calc_date) for calc_date in date_list])
-                jsd_model.input_data.append(input_data)
+                model_input_data.append([pandas_date_to_qdate(calc_date) for calc_date in date_list])
+                model_input_data.append(input_data)
                 # jsd_model.column_infos.append(copy.deepcopy(column_info)) # We shouldn't need to recursively copy
-                jsd_model.column_infos.append(column_info.copy())
+                column_infos.append(column_info.copy())
 
-        print(len(jsd_model.input_data))
-        print([len(data) for data in jsd_model.input_data])
+        jsd_model.update_input_data(model_input_data, column_infos)
+        # print(len(jsd_model.input_data))
+        # print([len(data) for data in jsd_model.input_data])
 
         self.update_category_plots()
         jsd_model.layoutChanged.emit()
