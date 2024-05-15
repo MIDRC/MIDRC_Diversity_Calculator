@@ -1,6 +1,7 @@
 from typing import Type, Union, List, Tuple
 import math
-from PySide6.QtCore import QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, QAbstractTableModel, Signal
+from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, QAbstractTableModel, Signal,
+                            QFileInfo)
 from PySide6.QtGui import QPainter, QAction
 from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu, QFileDialog,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
@@ -653,6 +654,13 @@ class FileOptionsDialog (QDialog):
 
         self.layout().addLayout(form_layout)
 
+        fi = QFileInfo(file_name)
+        self.setWindowTitle(fi.fileName())
+        self.name_line_edit.setText(fi.baseName())
+        self.description_line_edit.setText(fi.baseName())
+
         button_box = QDialogButtonBox(QDialogButtonBox.Ok)
         button_box.accepted.connect(self.accept)
         self.layout().addWidget(button_box)
+
+        self.resize(600, -1)
