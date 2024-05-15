@@ -878,7 +878,6 @@ class CopyableTableView(QTableView):
                 row = index.row() - rows[0]
                 column = index.column() - columns[0]
                 index_data = index.data()
-                print(type(index_data))
                 if isinstance(index_data, QDate):
                     index_data = index_data.toString(format=Qt.ISODate)
                 table[row][column] = index_data
