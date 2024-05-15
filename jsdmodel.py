@@ -1,5 +1,5 @@
 from ExcelLayout import DataSource
-from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
+from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, Signal
 from PySide6.QtGui import QColor
 from typing import Optional, Any, List
 
@@ -35,6 +35,7 @@ class JSDTableModel(QAbstractTableModel):
         "Date",
         "JSD"
     ]
+    data_source_added = Signal()
 
     def __init__(self, data_source_list=None, custom_age_ranges=None):
         """
@@ -54,11 +55,12 @@ class JSDTableModel(QAbstractTableModel):
             None
         """
         super().__init__()
-        self.input_data = []
-        self.column_infos = []  # This is a list of dicts containing column metadata
+        self._input_data = []
+        self._column_infos = []  # This is a list of dicts containing column metadata
         self._color_mapping = {}
         self._color_cache = {}
         self.custom_age_ranges = custom_age_ranges
+        self.max_row_count = 0
 
         if data_source_list is not None:
             self.data_sources = {}
@@ -66,22 +68,73 @@ class JSDTableModel(QAbstractTableModel):
                 self.add_data_source(data_source_dict)
 
     def add_data_source(self, data_source_dict):
+        """
+        Add a data source to the JSDTableModel.
+
+        This method adds a data source to the JSDTableModel by creating a new instance of the DataSource class and
+        storing it in the data_sources dictionary. The data source is identified by its name, which is obtained from the
+        'name' key in the data_source_dict parameter. The DataSource object is initialized with the data_source_dict
+        and the custom_age_ranges, if provided.
+
+        Args:
+            data_source_dict (dict): A dictionary containing the information about the data source.
+                                     It should have the following keys:
+                - 'name' (str): The name of the data source.
+                - 'data type' (str): The type of the data source.
+                - 'filename' (str): The filename of the data source.
+
+        Returns:
+            None
+        """
         self.data_sources[data_source_dict['name']] = DataSource(data_source_dict, self.custom_age_ranges)
+        self.data_source_added.emit()
 
     def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
         """
         Get the number of rows in the model.
 
         This method returns the number of rows in the model based on the length of the input data.
+        If the parent index is invalid, this method returns the largest number of rows in a column.
 
         Args:
-            parent (QModelIndex): The parent index. Row count should be the same regardless of column.
+            parent (QModelIndex): The parent index.
 
         Returns:
             int: The number of rows in the model.
         """
-        # return len(self.input_data)
-        return len(self.input_data[parent.column()])
+        if parent.isValid():
+            return len(self._input_data[parent.column()])
+        else:
+            return self.max_row_count
+
+    def update_input_data(self, new_input_data, new_column_infos):
+        """
+        Update the input data and column information in the JSDTableModel.
+
+        This method updates the input data and column information in the JSDTableModel. It clears the existing input
+        data and column information, and then sets them to the new values provided as arguments. It also updates the
+        maximum row count based on the new input data.
+
+        Args:
+            new_input_data (List[List[Any]]): The new input data to be set in the model. It should be a list of lists,
+                                              where each inner list represents a column and contains the data for that
+                                              column.
+            new_column_infos (List[dict]): The new column information to be set in the model. It should be a list of
+                                           dictionaries, where each dictionary represents the metadata for a column.
+
+        Returns:
+            None
+        """
+        self._input_data.clear()
+        self._column_infos.clear()
+
+        self._input_data = new_input_data
+        self._column_infos = new_column_infos
+
+        # Update the max row count
+        self.max_row_count = 0
+        for c in range(self.columnCount()):
+            self.max_row_count = max(self.max_row_count, len(self._input_data[c]))
 
     def columnCount(self, parent: QModelIndex = None) -> int:
         """
@@ -94,7 +147,7 @@ class JSDTableModel(QAbstractTableModel):
             int: The number of columns in the model.
         """
         # return len(self.input_data[parent.row()])
-        return len(self.input_data)
+        return len(self._input_data)
 
     def headerData(self, section: int, orientation: int, role: int, *args, **kwargs) -> Any:
         """
@@ -135,7 +188,10 @@ class JSDTableModel(QAbstractTableModel):
             any of the above, it returns None.
         """
         if role in (Qt.DisplayRole, Qt.EditRole):
-            return self.input_data[index.column()][index.row()]
+            try:
+                return self._input_data[index.column()][index.row()]
+            except IndexError:
+                return None
         elif role == Qt.BackgroundRole:
             row = index.row()
             column = index.column()
@@ -160,10 +216,41 @@ class JSDTableModel(QAbstractTableModel):
             bool: True if the data was successfully set, False otherwise.
         """
         if index.isValid() and role == Qt.EditRole:
-            self.input_data[index.column()][index.row()] = float(value)
+            self._input_data[index.column()][index.row()] = float(value)
             self.dataChanged.emit(index, index)
             return True
         return False
+
+    @property
+    def input_data(self):
+        """
+        Returns the input data of the JSDTableModel.
+
+        This method returns the input data of the JSDTableModel, which is a list of lists representing the data for each
+        column in the model. Each inner list represents a column and contains the data for that column.
+
+        Returns:
+            List[List[Any]]: The input data of the JSDTableModel.
+        """
+        return self._input_data
+
+    @property
+    def column_infos(self):
+        """
+        Returns the column information of the JSDTableModel.
+
+        This method returns the column information of the JSDTableModel, which is a list of dictionaries representing
+        the metadata for each set of two columns in the model (one column for date, one column for the JSD value).
+        Each dictionary contains the following keys:
+        - 'index1' (int): The index of the first file used
+        - 'file1' (str): The file name of the first file used.
+        - 'index2' (int): The index of the second file used.
+        - 'file2' (str): The file name of the second file used.
+
+        Returns:
+            List[dict]: The column information of the JSDTableModel.
+        """
+        return self._column_infos
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlags:
         """
