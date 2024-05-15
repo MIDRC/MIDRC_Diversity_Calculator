@@ -1,11 +1,12 @@
 from typing import Type, Union, List, Tuple
-import math
+import math, io, csv
 from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, Signal,
-                            QFileInfo)
-from PySide6.QtGui import QPainter, QAction
+                            QFileInfo, QEvent, QDate)
+from PySide6.QtGui import QPainter, QAction, QKeySequence, QGuiApplication
 from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu, QFileDialog,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
-                               QLayout, QFormLayout, QGridLayout, QLineEdit, QDialog, QDialogButtonBox, QSpinBox)
+                               QLayout, QFormLayout, QGridLayout, QLineEdit, QDialog, QDialogButtonBox, QSpinBox,
+                               )
 from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
@@ -48,7 +49,6 @@ class JsdDataSelectionGroupBox(QGroupBox):
 
         self.setTitle('Data Selection')
 
-        self.labels = []
         self.form_layout = QFormLayout()
         self.file_comboboxes = []
         self.category_label = QLabel('Category')
@@ -101,7 +101,6 @@ class JsdDataSelectionGroupBox(QGroupBox):
         new_label = QLabel(f'Data File {index}')
         self.form_layout.insertRow(index - 1, new_label, new_combobox)
 
-        self.labels.append(new_label)
         self.file_comboboxes.append(new_combobox)
 
         if auto_populate:
@@ -126,7 +125,6 @@ class JsdDataSelectionGroupBox(QGroupBox):
         """
         index = len(self.file_comboboxes) - 1
         self.form_layout.removeRow(index)
-        self.labels.pop(index)
         self.file_comboboxes.pop(index)
 
     def set_num_data_items(self, count: int):
@@ -218,7 +216,7 @@ class JsdWindow(QMainWindow):
         # Set up graphical layout
         self._dataselectiongroupbox = JsdDataSelectionGroupBox(data_sources)
 
-        self.table_view = QTableView()
+        self.table_view = CopyableTableView()
         self.addDockWidget(Qt.LeftDockWidgetArea,
                            self.create_table_dock_widget(self.table_view, 'JSD Table - ' + JsdWindow.WINDOW_TITLE))
 
@@ -822,3 +820,68 @@ class FileOptionsDialog (QDialog):
         self.layout().addWidget(button_box)
 
         self.resize(600, -1)
+
+
+class CopyableTableView(QTableView):
+    """
+    A custom subclass of QTableView that allows copying selected data to the clipboard.
+
+    Attributes:
+        None
+
+    Methods:
+        __init__(): Initializes the CopyableTableView object.
+        eventFilter(source, event): Filters and handles key press events.
+        copy_selection(): Copies the selected data to the clipboard.
+
+    """
+    def __init__(self):
+        super().__init__()
+        self.installEventFilter(self)
+
+    def eventFilter(self, source, event):
+        """
+        Filters and handles key press events.
+
+        Parameters:
+            source (object): The source object that triggered the event.
+            event (QEvent): The event object that contains information about the key press event.
+
+        Returns:
+            bool: True if the event is handled, False otherwise.
+        """
+        if event.type() == QEvent.KeyPress:
+            if event == QKeySequence.Copy:
+                self.copy_selection()
+                return True
+        return super(QTableView, self).eventFilter(source, event)
+
+    def copy_selection(self):
+        """
+        Copies the selected data to the clipboard as a tab-delimited table.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+        copied = ''
+        selection = self.selectedIndexes()
+        if selection:
+            rows = sorted(index.row() for index in selection)
+            columns = sorted(index.column() for index in selection)
+            rowcount = rows[-1] - rows[0] + 1
+            colcount = columns[-1] - columns[0] + 1
+            table = [[''] * colcount for _ in range(rowcount)]
+            for index in selection:
+                row = index.row() - rows[0]
+                column = index.column() - columns[0]
+                index_data = index.data()
+                print(type(index_data))
+                if isinstance(index_data, QDate):
+                    index_data = index_data.toString(format=Qt.ISODate)
+                table[row][column] = index_data
+            stream = io.StringIO()
+            csv.writer(stream, delimiter='\t').writerows(table)
+            QGuiApplication.clipboard().setText(stream.getvalue())
