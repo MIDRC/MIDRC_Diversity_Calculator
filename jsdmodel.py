@@ -55,7 +55,7 @@ class JSDTableModel(QAbstractTableModel):
         """
         super().__init__()
         self.input_data = []
-        self.column_infos = [] # This is a list of dicts containing column metadata
+        self.column_infos = []  # This is a list of dicts containing column metadata
         self._color_mapping = {}
         self._color_cache = {}
         self.custom_age_ranges = custom_age_ranges
@@ -139,9 +139,11 @@ class JSDTableModel(QAbstractTableModel):
         elif role == Qt.BackgroundRole:
             row = index.row()
             column = index.column()
-            for color, rect in self._color_mapping.items():
-                if rect.contains(column, row):
-                    return self._color_cache.setdefault(color, QColor(color))
+            for color, rects in self._color_mapping.items():
+                if rects is not None:
+                    for rect in rects:
+                        if rect.contains(column, row):
+                            return self._color_cache.setdefault(color, QColor(color))
             return self._color_cache.setdefault(Qt.white, QColor(Qt.white))
         return None
 
@@ -188,7 +190,8 @@ class JSDTableModel(QAbstractTableModel):
         Returns:
             None
         """
-        self._color_mapping[color] = mapping_area
+        self._color_mapping.setdefault(color, [])
+        self._color_mapping[color].append(mapping_area)
 
     def clear_color_mapping(self):
         """
@@ -202,4 +205,3 @@ class JSDTableModel(QAbstractTableModel):
         """
         self._color_mapping.clear()
         self._color_cache.clear()
-

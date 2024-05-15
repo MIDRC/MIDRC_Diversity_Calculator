@@ -1,12 +1,10 @@
 from bisect import bisect_left
-import ExcelLayout
 from PySide6.QtCore import Qt, QObject, Signal
 import numpy as np
 from scipy.spatial import distance
 from datetimetools import pandas_date_to_qdate
 from jsdmodel import JSDTableModel
 from jsdview import JsdWindow
-from jsdconfig import JSDConfig
 
 
 class JSDController(QObject):
@@ -65,6 +63,7 @@ class JSDController(QObject):
         jsd_view.add_data_source.connect(self.jsd_model.add_data_source)
         for f_c in jsd_view.dataselectiongroupbox.file_comboboxes:
             f_c.currentIndexChanged.connect(self.file_changed)
+        jsd_view.dataselectiongroupbox.num_data_items_changed.connect(self.file_changed)
         jsd_view.dataselectiongroupbox.category_combobox.currentIndexChanged.connect(self.category_changed)
 
         self.fileChangedSignal.connect(self.update_file_based_charts)
@@ -103,7 +102,7 @@ class JSDController(QObject):
         return self._jsd_model
 
     @jsd_model.setter
-    def jsd_model(self, config: JSDConfig, jsd_model: JSDTableModel) -> None:
+    def jsd_model(self, jsd_model: JSDTableModel) -> None:
         """
         Set the JSD model object.
 
@@ -254,7 +253,7 @@ class JSDController(QObject):
         try:
             self.jsd_view.update_jsd_timeline_plot(self.jsd_model)
 
-            file_cbox_index = 0
+            # file_cbox_index = 0
             # sheets = self.get_file_sheets_from_combobox(file_cbox_index)
             self.jsd_view.update_area_chart(sheet_list)
             return True
