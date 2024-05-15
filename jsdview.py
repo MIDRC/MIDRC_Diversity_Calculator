@@ -1,11 +1,11 @@
 from typing import Type, Union, List, Tuple
 import math
-from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, QAbstractTableModel, Signal,
+from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, Signal,
                             QFileInfo)
 from PySide6.QtGui import QPainter, QAction
 from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu, QFileDialog,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
-                               QLayout, QFormLayout, QGridLayout, QLineEdit, QDialog, QDialogButtonBox)
+                               QLayout, QFormLayout, QGridLayout, QLineEdit, QDialog, QDialogButtonBox, QSpinBox)
 from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
@@ -28,7 +28,8 @@ class JsdDataSelectionGroupBox(QGroupBox):
     - update_category_combo_box(self, categorylist, categoryindex): Updates the category combo box with the given
       category list and sets the selected index to the specified category index.
     """
-    NUM_DATA_ITEMS = 2
+    num_data_items_changed = Signal(int)
+    NUM_DEFAULT_DATA_ITEMS = 2
 
     def __init__(self, data_sources):
         """
@@ -77,8 +78,7 @@ class JsdDataSelectionGroupBox(QGroupBox):
         self.file_comboboxes[0].setCurrentIndex(0)
 
         # Now we can copy the data from the first combobox to the rest of them
-        for i in range(1, self.NUM_DATA_ITEMS):
-            self.add_file_combobox_to_layout(auto_populate=True)
+        self.set_num_data_items(self.NUM_DEFAULT_DATA_ITEMS)
 
     def add_file_combobox_to_layout(self, auto_populate: bool = True):
         new_combobox = QComboBox()
@@ -94,6 +94,21 @@ class JsdDataSelectionGroupBox(QGroupBox):
             for i in range(cbox.count()):
                 new_combobox.addItem(cbox.itemText(i), userData=cbox.itemData(i))
             new_combobox.setCurrentIndex(index - 1)
+
+    def remove_file_combobox_from_layout(self):
+        index = len(self.file_comboboxes) - 1
+        self.form_layout.removeRow(index)
+        self.labels.pop(index)
+        self.file_comboboxes.pop(index)
+
+    def set_num_data_items(self, count: int):
+        if len(self.file_comboboxes) == count:
+            return
+        while len(self.file_comboboxes) < count:
+            self.add_file_combobox_to_layout()
+        while len(self.file_comboboxes) > count:
+            self.remove_file_combobox_from_layout()
+        self.num_data_items_changed.emit(count)
 
     def add_file_to_comboboxes(self, description: str, name: str):
         for combobox in self.file_comboboxes:
@@ -228,8 +243,12 @@ class JsdWindow(QMainWindow):
         chart_animation_setting.setChecked(True)
         chart_animation_setting.toggled.connect(lambda checked: self.set_animation_options(checked))
 
-        # Add the 'Chart Animations' action to the 'Settings' menu
+        num_files_setting: QAction = QAction("Number of Files to Compare", self)
+        num_files_setting.triggered.connect(self.adjust_number_of_files_to_compare)
+
+        # Add the actions to the 'Settings' menu
         settings_menu.addAction(chart_animation_setting)
+        settings_menu.addAction(num_files_setting)
 
         # Return the menu bar
         return menu_bar
@@ -599,6 +618,29 @@ class JsdWindow(QMainWindow):
                             'remove column name text': file_options_dialog.remove_column_text_line_edit.text()}
         self.add_data_source.emit(data_source_dict)
         self._dataselectiongroupbox.add_file_to_comboboxes(data_source_dict['description'], data_source_dict['name'])
+
+    def adjust_number_of_files_to_compare(self):
+        d = QDialog(self)
+        d.setLayout(QVBoxLayout())
+        f_l = QFormLayout()
+        d.layout().addLayout(f_l)
+
+        spinbox = QSpinBox()
+        # The spinbox range should be between 2 and the number of files opened
+        spinbox.setMinimum(2)
+        spinbox.setMaximum(self.dataselectiongroupbox.file_comboboxes[0].count())
+        spinbox.setValue(len(self.dataselectiongroupbox.file_comboboxes))
+
+        f_l.addRow(QLabel("Number of Files to Compare:"), spinbox)
+
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box.accepted.connect(d.accept)
+        button_box.rejected.connect(d.reject)
+        d.layout().addWidget(button_box)
+
+        d.resize(400, -1)
+        if d.exec():
+            self.dataselectiongroupbox.set_num_data_items(spinbox.value())
 
 
 class JsdChart (QChart):

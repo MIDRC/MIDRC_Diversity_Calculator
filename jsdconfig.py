@@ -11,4 +11,3 @@ class JSDConfig:
         self.data = load(stream, Loader=Loader)
 
         # print(dump(self.data))
-

@@ -88,7 +88,7 @@ class DataSheet:
 
         Args:
             sheet_name (str): The name of the sheet in the Excel file to parse.
-            data_source (str): The data source object.
+            data_source (dict): The data source object.
             is_excel (bool, optional): Flag indicating whether the data source is an Excel file. Defaults to False.
             file (pd.ExcelFile, optional): The Excel file to read the sheet from
 
