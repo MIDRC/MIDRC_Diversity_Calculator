@@ -62,6 +62,7 @@ class JSDController(QObject):
         Connects signals for file and category comboboxes.
         """
         jsd_view = self.jsd_view  # Store the result of jsd_view() in a variable
+        jsd_view.add_data_source.connect(self.jsd_model.add_data_source)
         for f_c in jsd_view.dataselectiongroupbox.file_comboboxes:
             f_c.currentIndexChanged.connect(self.file_changed)
         jsd_view.dataselectiongroupbox.category_combobox.currentIndexChanged.connect(self.category_changed)
