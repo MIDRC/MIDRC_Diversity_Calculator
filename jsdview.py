@@ -6,7 +6,7 @@ from PySide6.QtGui import QPainter, QAction, QKeySequence, QGuiApplication
 from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu, QFileDialog,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
                                QLayout, QFormLayout, QGridLayout, QLineEdit, QDialog, QDialogButtonBox, QSpinBox,
-                               )
+                               QCheckBox)
 from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
@@ -36,6 +36,7 @@ class JsdDataSelectionGroupBox(QGroupBox):
                                                                       category list and selected index.
     """
     num_data_items_changed = Signal(int)
+    file_checkbox_state_changed = Signal(bool)
     NUM_DEFAULT_DATA_ITEMS = 2
 
     def __init__(self, data_sources):
@@ -51,7 +52,8 @@ class JsdDataSelectionGroupBox(QGroupBox):
 
         self.form_layout = QFormLayout()
         self.file_comboboxes = []
-        self.category_label = QLabel('Category')
+        self.file_checkboxes = []
+        self.category_label = QLabel('Attribute')
         self.category_combobox = QComboBox()
         self.set_layout(data_sources)
 
@@ -82,6 +84,7 @@ class JsdDataSelectionGroupBox(QGroupBox):
         for combobox_item in items:
             self.add_file_to_comboboxes(combobox_item[0], combobox_item[1])
         self.file_comboboxes[0].setCurrentIndex(0)
+        self.file_checkboxes[0].setChecked(True)
 
         # Now we can copy the data from the first combobox to the rest of them
         self.set_num_data_items(self.NUM_DEFAULT_DATA_ITEMS)
@@ -96,12 +99,19 @@ class JsdDataSelectionGroupBox(QGroupBox):
         Returns:
         None
         """
+        new_hbox = QHBoxLayout()
         new_combobox = QComboBox()
+        new_checkbox = QCheckBox()
+        new_hbox.addWidget(new_combobox, stretch=1)
+        new_hbox.addWidget(new_checkbox, stretch=0)
+
         index = self.form_layout.rowCount()
         new_label = QLabel(f'Data File {index}')
-        self.form_layout.insertRow(index - 1, new_label, new_combobox)
+        self.form_layout.insertRow(index - 1, new_label, new_hbox)
 
         self.file_comboboxes.append(new_combobox)
+        self.file_checkboxes.append(new_checkbox)
+        new_checkbox.toggled.connect(self.file_checkbox_state_changed.emit)
 
         if auto_populate:
             cbox: QComboBox = self.file_comboboxes[0]
@@ -126,6 +136,7 @@ class JsdDataSelectionGroupBox(QGroupBox):
         index = len(self.file_comboboxes) - 1
         self.form_layout.removeRow(index)
         self.file_comboboxes.pop(index)
+        self.file_checkboxes.pop(index)
 
     def set_num_data_items(self, count: int):
         """
@@ -231,7 +242,6 @@ class JsdWindow(QMainWindow):
         self.setMenuBar(self.create_menu_bar)
 
         self.pie_chart_views = {}
-        self.pie_chart_hboxes = {}
         self.pie_chart_hbox_labels = {}
         self.pie_chart_grid = QGridLayout()
         self.pie_chart_dock_widget = self.create_dock_widget(self.pie_chart_grid,
@@ -410,8 +420,9 @@ class JsdWindow(QMainWindow):
         # print('update pie chart dock')
         clear_layout(self.pie_chart_grid)
         self.pie_chart_views = {}
-        self.pie_chart_hboxes = {}
         self.pie_chart_hbox_labels = {}
+        # self.pie_chart_grid = QGridLayout()
+        # self.pie_chart_dock_widget.widget().setLayout(self.pie_chart_grid)
 
         # print('get categories')
         categories = [self.dataselectiongroupbox.category_combobox.itemText(i) for i in
@@ -465,6 +476,8 @@ class JsdWindow(QMainWindow):
         Raises:
         - None
         """
+        # TODO: This should loop over all the file combo boxes, similar to how the main plot is generated
+        # TODO: All of them on one spider plot for comparison, or each their own? Also need data over time.
         file1_data = self._dataselectiongroupbox.file_comboboxes[0].currentData()
         file2_data = self._dataselectiongroupbox.file_comboboxes[1].currentData()
 
@@ -766,6 +779,7 @@ def clear_layout(layout):
                 child.widget().deleteLater()
             elif child.layout() is not None:
                 clear_layout(child.layout())
+            layout.removeItem(child)
 
 
 class FileOptionsDialog (QDialog):
