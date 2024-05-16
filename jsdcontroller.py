@@ -64,6 +64,7 @@ class JSDController(QObject):
         for f_c in jsd_view.dataselectiongroupbox.file_comboboxes:
             f_c.currentIndexChanged.connect(self.file_changed)
         jsd_view.dataselectiongroupbox.num_data_items_changed.connect(self.file_changed)
+        jsd_view.dataselectiongroupbox.file_checkbox_state_changed.connect(self.file_changed)
         jsd_view.dataselectiongroupbox.category_combobox.currentIndexChanged.connect(self.category_changed)
 
         self.fileChangedSignal.connect(self.update_file_based_charts)
@@ -226,7 +227,8 @@ class JSDController(QObject):
         spider_plot_date = None
         sheet_list = []
         for i in range(len(self.jsd_view.dataselectiongroupbox.file_comboboxes)):
-            sheet_list.append(self.get_file_sheets_from_combobox(i))
+            if self.jsd_view.dataselectiongroupbox.file_checkboxes[i].isChecked():
+                sheet_list.append(self.get_file_sheets_from_combobox(i))
 
         spider_plot_values = self.get_spider_plot_values(spider_plot_date)
         self.jsd_view.update_spider_chart(spider_plot_values)
@@ -249,13 +251,11 @@ class JSDController(QObject):
         """
         sheet_list = []
         for i in range(len(self.jsd_view.dataselectiongroupbox.file_comboboxes)):
-            sheet_list.append(self.get_file_sheets_from_combobox(i))
+            if self.jsd_view.dataselectiongroupbox.file_checkboxes[i].isChecked():
+                sheet_list.append(self.get_file_sheets_from_combobox(i))
 
         try:
             self.jsd_view.update_jsd_timeline_plot(self.jsd_model)
-
-            # file_cbox_index = 0
-            # sheets = self.get_file_sheets_from_combobox(file_cbox_index)
             self.jsd_view.update_area_chart(sheet_list)
             return True
         except Exception as e:
