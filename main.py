@@ -87,6 +87,8 @@ def launch_diversity_calculator():
                                      JSDTableModel(data_source_list, config.data.get('custom age ranges', None)),
                                      config)
     w.show()
+    q_app.processEvents()
+    w.reset_minimum_sizes()
 
     splash.finish(w)
     sys.exit(q_app.exec())

@@ -31,7 +31,7 @@ There is a requirements.txt file available to install requirements
 <h2 id="started">🚀 Getting started</h2>
 
 #### Configure yaml
-First, configure your own jsdconfig.yaml file to load default data. 
+First, configure your own jsdconfig.yaml file to load default data. There is a jsdconfig-example.yaml file provided that may be copied over or used as a template for your own config file.
 * The filename needs to be specified, and a human-readable name should be provided for use in the plots and figures. 
 * There is a 'remove column name text' option that is used for MIDRC data sources
 
