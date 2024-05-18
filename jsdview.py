@@ -234,7 +234,7 @@ class JsdWindow(QMainWindow):
         self.jsd_timeline_chart = JsdChart()
         self.jsd_timeline_chart_view = QChartView(self.jsd_timeline_chart)
         self.jsd_timeline_chart_view.setRenderHint(QPainter.Antialiasing)
-        self.jsd_timeline_chart_view.setMinimumSize(640, 480)
+        # self.jsd_timeline_chart_view.setMinimumSize(640, 480)
 
         self.setCentralWidget(QWidget())
         self.centralWidget().setLayout(self.create_main_layout())
@@ -743,6 +743,21 @@ class JsdWindow(QMainWindow):
         d.resize(400, -1)
         if d.exec():
             self.dataselectiongroupbox.set_num_data_items(spinbox.value())
+
+    def set_default_widget_sizes(self):
+        # Resize window and widgets to decent defaults
+        self.resize(1800, 1000)
+        # Setting a minimum size seems to be the only way to set the default size of dock widgets,
+        # but we must reset these values after show() using the reset_minimum_sizes() method
+        self.pie_chart_dock_widget.setMinimumHeight(250)
+        self.spider_chart_dock_widget.setMinimumWidth(600)
+        # These stretch factors seem to make a good default size for the East dock widget
+        self.spider_chart_vbox.setStretchFactor(0, 2)
+        self.spider_chart_vbox.setStretchFactor(1, 7)
+
+    def reset_minimum_sizes(self):
+        self.spider_chart_dock_widget.setMinimumWidth(0)
+        self.pie_chart_dock_widget.setMinimumHeight(0)
 
 
 class JsdChart (QChart):

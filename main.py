@@ -86,7 +86,12 @@ def launch_diversity_calculator():
     w.jsd_controller = JSDController(w,
                                      JSDTableModel(data_source_list, config.data.get('custom age ranges', None)),
                                      config)
+
+    # Set the default widget sizes, show the window, then reset the minimum sizes
+    w.set_default_widget_sizes()
     w.show()
+    q_app.processEvents()
+    w.reset_minimum_sizes()
 
     splash.finish(w)
     sys.exit(q_app.exec())
