@@ -61,7 +61,7 @@ Keyboard commands can be used to copy and paste the calculated JSD values (and d
  
 <h3>Cloning</h3>
 
-How to clone your project
+How to clone the project
 
 ```bash
 git clone https://github.com/MIDRC/MIDRC_Diversity_Calculator.git
