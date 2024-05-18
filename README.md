@@ -67,6 +67,16 @@ How to clone your project
 git clone https://github.com/MIDRC/MIDRC_Diversity_Calculator.git
 ```
  
+<h3>Installing Requirements</h3>
+
+How to install project dependencies
+
+```bash
+cd MIDRC_Diversity_Calculator
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
 <h3>Starting</h3>
 
 How to start the project
