@@ -745,6 +745,22 @@ class JsdWindow(QMainWindow):
             self.dataselectiongroupbox.set_num_data_items(spinbox.value())
 
     def set_default_widget_sizes(self):
+        """
+        Set the default sizes for the widgets in the JsdWindow.
+
+        This method resizes the main window and sets the default sizes for the pie chart dock widget and the spider
+        chart dock widget. It also sets the stretch factors for the spider chart vbox layout to achieve a good default
+        size for the widget.
+
+        Parameters:
+        - None
+
+        Returns:
+        - None
+
+        Raises:
+        - None
+        """
         # Resize window and widgets to decent defaults
         self.resize(1800, 1000)
         # Setting a minimum size seems to be the only way to set the default size of dock widgets,
@@ -756,6 +772,22 @@ class JsdWindow(QMainWindow):
         self.spider_chart_vbox.setStretchFactor(1, 7)
 
     def reset_minimum_sizes(self):
+        """
+        Reset the minimum sizes of the spider chart dock widget and the pie chart dock widget.
+
+        This method sets the minimum width of the spider chart dock widget to 0 and the minimum height of the pie chart
+        dock widget to 0. This effectively removes any minimum size constraints on these widgets, allowing them to
+        resize freely.
+
+        Parameters:
+        - None
+
+        Returns:
+        - None
+
+        Raises:
+        - None
+        """
         self.spider_chart_dock_widget.setMinimumWidth(0)
         self.pie_chart_dock_widget.setMinimumHeight(0)
 
