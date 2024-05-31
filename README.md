@@ -17,6 +17,9 @@
 <a href="https://www.midrc.org/">📱 Visit MIDRC Website</a>
 </p>
  
+<h2 id="license">License</h2>
+This project is licensed with the Apache 2.0 license. See LICENSE file for details.
+ 
 <h2 id="technologies">💻 Technologies</h2>
 
 Technologies used with this application
@@ -77,7 +80,7 @@ git clone https://github.com/MIDRC/MIDRC_Diversity_Calculator.git
  
 <h3>Installing Requirements</h3>
 
-You may install project dependencies using pip or conda.
+You may install project dependencies using pip.
 
 Using pip:
 
