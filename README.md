@@ -114,7 +114,7 @@ Maryellen Giger,
 Heather Whitney
 </p>
 <h3>We'd also like to acknowledge</h3>
-<p>
+
 Natalie Baughan, 
 Kyle Myers, 
 Karen Drukker, 
@@ -127,22 +127,17 @@ Sanmi Koyejo,
 Rui Sá,
 Berkman Sahiner,
 Zi Zhang,
-</p>
 
-<h4>The MIDRC Biomedical Diversity Working Group
-
+#### The MIDRC Biomedical Diversity Working Group:
 * Co-leads
   * Karen Drukker
   * Judy Wawira Gichoya
-
 * AAPM
   * Weijie Chen
   * Kyle Myers
   * Heather Whitney
-
 * ACR
   * Jayashree Kalpathy-Cramer
-
 * RSNA
   * Zi Jill Zhang
 * NIH
@@ -155,7 +150,6 @@ Zi Zhang,
   * Robert Tomek
 * Project Manager
   * Emily Townley
-</h4>
 
 </tr>
 </table>
