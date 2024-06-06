@@ -3,19 +3,24 @@
 <h1 align="center" style="font-weight: bold;">MIDRC Diversity Calculator</h1>
 
 <p align="center">
-<a href="#tech">Technologies</a>
-<a href="#started">Getting Started</a>
-<a href="#colab">Collaborators</a>
-<a href="#contribute">Contribute</a> 
+<a href="#tech">Technologies</a> |
+<a href="#started">Getting Started</a> |
+<a href="#colab">Collaborators</a> |
+<a href="#contribute">Contribute</a> |
+<a href="#references">References</a>
 </p>
 
 
 <p align="center">Diversity calculator for comparing representativeness of biomedical data</p>
+<p align="center">The distance measure for calculating representativeness is the Jensen-Shannon distance (JSD) <a href="#1"><sup>[1]</sup></a>.</p>
 
 
 <p align="center">
 <a href="https://www.midrc.org/">📱 Visit MIDRC Website</a>
 </p>
+ 
+<h2 id="license">License</h2>
+This project is licensed with the Apache 2.0 license. See LICENSE file for details.
  
 <h2 id="technologies">💻 Technologies</h2>
 
@@ -77,7 +82,7 @@ git clone https://github.com/MIDRC/MIDRC_Diversity_Calculator.git
  
 <h3>Installing Requirements</h3>
 
-You may install project dependencies using pip or conda.
+You may install project dependencies using pip.
 
 Using pip:
 
@@ -99,18 +104,58 @@ python main.py
  
 <h2 id="colab">🤝 Collaborators</h2>
 
-<p>Special thank you for all people that contributed for this project.</p>
+<h3>Special thank you for all people that contributed for this project</h3>
 <table>
 <tr>
 
-<td align="center">
-<a href="https://github.com/rtomek">
-<img src="https://avatars.githubusercontent.com/u/47761173" width="100px;" alt="Robert Tomek Profile Picture"/><br>
-<sub>
-<b>Robert Tomek</b>
-</sub>
-</a>
-</td>
+<p>
+Robert Tomek,
+Maryellen Giger,
+Heather Whitney
+</p>
+<h3>We'd also like to acknowledge</h3>
+<p>
+Natalie Baughan, 
+Kyle Myers, 
+Karen Drukker, 
+Judy Gichoya, 
+Brad Bower, 
+Weijie Chen, 
+Nicholas Gruszauskas, 
+Jayashree Kalpathy-Cramer,
+Sanmi Koyejo,
+Rui Sá,
+Berkman Sahiner,
+Zi Zhang,
+</p>
+
+<h4>The MIDRC Biomedical Diversity Working Group
+
+* Co-leads
+  * Karen Drukker
+  * Judy Wawira Gichoya
+
+* AAPM
+  * Weijie Chen
+  * Kyle Myers
+  * Heather Whitney
+
+* ACR
+  * Jayashree Kalpathy-Cramer
+
+* RSNA
+  * Zi Jill Zhang
+* NIH
+  * Rui Sá
+  * Brad Bower
+* MIDRC Central (University of Chicago)
+  * Maryellen Giger
+  * Nick Gruszaukas,
+  * Katie Pizer
+  * Robert Tomek
+* Project Manager
+  * Emily Townley
+</h4>
 
 </tr>
 </table>
@@ -124,3 +169,10 @@ python main.py
 <h3>Documentations that might help</h3>
 
 [📝 How to create a Pull Request](https://www.atlassian.com/br/git/tutorials/making-a-pull-request)
+
+<h2 id="references">References</h2>
+<a id="1">[1]</a> 
+Whitney HM, Baughan N, Myers KJ, Drukker K, Gichoya J, Bower B, Chen W, Gruszauskas N, Kalpathy-Cramer J, Koyejo S, Sá RC, Sahiner B, Zhang Z, Giger ML. 
+Longitudinal assessment of demographic representativeness in the Medical Imaging and Data Resource Center open data commons. 
+J Med Imaging (Bellingham). 2023 Nov;10(6):61105. 
+doi: 10.1117/1.JMI.10.6.061105. Epub 2023 Jul 18. PMID: 37469387; PMCID: PMC10353566.
