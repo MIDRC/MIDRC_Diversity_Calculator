@@ -129,8 +129,7 @@ Berkman Sahiner,
 Zi Zhang,
 </p>
 
-<h4>The MIDRC Biomedical Diversity Working Group</h4>
-<p>
+#### The MIDRC Biomedical Diversity Working Group:
 * Co-leads
   * Karen Drukker
   * Judy Wawira Gichoya
@@ -155,7 +154,7 @@ Zi Zhang,
   * Robert Tomek
 * Project Manager
   * Emily Townley
-</p>
+
 
 </tr>
 </table>
