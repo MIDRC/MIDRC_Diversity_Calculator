@@ -35,6 +35,8 @@ The methodology behind the Diversity Calculator is based on the 2023 paper by Wh
 <a href="#1">"Longitudinal assessment of demographic representativeness in the Medical Imaging and Data Resource Center open data commons"[1]</a>. 
 This paper provides the theoretical foundation for using JSD in evaluating demographic representativeness.
 
+![screenshot](docs/images/screenshot.jpg)
+
 <h2 id="technologies">💻 Technologies</h2>
 
 Technologies used with this application
