@@ -6,22 +6,32 @@
 <a href="#tech">Technologies</a> |
 <a href="#started">Getting Started</a> |
 <a href="#colab">Collaborators</a> |
-<a href="#contribute">Contribute</a> |
-<a href="#references">References</a>
+<a href="#references">References</a> |
+<a href="#contribute">Contribute</a>
 </p>
-
-
-<p align="center">Diversity calculator for comparing representativeness of biomedical data</p>
-<p align="center">The distance measure for calculating representativeness is the Jensen-Shannon distance (JSD) <a href="#1"><sup>[1]</sup></a>.</p>
-
 
 <p align="center">
 <a href="https://www.midrc.org/">📱 Visit MIDRC Website</a>
 </p>
- 
-<h2 id="license">License</h2>
-This project is licensed with the Apache 2.0 license. See LICENSE file for details.
- 
+
+<h2>Overview</h2>
+The MIDRC Diversity Calculator is a tool designed to compare the representativeness of biomedical data. 
+By leveraging the Jensen-Shannon distance (JSD) measure, this tool provides insights into the demographic representativeness of datasets within the biomedical field.
+It also supports monitoring the representativeness of datasets over time by assessing the representativeness of historical data.
+Developed and utilized by MIDRC, this tool assesses the representativeness of data within the open data commons to the US population.
+Additionally, it can be generalized by users for other diversity representativeness needs, such as assessing the similarity of demographic distributions across multiple attributes in different biomedical datasets.
+
+<h2>Features</h2>
+- **Jensen-Shannon Distance (JSD) Calculation**: Uses the JSD measure to assess the representativeness of data.
+- **Comparative Analysis**: Enables comparisons between different datasets to evaluate demographic diversity.
+- **Biomedical Focus**: Specifically tailored for analyzing biomedical data, ensuring relevance and similarity.
+- **Historical Data**: Enables the ability to assess data over time for monitoring changes in representativeness.
+
+<h2>Background</h2>
+The methodology behind the Diversity Calculator is based on the 2023 paper titled 
+<a href="#1">"Longitudinal assessment of demographic representativeness in the Medical Imaging and Data Resource Center open data commons"[1]</a>. 
+This paper provides the theoretical foundation for using JSD in evaluating demographic representativeness.
+
 <h2 id="technologies">💻 Technologies</h2>
 
 Technologies used with this application
@@ -128,7 +138,7 @@ Rui Sá,
 Berkman Sahiner,
 Zi Zhang,
 
-#### The MIDRC Biomedical Diversity Working Group:
+#### The MIDRC Bias and Diversity Working Group:
 * Co-leads
   * Karen Drukker
   * Judy Wawira Gichoya
@@ -153,6 +163,13 @@ Zi Zhang,
 
 </tr>
 </table>
+
+<h2 id="references">References</h2>
+<a id="1">[1]</a> 
+Whitney HM, Baughan N, Myers KJ, Drukker K, Gichoya J, Bower B, Chen W, Gruszauskas N, Kalpathy-Cramer J, Koyejo S, Sá RC, Sahiner B, Zhang Z, Giger ML. 
+Longitudinal assessment of demographic representativeness in the Medical Imaging and Data Resource Center open data commons. 
+J Med Imaging (Bellingham). 2023 Nov;10(6):61105. 
+<a href="https://doi.org/10.1117/1.JMI.10.6.061105">doi: 10.1117/1.JMI.10.6.061105</a>. Epub 2023 Jul 18. PMID: 37469387; PMCID: PMC10353566.
  
 <h2 id="contribute">📫 Contribute</h2>
 
@@ -164,9 +181,6 @@ Zi Zhang,
 
 [📝 How to create a Pull Request](https://www.atlassian.com/br/git/tutorials/making-a-pull-request)
 
-<h2 id="references">References</h2>
-<a id="1">[1]</a> 
-Whitney HM, Baughan N, Myers KJ, Drukker K, Gichoya J, Bower B, Chen W, Gruszauskas N, Kalpathy-Cramer J, Koyejo S, Sá RC, Sahiner B, Zhang Z, Giger ML. 
-Longitudinal assessment of demographic representativeness in the Medical Imaging and Data Resource Center open data commons. 
-J Med Imaging (Bellingham). 2023 Nov;10(6):61105. 
-doi: 10.1117/1.JMI.10.6.061105. Epub 2023 Jul 18. PMID: 37469387; PMCID: PMC10353566.
+ 
+<h2 id="license">License</h2>
+This project is licensed with the Apache 2.0 license. See LICENSE file for details.
