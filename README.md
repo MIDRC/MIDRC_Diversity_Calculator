@@ -15,6 +15,7 @@
 </p>
 
 <h2>Overview</h2>
+
 The MIDRC Diversity Calculator is a tool designed to compare the representativeness of biomedical data. 
 By leveraging the Jensen-Shannon distance (JSD) measure, this tool provides insights into the demographic representativeness of datasets within the biomedical field.
 It also supports monitoring the representativeness of datasets over time by assessing the representativeness of historical data.
@@ -22,12 +23,14 @@ Developed and utilized by MIDRC, this tool assesses the representativeness of da
 Additionally, it can be generalized by users for other diversity representativeness needs, such as assessing the similarity of demographic distributions across multiple attributes in different biomedical datasets.
 
 <h2>Features</h2>
-- **Jensen-Shannon Distance (JSD) Calculation**: Uses the JSD measure to assess the representativeness of data.
-- **Comparative Analysis**: Enables comparisons between different datasets to evaluate demographic diversity.
-- **Biomedical Focus**: Specifically tailored for analyzing biomedical data, ensuring relevance and similarity.
-- **Historical Data**: Enables the ability to assess data over time for monitoring changes in representativeness.
+
+* **Jensen-Shannon Distance (JSD) Calculation**: Uses the JSD measure to assess the representativeness of data.
+* **Comparative Analysis**: Enables comparisons between different datasets to evaluate demographic diversity.
+* **Biomedical Focus**: Specifically tailored for analyzing biomedical data, ensuring relevance and similarity.
+* **Historical Data**: Enables the ability to assess data over time for monitoring changes in representativeness.
 
 <h2>Background</h2>
+
 The methodology behind the Diversity Calculator is based on the 2023 paper titled 
 <a href="#1">"Longitudinal assessment of demographic representativeness in the Medical Imaging and Data Resource Center open data commons"[1]</a>. 
 This paper provides the theoretical foundation for using JSD in evaluating demographic representativeness.
