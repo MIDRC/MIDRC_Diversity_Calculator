@@ -14,7 +14,7 @@
 <a href="https://www.midrc.org/">📱 Visit MIDRC Website</a>
 </p>
 
-<h2>Overview</h2>
+<h2>:information_source: Overview</h2>
 
 The MIDRC Diversity Calculator is a tool designed to compare the representativeness of biomedical data. 
 By leveraging the Jensen-Shannon distance (JSD) measure, this tool provides insights into the demographic representativeness of datasets within the biomedical field.
@@ -22,16 +22,16 @@ It also supports monitoring the representativeness of datasets over time by asse
 Developed and utilized by MIDRC, this tool assesses the representativeness of data within the open data commons to the US population.
 Additionally, it can be generalized by users for other diversity representativeness needs, such as assessing the similarity of demographic distributions across multiple attributes in different biomedical datasets.
 
-<h2>Features</h2>
+<h2>:wrench: Features</h2>
 
 * **Jensen-Shannon Distance (JSD) Calculation**: Uses the JSD measure to assess the representativeness of data.
 * **Comparative Analysis**: Enables comparisons between different datasets to evaluate demographic diversity.
 * **Biomedical Focus**: Specifically tailored for analyzing biomedical data, ensuring relevance and similarity.
 * **Historical Data**: Enables the ability to assess data over time for monitoring changes in representativeness.
 
-<h2>Background</h2>
+<h2>:notebook_with_decorative_cover: Background</h2>
 
-The methodology behind the Diversity Calculator is based on the 2023 paper titled 
+The methodology behind the Diversity Calculator is based on the 2023 paper by Whitney et al. titled 
 <a href="#1">"Longitudinal assessment of demographic representativeness in the Medical Imaging and Data Resource Center open data commons"[1]</a>. 
 This paper provides the theoretical foundation for using JSD in evaluating demographic representativeness.
 
@@ -45,7 +45,7 @@ Technologies used with this application
 * pandas
 
 There is a requirements.txt file available to install requirements
- 
+
 <h2 id="started">🚀 Getting started</h2>
 
 #### Configure yaml
@@ -167,7 +167,7 @@ Zi Zhang,
 </tr>
 </table>
 
-<h2 id="references">References</h2>
+<h2 id="references">:book: References</h2>
 <a id="1">[1]</a> 
 Whitney HM, Baughan N, Myers KJ, Drukker K, Gichoya J, Bower B, Chen W, Gruszauskas N, Kalpathy-Cramer J, Koyejo S, Sá RC, Sahiner B, Zhang Z, Giger ML. 
 Longitudinal assessment of demographic representativeness in the Medical Imaging and Data Resource Center open data commons. 
@@ -185,5 +185,5 @@ J Med Imaging (Bellingham). 2023 Nov;10(6):61105.
 [📝 How to create a Pull Request](https://www.atlassian.com/br/git/tutorials/making-a-pull-request)
 
  
-<h2 id="license">License</h2>
+<h2 id="license">:heavy_check_mark: License</h2>
 This project is licensed with the Apache 2.0 license. See LICENSE file for details.
