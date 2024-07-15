@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QG
 from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
+from grabbablewidget import GrabbableChartView
 
 
 class JsdDataSelectionGroupBox(QGroupBox):
@@ -247,7 +248,7 @@ class JsdWindow(QMainWindow):
                            self.create_table_dock_widget(self.table_view, 'JSD Table - ' + JsdWindow.WINDOW_TITLE))
 
         self.jsd_timeline_chart = JsdChart()
-        self.jsd_timeline_chart_view = QChartView(self.jsd_timeline_chart)
+        self.jsd_timeline_chart_view = GrabbableChartView(self.jsd_timeline_chart)
         self.jsd_timeline_chart_view.setRenderHint(QPainter.Antialiasing)
         # self.jsd_timeline_chart_view.setMinimumSize(640, 480)
 
@@ -812,15 +813,16 @@ class JsdChart (QChart):
     A custom chart class for JSD data visualization.
     """
 
-    def __init__(self, animation_options=QChart.AllAnimations):
+    def __init__(self, parent=None, animation_options=QChart.AllAnimations):
         """
         Initializes a new instance of the JsdChart class.
 
         Args:
             animation_options (QChart.AnimationOptions): The animation options for the chart.
         """
-        super().__init__()
+        super().__init__(parent)
         self.setAnimationOptions(animation_options)
+
 
 
 def clear_layout(layout):
@@ -960,3 +962,4 @@ class CopyableTableView(QTableView):
             stream = io.StringIO()
             csv.writer(stream, delimiter='\t').writerows(table)
             QGuiApplication.clipboard().setText(stream.getvalue())
+
