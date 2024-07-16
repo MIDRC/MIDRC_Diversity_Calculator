@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QG
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
                                QLayout, QFormLayout, QGridLayout, QLineEdit, QDialog, QDialogButtonBox, QSpinBox,
                                QCheckBox)
-from PySide6.QtCharts import (QChart, QChartView, QLineSeries, QDateTimeAxis, QValueAxis,
+from PySide6.QtCharts import (QChart, QLineSeries, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
 from grabbablewidget import GrabbableChartView
@@ -404,7 +404,7 @@ class JsdWindow(QMainWindow):
         Raises:
             None
         """
-        area_chart_view = QChartView(area_chart)
+        area_chart_view = GrabbableChartView(area_chart, save_file_prefix="diversity_area_chart")
         self.area_chart_widget.layout().addWidget(area_chart_view, stretch=1)
         return area_chart_view
 
@@ -415,7 +415,7 @@ class JsdWindow(QMainWindow):
         Returns:
             The spider chart view object that was added.
         """
-        spider_chart_view = QChartView(self.spider_chart)
+        spider_chart_view = GrabbableChartView(self.spider_chart, save_file_prefix="diversity_spider_chart")
         self.spider_chart_vbox.addWidget(spider_chart_view)
         return spider_chart_view
 
@@ -460,7 +460,7 @@ class JsdWindow(QMainWindow):
             for j, category in enumerate(categories):
                 # print('category:', category)
                 chart = QChart()
-                new_pie_chart_views[(category, i)] = QChartView(chart)
+                new_pie_chart_views[(category, i)] = GrabbableChartView(chart, save_file_prefix="diversity_pie_chart")
                 chart.setTitle(category)
                 df = sheets[category].df
                 cols_to_use = sheets[category].data_columns

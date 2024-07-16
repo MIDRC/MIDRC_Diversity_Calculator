@@ -1,13 +1,14 @@
 from PySide6.QtWidgets import (QWidget, QMenu, QFileDialog, QApplication, QDialog, QVBoxLayout, QHBoxLayout,
                                QPushButton, QLabel)
 from PySide6.QtGui import QClipboard, QAction, QImage, QPixmap, QPainter
-from PySide6.QtCore import QEvent, Qt, QObject, QRect, QSize, QPoint
+from PySide6.QtCore import QEvent, Qt, QObject, QDir, QStandardPaths
 from PySide6.QtCharts import QChartView
 from datetime import datetime
-import copy
+import os
 
-DEFAULT_SAVE_FILE_PREFIX = "diversity_plot_"
 class GrabbableWidgetMixin(QObject):
+    DEFAULT_SAVE_FILE_PREFIX = "diversity_plot_"
+
     def __init__(self, parent=None, save_file_prefix=DEFAULT_SAVE_FILE_PREFIX):
         super().__init__(parent)
         self.save_file_prefix = save_file_prefix
@@ -46,18 +47,29 @@ class GrabbableWidgetMixin(QObject):
         snapshot = self.parent.grab()
         clipboard = QApplication.clipboard()
         clipboard.setPixmap(snapshot)
-        # print("Snapshot copied to clipboard")
+
+    def default_filename(self, suffix=".png"):
+        # Get the default save directory
+        pictures_location = QStandardPaths.writableLocation(QStandardPaths.PicturesLocation)
+        screenshots_dir = QDir(os.path.join(pictures_location, "Screenshots"))
+
+        # Create the directory if it does not exist
+        if not screenshots_dir.exists():
+            screenshots_dir.mkpath(".")
+
+        # Set default file name
+        default_filename = self.save_file_prefix + datetime.now().strftime("%Y%m%d%H%M%S") + suffix
+        return os.path.join(screenshots_dir.path(), default_filename)
 
     def saveToDisk(self):
         options = QFileDialog.Options()
         default_filename = self.save_file_prefix + datetime.now().strftime("%Y%m%d%H%M%S")
-        fileName, _ = QFileDialog.getSaveFileName(self.parent, "Save Snapshot", default_filename + ".png",
+        fileName, _ = QFileDialog.getSaveFileName(self.parent, "Save Snapshot", self.default_filename(".png"),
                                                   "PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)",
                                                   options=options)
         if fileName:
             snapshot = self.parent.grab()
             snapshot.save(fileName)
-            # print(f"Snapshot saved to {fileName}")
 
     def saveHighResToDisk(self):
         self.save_dialog_open = True
@@ -67,10 +79,10 @@ class GrabbableWidgetMixin(QObject):
 
         if screenshot_dialog.result() == QDialog.Accepted:
             options = QFileDialog.Options()
-            default_filename = self.save_file_prefix + datetime.now().strftime("%Y%m%d%H%M%S")
-            fileName, _ = QFileDialog.getSaveFileName(self.parent, "Save High Resolution Snapshot", default_filename + "_highres.png",
-                                                  "PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)",
-                                                  options=options)
+            fileName, _ = QFileDialog.getSaveFileName(self.parent, "Save High Resolution Snapshot",
+                                                      self.default_filename("_highres.png"),
+                                                      "PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)",
+                                                      options=options)
             if fileName:
                 high_res_snapshot.save(fileName)
 
@@ -113,17 +125,6 @@ class SaveWidgetAsImageDialog(QDialog):
         # Add the button layout to the main layout
         layout.addLayout(button_layout)
 
-    #def resizeEvent(self, arg__1):
-    #    super().resizeEvent(arg__1)
-    #    label_size = self.image_label.size()
-    #    parent_size = self.parent().size()
-    #    ratio = min(label_size.width()/parent_size.width(), label_size.height()/parent_size.height())
-    #    self.image = QImage(round(ratio * parent_size.width()), round(ratio * parent_size.height()))
-    #    self.image.setDevicePixelRatio(ratio)
-    #    print("label size {}   ---   ratio {}".format(label_size, ratio))
-    #    self.parent().render(self.image)
-    #    self.image_label.setPixmap(QPixmap.fromImage(self.image))
-
     def restore_widget(self):
         self.layout().removeWidget(self.widget)
         self.widget_parent_layout.replaceWidget(self.temp_widget, self.widget)
@@ -135,19 +136,16 @@ class SaveWidgetAsImageDialog(QDialog):
     def save_image(self):
         ratio = 2
         self.image = QImage(round(ratio * self.widget.width()), round(ratio * self.widget.height()), QImage.Format_RGB32)
-        # self.image.setDevicePixelRatio(ratio)
+        # self.image.setDevicePixelRatio(ratio) # The QPainter handles this automatically
         painter = QPainter(self.image)
         self.widget.render(painter)
         painter.end()
-
-        # options = QFileDialog.Options()
-        # file_name, _ = QFileDialog.getSaveFileName(self, "Save Image", "", "PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)", options=options)
 
         self.restore_widget()
         self.accept()
 
 class GrabbableChartView(QChartView):
-    def __init__(self, chart, parent=None, save_file_prefix=DEFAULT_SAVE_FILE_PREFIX):
+    def __init__(self, chart, parent=None, save_file_prefix=GrabbableWidgetMixin.DEFAULT_SAVE_FILE_PREFIX):
         super().__init__(chart, parent)
         self.mixin = GrabbableWidgetMixin(self, save_file_prefix)
 
