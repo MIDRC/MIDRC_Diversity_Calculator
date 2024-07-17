@@ -1,7 +1,7 @@
 from typing import Optional
 from PySide6.QtWidgets import (QWidget, QMenu, QFileDialog, QApplication, QDialog, QVBoxLayout, QHBoxLayout,
                                QPushButton, QLabel, QLayout)
-from PySide6.QtGui import QClipboard, QAction, QImage, QPixmap, QPainter
+from PySide6.QtGui import QAction, QImage, QPainter
 from PySide6.QtCore import QEvent, Qt, QObject, QDir, QStandardPaths, QDateTime
 from PySide6.QtCharts import QChartView, QChart
 
@@ -13,6 +13,7 @@ class GrabbableWidgetMixin(QObject):
     Attributes:
         DEFAULT_SAVE_FILE_PREFIX (str): Default prefix for save file names.
         DATE_TIME_FORMAT (str): The datetime format for appending to default filenames when saving snapshots
+        save_dialog_open (bool): Indicates if the save dialog is currently open.
 
     Methods:
         __init__(self, parent: QWidget = None, save_file_prefix: str = DEFAULT_SAVE_FILE_PREFIX):
@@ -37,15 +38,12 @@ class GrabbableWidgetMixin(QObject):
         """
         Initialize the class instance with optional parent QWidget and a save file prefix.
         Set the save dialog status to False by default.
-
-        Attributes:
-            save_dialog_open (bool): Indicates if the save dialog is currently open.
         """
-        self.save_dialog_open = False # Indicates if the save dialog is currently open
+        self.save_dialog_open = False  # Indicates if the save dialog is currently open
         super().__init__(parent)
         self.save_file_prefix = save_file_prefix
         parent.setContextMenuPolicy(Qt.CustomContextMenu)
-        parent.customContextMenuRequested.connect(self.showContextMenu)
+        parent.customContextMenuRequested.connect(self.show_context_menu)
         parent.installEventFilter(self)
         self.parent = parent
 
@@ -61,11 +59,11 @@ class GrabbableWidgetMixin(QObject):
             bool: True if the event is a context menu event for the parent widget, False otherwise.
         """
         if event.type() == QEvent.ContextMenu and source == self.parent:
-            self.showContextMenu(event.pos())
+            self.show_context_menu(event.pos())
             return True
         return super().eventFilter(source, event)
 
-    def showContextMenu(self, pos):
+    def show_context_menu(self, pos):
         """
         Display a context menu for the widget for capturing snapshots of the widget.
 
@@ -75,23 +73,23 @@ class GrabbableWidgetMixin(QObject):
         Returns:
             None
         """
-        contextMenu = QMenu(self.parent)
-        copyAction = QAction("Copy", self.parent)
-        saveAction = QAction("Save", self.parent)
+        context_menu = QMenu(self.parent)
+        copy_action = QAction("Copy", self.parent)
+        save_action = QAction("Save", self.parent)
 
-        copyAction.triggered.connect(self.copy_to_clipboard)
-        saveAction.triggered.connect(self.save_to_disk)
+        copy_action.triggered.connect(self.copy_to_clipboard)
+        save_action.triggered.connect(self.save_to_disk)
 
-        contextMenu.addAction(copyAction)
-        contextMenu.addAction(saveAction)
+        context_menu.addAction(copy_action)
+        context_menu.addAction(save_action)
 
-        # Only display this action if we don't have the high res save dialog open for this widget
+        # Only display this action if we don't have the high-res save dialog open for this widget
         if not self.save_dialog_open:
-            saveHighResAction = QAction("Save High Resolution", self.parent)
-            saveHighResAction.triggered.connect(self.save_high_res_to_disk)
-            contextMenu.addAction(saveHighResAction)
+            save_high_res_action = QAction("Save High Resolution", self.parent)
+            save_high_res_action.triggered.connect(self.save_high_res_to_disk)
+            context_menu.addAction(save_high_res_action)
 
-        contextMenu.exec(self.parent.mapToGlobal(pos))
+        context_menu.exec(self.parent.mapToGlobal(pos))
 
     def copy_to_clipboard(self):
         """
@@ -106,7 +104,8 @@ class GrabbableWidgetMixin(QObject):
             clipboard.setPixmap(snapshot)
             del snapshot
 
-    def create_directory(self):
+    @staticmethod
+    def create_directory():
         """
         Create the directory for saving snapshots if it does not exist.
 
@@ -149,12 +148,12 @@ class GrabbableWidgetMixin(QObject):
             None
         """
         options = QFileDialog.Options()
-        fileName, _ = QFileDialog.getSaveFileName(self.parent, "Save Snapshot", self.default_filename(".png"),
-                                                  "PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)",
-                                                  options=options)
-        if fileName:
+        file_name, _ = QFileDialog.getSaveFileName(self.parent, "Save Snapshot", self.default_filename(".png"),
+                                                   "PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)",
+                                                   options=options)
+        if file_name:
             snapshot = self.parent.grab()
-            snapshot.save(fileName)
+            snapshot.save(file_name)
             del snapshot
 
     def save_high_res_to_disk(self) -> None:
@@ -172,16 +171,14 @@ class GrabbableWidgetMixin(QObject):
         screenshot_dialog.exec()
         high_res_snapshot = screenshot_dialog.image
 
-        # QImage.isNull() does not always work properly
-        # if (not high_res_snapshot.isNull()) and screenshot_dialog.result() == QDialog.Accepted:
-        if screenshot_dialog.result() == QDialog.Accepted:
+        if (not high_res_snapshot.isNull()) and screenshot_dialog.result() == QDialog.Accepted:
             options = QFileDialog.Options()
-            fileName, _ = QFileDialog.getSaveFileName(self.parent, "Save High Resolution Snapshot",
-                                                      self.default_filename("_highres.png"),
-                                                      "PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)",
-                                                      options=options)
-            if fileName:
-                high_res_snapshot.save(fileName)
+            file_name, _ = QFileDialog.getSaveFileName(self.parent, "Save High Resolution Snapshot",
+                                                       self.default_filename("_highres.png"),
+                                                       "PNG Files (*.png);;JPEG Files (*.jpg);;All Files (*)",
+                                                       options=options)
+            if file_name:
+                high_res_snapshot.save(file_name)
 
         self.save_dialog_open = False
 
@@ -192,7 +189,6 @@ class SaveWidgetAsImageDialog(QDialog):
 
     Attributes:
         widget: The widget to be saved as an image.
-        parent: Optional parent QWidget for the dialog.
 
     Methods:
         restore_widget: Restore the original widget by removing the temporary widget.
@@ -237,9 +233,6 @@ class SaveWidgetAsImageDialog(QDialog):
     def _create_temp_widget(self):
         """
         Create a temporary widget to display the image before saving.
-
-        Parameters:
-            None
 
         Returns:
             None
@@ -299,7 +292,7 @@ class SaveWidgetAsImageDialog(QDialog):
         """
         Restore the original widget and reject the save operation.
 
-        This method restores the original widget by removing the temporary widget and replaces it with the original widget.
+        This method restores the original widget by removing the temporary widget and replaces it with the original.
         Then, it rejects the save operation.
         """
         self._restore_widget()
@@ -309,14 +302,16 @@ class SaveWidgetAsImageDialog(QDialog):
         """
         Save the image of the widget with a specified ratio.
 
-        Creates an image of the widget with a given ratio, renders it using a QPainter, and then restores the original widget.
+        Creates an image of the widget with a given ratio, renders it using a QPainter, and then restores the original.
         Finally, accepts the save operation.
 
         Parameters:
             _ : Signals can send a parameter, so ignore it
             ratio (int): The ratio to scale the image.
         """
-        self._image = QImage(round(ratio * self.widget.width()), round(ratio * self.widget.height()), QImage.Format_RGB32)
+        self._image = QImage(round(ratio * self.widget.width()),
+                             round(ratio * self.widget.height()),
+                             QImage.Format_RGB32)
         # self.image.setDevicePixelRatio(ratio) # The QPainter handles this automatically
         painter = QPainter(self._image)
         self.widget.render(painter)
@@ -332,7 +327,8 @@ class GrabbableChartView(QChartView):
 
     Inherits functionality from QChartView and adds the ability to save the chart as an image.
     """
-    def __init__(self, chart: QChart, parent: Optional[QWidget] = None, save_file_prefix: str = GrabbableWidgetMixin.DEFAULT_SAVE_FILE_PREFIX) -> None:
+    def __init__(self, chart: QChart, parent: Optional[QWidget] = None,
+                 save_file_prefix: str = GrabbableWidgetMixin.DEFAULT_SAVE_FILE_PREFIX) -> None:
         """
         Initialize the class instance with an optional parent QWidget, a save file prefix, and a GrabbableWidgetMixin.
 
@@ -354,4 +350,3 @@ class GrabbableChartView(QChartView):
             None
         """
         self.grabbable_mixin.save_to_disk()
-

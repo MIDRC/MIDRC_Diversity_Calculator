@@ -625,7 +625,7 @@ class JsdWindow(QMainWindow):
         Returns:
         - None
 
-        This method updates the table view's model with the provided JSD model, effectively updating the JSD timeline plot.
+        This method updates the table view model with the provided JSD model, effectively updating the JSD timeline plot
         """
         self.table_view.setModel(jsd_model)
         self.jsd_timeline_chart.removeAllSeries()
@@ -824,7 +824,6 @@ class JsdChart (QChart):
         self.setAnimationOptions(animation_options)
 
 
-
 def clear_layout(layout):
     """
     Clears all widgets and layouts from the given layout.
@@ -853,10 +852,6 @@ class FileOptionsDialog (QDialog):
     This class represents a dialog window that allows the user to view and modify various options related to a file.
     It inherits from the QDialog class provided by the PySide6.QtWidgets module.
 
-    Attributes:
-        parent: The parent widget of the dialog.
-        file_name: The name of the file for which the options are being displayed.
-
     Methods:
         __init__(self, parent, file_name: str): Initializes the FileOptionsDialog object.
     """
@@ -868,7 +863,8 @@ class FileOptionsDialog (QDialog):
         category combo box.
 
         Parameters:
-        - data_sources (list): A list of data sources.
+        parent: The parent widget of the dialog.
+        file_name: The name of the file for which the options are being displayed.
 
         Returns:
         None
@@ -903,9 +899,6 @@ class FileOptionsDialog (QDialog):
 class CopyableTableView(QTableView):
     """
     A custom subclass of QTableView that allows copying selected data to the clipboard.
-
-    Attributes:
-        None
 
     Methods:
         __init__(): Initializes the CopyableTableView object.
@@ -944,7 +937,6 @@ class CopyableTableView(QTableView):
         Raises:
             None
         """
-        copied = ''
         selection = self.selectedIndexes()
         if selection:
             rows = sorted(index.row() for index in selection)
@@ -962,4 +954,3 @@ class CopyableTableView(QTableView):
             stream = io.StringIO()
             csv.writer(stream, delimiter='\t').writerows(table)
             QGuiApplication.clipboard().setText(stream.getvalue())
-
