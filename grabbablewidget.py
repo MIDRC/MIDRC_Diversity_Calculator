@@ -249,7 +249,7 @@ class SaveWidgetAsImageDialog(QDialog):
         self.widget_parent_layout = self.widget.parentWidget().layout()
         if self.widget_parent_layout is None:  # This means the parent handles the layout instead of having a layout
             self.widget_parent_index = self.widget.parentWidget().indexOf(self.widget)
-            self.widget.parentWidget().insertWidget(self.widget_parent_index, self.temp_widget)
+            self.widget.parentWidget().replaceWidget(self.widget_parent_index, self.temp_widget)
         else:
             self.widget_parent_layout.replaceWidget(self.widget, self.temp_widget)
 
@@ -316,13 +316,11 @@ class SaveWidgetAsImageDialog(QDialog):
             _ : Signals can send a parameter, so ignore it
             ratio (int): The ratio to scale the image.
         """
-        image = QImage(round(ratio * self.widget.width()), round(ratio * self.widget.height()), QImage.Format_RGB32)
+        self._image = QImage(round(ratio * self.widget.width()), round(ratio * self.widget.height()), QImage.Format_RGB32)
         # self.image.setDevicePixelRatio(ratio) # The QPainter handles this automatically
-        painter = QPainter(self.image)
+        painter = QPainter(self._image)
         self.widget.render(painter)
         painter.end()
-
-        self._image.swap(image)
 
         self._restore_widget()
         self.accept()
