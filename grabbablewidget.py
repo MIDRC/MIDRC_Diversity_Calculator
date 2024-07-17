@@ -247,7 +247,11 @@ class SaveWidgetAsImageDialog(QDialog):
         self.temp_widget = QLabel()
         self.temp_widget.setPixmap(self.widget.grab())
         self.widget_parent_layout = self.widget.parentWidget().layout()
-        self.widget_parent_layout.replaceWidget(self.widget, self.temp_widget)
+        if self.widget_parent_layout is None:  # This means the parent handles the layout instead of having a layout
+            self.widget_parent_index = self.widget.parentWidget().indexOf(self.widget)
+            self.widget.parentWidget().insertWidget(self.widget_parent_index, self.temp_widget)
+        else:
+            self.widget_parent_layout.replaceWidget(self.widget, self.temp_widget)
 
     def _setup_layout(self) -> None:
         """
@@ -285,7 +289,10 @@ class SaveWidgetAsImageDialog(QDialog):
         This method reverts the changes made for displaying the temporary widget.
         """
         self.layout().removeWidget(self.widget)
-        self.widget_parent_layout.replaceWidget(self.temp_widget, self.widget)
+        if self.widget_parent_layout is None:
+            self.temp_widget.parentWidget().replaceWidget(self.widget_parent_index, self.widget)
+        else:
+            self.widget_parent_layout.replaceWidget(self.temp_widget, self.widget)
         self.temp_widget.deleteLater()
 
     def cancel_save(self):
