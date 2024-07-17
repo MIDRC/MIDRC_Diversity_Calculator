@@ -289,7 +289,7 @@ class SaveWidgetAsImageDialog(QDialog):
         This method reverts the changes made for displaying the temporary widget.
         """
         self.layout().removeWidget(self.widget)
-        if self.widget_parent_layout is None:
+        if self.widget_parent_layout is None:  # The parent handles the layout instead of having a layout
             self.temp_widget.parentWidget().replaceWidget(self.widget_parent_index, self.widget)
         else:
             self.widget_parent_layout.replaceWidget(self.temp_widget, self.widget)
