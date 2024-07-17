@@ -215,7 +215,7 @@ class JSDTableModel(QAbstractTableModel):
                     for rect in rects:
                         if rect.contains(column, row):
                             return self._color_cache.setdefault(color, QColor(color))
-            return self._color_cache.setdefault(Qt.white, QColor(Qt.white))
+            return self._color_cache.setdefault(Qt.dimgray, QColor(Qt.dimgray))
         return None
 
     def setData(self, index: QModelIndex, value: Any, role: int = Qt.EditRole) -> bool:
