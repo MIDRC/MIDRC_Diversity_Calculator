@@ -117,7 +117,8 @@ class DataSheet:
         self.data_columns = []
 
         if is_excel:
-            self.df = pd.read_excel(file, sheet_name, usecols=lambda x: '(%)' not in x, engine='openpyxl')
+            self.df = pd.read_excel(file, sheet_name, usecols=lambda x: '(%)' not in str(x), engine='openpyxl')
+            self.df.columns = self.df.columns.astype(str)
             cols = [col for col in self.df.columns]
 
             if data_source.get('date', None):
@@ -132,12 +133,12 @@ class DataSheet:
 
             self.columns['date'] = cols[0]
             for col in cols[1:]:
-                colname = col
+                col_name = col
                 if data_source.get('remove column name text', None):
                     for txt in data_source['remove column name text']:
-                        colname = str(col).split(txt)[0]
-                        self.df[colname.rstrip()] = self.df[col]
-                self.columns[colname.rstrip()] = col
+                        col_name = col.split(txt)[0]
+                        self.df[col_name.rstrip()] = self.df[col]
+                self.columns[col_name.rstrip()] = col
 
             self.data_columns = list(self.columns.keys())[1:]
 
