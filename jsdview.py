@@ -12,7 +12,7 @@
 #      See the License for the specific language governing permissions and
 #      limitations under the License.
 #
-
+import copy
 from typing import Type, Union, List, Tuple
 import math, io, csv
 from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, Signal,
@@ -20,12 +20,14 @@ from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker
 from PySide6.QtGui import QPainter, QAction, QKeySequence, QGuiApplication
 from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu, QFileDialog,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
-                               QLayout, QFormLayout, QGridLayout, QLineEdit, QDialog, QDialogButtonBox, QSpinBox,
+                               QLayout, QFormLayout, QScrollArea, QLineEdit, QDialog, QDialogButtonBox, QSpinBox,
                                QCheckBox)
 from PySide6.QtCharts import (QChart, QLineSeries, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
 from grabbablewidget import GrabbableChartView
+from functools import partial
+from typing import Iterable
 
 
 class JsdDataSelectionGroupBox(QGroupBox):
@@ -257,11 +259,9 @@ class JsdWindow(QMainWindow):
 
         self.setMenuBar(self.create_menu_bar)
 
-        self.pie_chart_views = {}
-        self.pie_chart_hbox_labels = {}
-        self.pie_chart_grid = QGridLayout()
-        self.pie_chart_dock_widget = self.create_dock_widget(self.pie_chart_grid,
-                                                             'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
+        self.pie_chart_layout = QVBoxLayout()
+        self.pie_chart_dock_widget = self.create_pie_chart_dock_widget(self.pie_chart_layout,
+                                                                       'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.pie_chart_dock_widget)
 
         self.spider_chart = QPolarChart()
@@ -329,12 +329,33 @@ class JsdWindow(QMainWindow):
         num_files_setting: QAction = QAction("Number of Files to Compare", self)
         num_files_setting.triggered.connect(self.adjust_number_of_files_to_compare)
 
+        # Add the 'View' menu
+        view_menu: QMenu = menu_bar.addMenu("View")
+        self.dock_widget_menu: QMenu = view_menu.addMenu("Dock Widgets")
+        self.dock_widget_menu.aboutToShow.connect(self.populate_dock_widget_menu)
+
         # Add the actions to the 'Settings' menu
         settings_menu.addAction(chart_animation_setting)
         settings_menu.addAction(num_files_setting)
 
         # Return the menu bar
         return menu_bar
+
+    def populate_dock_widget_menu(self) -> None:
+        """
+        Clear the dock widget menu and populate it with actions for each dock widget.
+
+        This method clears the existing menu items in the dock widget menu and creates a new action for each dock widget found.
+        Each action corresponds to a dock widget and allows the user to toggle the visibility of the dock widget.
+        """
+        self.dock_widget_menu.clear()
+        dock_widgets: Iterable[QDockWidget] = self.findChildren(QDockWidget)
+        for dock in dock_widgets:
+            action: QAction = QAction(dock.windowTitle(), self.dock_widget_menu)
+            action.setCheckable(True)
+            action.setChecked(dock.isVisible())
+            action.toggled.connect(lambda checked, d=dock: d.setVisible(checked))
+            self.dock_widget_menu.addAction(action)
 
     @staticmethod
     def create_table_dock_widget(table_view: QTableView, title: str) -> QDockWidget:
@@ -356,7 +377,7 @@ class JsdWindow(QMainWindow):
         return table_dock_widget
 
     @staticmethod
-    def create_dock_widget(layout: QLayout, title: str) -> QDockWidget:
+    def create_pie_chart_dock_widget(layout: QLayout, title: str) -> QDockWidget:
         """
         Creates a dock widget with a given layout and title.
 
@@ -368,9 +389,18 @@ class JsdWindow(QMainWindow):
             QDockWidget: The created dock widget.
         """
         dock_widget = QDockWidget()
-        w = QWidget()
-        w.setLayout(layout)
-        dock_widget.setWidget(w)
+        # w = QWidget()
+        scroll_content = QWidget()
+        scroll_content.setLayout(layout)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(scroll_content)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        # scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        # w.setLayout(layout)
+        dock_widget.setWidget(scroll_area)
         assert isinstance(title, str), f"The 'title' argument must be a string. Got {type(title).__name__} instead."
         dock_widget.setWindowTitle(title)
         return dock_widget
@@ -433,51 +463,40 @@ class JsdWindow(QMainWindow):
         - None
         """
         # First, get rid of the old stuff just to be safe
-        # print('update pie chart dock')
-        clear_layout(self.pie_chart_grid)
-        self.pie_chart_views = {}
-        self.pie_chart_hbox_labels = {}
-        # self.pie_chart_grid = QGridLayout()
-        # self.pie_chart_dock_widget.widget().setLayout(self.pie_chart_grid)
+        clear_layout(self.pie_chart_layout)
 
-        # print('get categories')
         categories = [self.dataselectiongroupbox.category_combobox.itemText(i) for i in
                       range(self.dataselectiongroupbox.category_combobox.count())]
-        # print('categories:', categories)
 
         # Set the timepoint to the last timepoint in the series for now
         timepoint = -1
 
-        new_pie_chart_views = {}
-        # print('len(sheet_list):', len(sheet_list))
-        hbox_labels = {}
-        for i in range(len(sheet_list)):
-            sheets = sheet_list[i]
-            hbox_labels[i] = QLabel(self.dataselectiongroupbox.file_comboboxes[i].currentText() + ':')
-            self.pie_chart_grid.addWidget(hbox_labels[i], i, 0)
-            # print("Pie Chart row", i)
-            # print("File Being Used:", self.dataselectiongroupbox.file_comboboxes[i].currentText())
+        for i, sheets in enumerate(sheet_list):
+            row_layout = QHBoxLayout()
+
+            label = QLabel(self.dataselectiongroupbox.file_comboboxes[i].currentText() + ':')
+            row_layout.addWidget(label)
+
             for j, category in enumerate(categories):
-                # print('category:', category)
                 chart = QChart()
-                new_pie_chart_views[(category, i)] = GrabbableChartView(chart, save_file_prefix="diversity_pie_chart")
+                chart_view = GrabbableChartView(chart, save_file_prefix="diversity_pie_chart")
                 chart.setTitle(category)
+                chart.setMinimumSize(300, 240)
+
                 df = sheets[category].df
                 cols_to_use = sheets[category].data_columns
                 series = QPieSeries(chart)
+
                 for col in cols_to_use:
                     if df[col].iloc[timepoint] > 0:
                         series.append(col, df[col].iloc[timepoint])
+
                 chart.addSeries(series)
                 chart.legend().setAlignment(Qt.AlignRight)
-                self.pie_chart_grid.addWidget(new_pie_chart_views[(category, i)], i, j+1)
-                self.pie_chart_grid.setColumnStretch(j+1, 1)
-            self.pie_chart_grid.setRowStretch(i, 1)
 
-        # self.pie_chart_hboxes = hbox
-        self.pie_chart_views = new_pie_chart_views
-        self.pie_chart_hbox_labels = hbox_labels
-        # print('end update pie chart dock')
+                row_layout.addWidget(chart_view, stretch=1)
+
+            self.pie_chart_layout.addLayout(row_layout, stretch=1)
 
     def update_spider_chart(self, spider_plot_values):
         """
@@ -625,7 +644,7 @@ class JsdWindow(QMainWindow):
         Returns:
         - None
 
-        This method updates the table view's model with the provided JSD model, effectively updating the JSD timeline plot.
+        This method updates the table view model with the provided JSD model, effectively updating the JSD timeline plot
         """
         self.table_view.setModel(jsd_model)
         self.jsd_timeline_chart.removeAllSeries()
@@ -824,7 +843,6 @@ class JsdChart (QChart):
         self.setAnimationOptions(animation_options)
 
 
-
 def clear_layout(layout):
     """
     Clears all widgets and layouts from the given layout.
@@ -853,10 +871,6 @@ class FileOptionsDialog (QDialog):
     This class represents a dialog window that allows the user to view and modify various options related to a file.
     It inherits from the QDialog class provided by the PySide6.QtWidgets module.
 
-    Attributes:
-        parent: The parent widget of the dialog.
-        file_name: The name of the file for which the options are being displayed.
-
     Methods:
         __init__(self, parent, file_name: str): Initializes the FileOptionsDialog object.
     """
@@ -868,7 +882,8 @@ class FileOptionsDialog (QDialog):
         category combo box.
 
         Parameters:
-        - data_sources (list): A list of data sources.
+        parent: The parent widget of the dialog.
+        file_name: The name of the file for which the options are being displayed.
 
         Returns:
         None
@@ -903,9 +918,6 @@ class FileOptionsDialog (QDialog):
 class CopyableTableView(QTableView):
     """
     A custom subclass of QTableView that allows copying selected data to the clipboard.
-
-    Attributes:
-        None
 
     Methods:
         __init__(): Initializes the CopyableTableView object.
@@ -944,7 +956,6 @@ class CopyableTableView(QTableView):
         Raises:
             None
         """
-        copied = ''
         selection = self.selectedIndexes()
         if selection:
             rows = sorted(index.row() for index in selection)
@@ -962,4 +973,3 @@ class CopyableTableView(QTableView):
             stream = io.StringIO()
             csv.writer(stream, delimiter='\t').writerows(table)
             QGuiApplication.clipboard().setText(stream.getvalue())
-
