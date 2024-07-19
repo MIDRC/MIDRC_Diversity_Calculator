@@ -27,6 +27,7 @@ from PySide6.QtCharts import (QChart, QLineSeries, QDateTimeAxis, QValueAxis,
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
 from grabbablewidget import GrabbableChartView
 from functools import partial
+from typing import Iterable
 
 
 class JsdDataSelectionGroupBox(QGroupBox):
@@ -258,8 +259,6 @@ class JsdWindow(QMainWindow):
 
         self.setMenuBar(self.create_menu_bar)
 
-        self.pie_chart_views = {}
-        self.pie_chart_hbox_labels = {}
         self.pie_chart_grid = QGridLayout()
         self.pie_chart_dock_widget = self.create_dock_widget(self.pie_chart_grid,
                                                              'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
@@ -350,7 +349,7 @@ class JsdWindow(QMainWindow):
         Each action corresponds to a dock widget and allows the user to toggle the visibility of the dock widget.
         """
         self.dock_widget_menu.clear()
-        dock_widgets: List[QDockWidget] = self.findChildren(QDockWidget)
+        dock_widgets: Iterable[QDockWidget] = self.findChildren(QDockWidget)
         for dock in dock_widgets:
             action: QAction = QAction(dock.windowTitle(), self.dock_widget_menu)
             action.setCheckable(True)
@@ -457,8 +456,6 @@ class JsdWindow(QMainWindow):
         # First, get rid of the old stuff just to be safe
         # print('update pie chart dock')
         clear_layout(self.pie_chart_grid)
-        self.pie_chart_views = {}
-        self.pie_chart_hbox_labels = {}
         # self.pie_chart_grid = QGridLayout()
         # self.pie_chart_dock_widget.widget().setLayout(self.pie_chart_grid)
 
@@ -470,35 +467,31 @@ class JsdWindow(QMainWindow):
         # Set the timepoint to the last timepoint in the series for now
         timepoint = -1
 
-        new_pie_chart_views = {}
-        # print('len(sheet_list):', len(sheet_list))
-        hbox_labels = {}
-        for i in range(len(sheet_list)):
-            sheets = sheet_list[i]
-            hbox_labels[i] = QLabel(self.dataselectiongroupbox.file_comboboxes[i].currentText() + ':')
-            self.pie_chart_grid.addWidget(hbox_labels[i], i, 0)
-            # print("Pie Chart row", i)
-            # print("File Being Used:", self.dataselectiongroupbox.file_comboboxes[i].currentText())
+        for i, sheets in enumerate(sheet_list):
+            hbox_label = QLabel(self.dataselectiongroupbox.file_comboboxes[i].currentText() + ':')
+            self.pie_chart_grid.addWidget(hbox_label, i, 0)
+
             for j, category in enumerate(categories):
-                # print('category:', category)
                 chart = QChart()
-                new_pie_chart_views[(category, i)] = GrabbableChartView(chart, save_file_prefix="diversity_pie_chart")
+                chart_view = GrabbableChartView(chart, save_file_prefix="diversity_pie_chart")
                 chart.setTitle(category)
+
                 df = sheets[category].df
                 cols_to_use = sheets[category].data_columns
                 series = QPieSeries(chart)
+
                 for col in cols_to_use:
                     if df[col].iloc[timepoint] > 0:
                         series.append(col, df[col].iloc[timepoint])
+
                 chart.addSeries(series)
                 chart.legend().setAlignment(Qt.AlignRight)
-                self.pie_chart_grid.addWidget(new_pie_chart_views[(category, i)], i, j+1)
-                self.pie_chart_grid.setColumnStretch(j+1, 1)
+
+                self.pie_chart_grid.addWidget(chart_view, i, j + 1)
+                self.pie_chart_grid.setColumnStretch(j + 1, 1)
+
             self.pie_chart_grid.setRowStretch(i, 1)
 
-        # self.pie_chart_hboxes = hbox
-        self.pie_chart_views = new_pie_chart_views
-        self.pie_chart_hbox_labels = hbox_labels
         # print('end update pie chart dock')
 
     def update_spider_chart(self, spider_plot_values):
