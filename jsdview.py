@@ -12,7 +12,7 @@
 #      See the License for the specific language governing permissions and
 #      limitations under the License.
 #
-
+import copy
 from typing import Type, Union, List, Tuple
 import math, io, csv
 from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, Signal,
@@ -26,6 +26,7 @@ from PySide6.QtCharts import (QChart, QLineSeries, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
 from grabbablewidget import GrabbableChartView
+from functools import partial
 
 
 class JsdDataSelectionGroupBox(QGroupBox):
@@ -329,12 +330,33 @@ class JsdWindow(QMainWindow):
         num_files_setting: QAction = QAction("Number of Files to Compare", self)
         num_files_setting.triggered.connect(self.adjust_number_of_files_to_compare)
 
+        # Add the 'View' menu
+        view_menu: QMenu = menu_bar.addMenu("View")
+        self.dock_widget_menu: QMenu = view_menu.addMenu("Dock Widgets")
+        self.dock_widget_menu.aboutToShow.connect(self.populate_dock_widget_menu)
+
         # Add the actions to the 'Settings' menu
         settings_menu.addAction(chart_animation_setting)
         settings_menu.addAction(num_files_setting)
 
         # Return the menu bar
         return menu_bar
+
+    def populate_dock_widget_menu(self) -> None:
+        """
+        Clear the dock widget menu and populate it with actions for each dock widget.
+
+        This method clears the existing menu items in the dock widget menu and creates a new action for each dock widget found.
+        Each action corresponds to a dock widget and allows the user to toggle the visibility of the dock widget.
+        """
+        self.dock_widget_menu.clear()
+        dock_widgets: List[QDockWidget] = self.findChildren(QDockWidget)
+        for dock in dock_widgets:
+            action: QAction = QAction(dock.windowTitle(), self.dock_widget_menu)
+            action.setCheckable(True)
+            action.setChecked(dock.isVisible())
+            action.toggled.connect(lambda checked, d=dock: d.setVisible(checked))
+            self.dock_widget_menu.addAction(action)
 
     @staticmethod
     def create_table_dock_widget(table_view: QTableView, title: str) -> QDockWidget:
