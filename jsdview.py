@@ -20,7 +20,7 @@ from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker
 from PySide6.QtGui import QPainter, QAction, QKeySequence, QGuiApplication
 from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu, QFileDialog,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
-                               QLayout, QFormLayout, QGridLayout, QLineEdit, QDialog, QDialogButtonBox, QSpinBox,
+                               QLayout, QFormLayout, QScrollArea, QLineEdit, QDialog, QDialogButtonBox, QSpinBox,
                                QCheckBox)
 from PySide6.QtCharts import (QChart, QLineSeries, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
@@ -260,8 +260,8 @@ class JsdWindow(QMainWindow):
         self.setMenuBar(self.create_menu_bar)
 
         self.pie_chart_layout = QVBoxLayout()
-        self.pie_chart_dock_widget = self.create_dock_widget(self.pie_chart_layout,
-                                                             'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
+        self.pie_chart_dock_widget = self.create_pie_chart_dock_widget(self.pie_chart_layout,
+                                                                       'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.pie_chart_dock_widget)
 
         self.spider_chart = QPolarChart()
@@ -377,7 +377,7 @@ class JsdWindow(QMainWindow):
         return table_dock_widget
 
     @staticmethod
-    def create_dock_widget(layout: QLayout, title: str) -> QDockWidget:
+    def create_pie_chart_dock_widget(layout: QLayout, title: str) -> QDockWidget:
         """
         Creates a dock widget with a given layout and title.
 
@@ -389,9 +389,18 @@ class JsdWindow(QMainWindow):
             QDockWidget: The created dock widget.
         """
         dock_widget = QDockWidget()
-        w = QWidget()
-        w.setLayout(layout)
-        dock_widget.setWidget(w)
+        # w = QWidget()
+        scroll_content = QWidget()
+        scroll_content.setLayout(layout)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(scroll_content)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        # scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        # w.setLayout(layout)
+        dock_widget.setWidget(scroll_area)
         assert isinstance(title, str), f"The 'title' argument must be a string. Got {type(title).__name__} instead."
         dock_widget.setWindowTitle(title)
         return dock_widget
@@ -454,15 +463,10 @@ class JsdWindow(QMainWindow):
         - None
         """
         # First, get rid of the old stuff just to be safe
-        # print('update pie chart dock')
         clear_layout(self.pie_chart_layout)
-        # self.pie_chart_grid = QGridLayout()
-        # self.pie_chart_dock_widget.widget().setLayout(self.pie_chart_grid)
 
-        # print('get categories')
         categories = [self.dataselectiongroupbox.category_combobox.itemText(i) for i in
                       range(self.dataselectiongroupbox.category_combobox.count())]
-        # print('categories:', categories)
 
         # Set the timepoint to the last timepoint in the series for now
         timepoint = -1
@@ -477,6 +481,7 @@ class JsdWindow(QMainWindow):
                 chart = QChart()
                 chart_view = GrabbableChartView(chart, save_file_prefix="diversity_pie_chart")
                 chart.setTitle(category)
+                chart.setMinimumSize(300, 240)
 
                 df = sheets[category].df
                 cols_to_use = sheets[category].data_columns
@@ -492,8 +497,6 @@ class JsdWindow(QMainWindow):
                 row_layout.addWidget(chart_view, stretch=1)
 
             self.pie_chart_layout.addLayout(row_layout, stretch=1)
-
-        # print('end update pie chart dock')
 
     def update_spider_chart(self, spider_plot_values):
         """
