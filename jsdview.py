@@ -259,8 +259,8 @@ class JsdWindow(QMainWindow):
 
         self.setMenuBar(self.create_menu_bar)
 
-        self.pie_chart_grid = QGridLayout()
-        self.pie_chart_dock_widget = self.create_dock_widget(self.pie_chart_grid,
+        self.pie_chart_layout = QVBoxLayout()
+        self.pie_chart_dock_widget = self.create_dock_widget(self.pie_chart_layout,
                                                              'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.pie_chart_dock_widget)
 
@@ -455,7 +455,7 @@ class JsdWindow(QMainWindow):
         """
         # First, get rid of the old stuff just to be safe
         # print('update pie chart dock')
-        clear_layout(self.pie_chart_grid)
+        clear_layout(self.pie_chart_layout)
         # self.pie_chart_grid = QGridLayout()
         # self.pie_chart_dock_widget.widget().setLayout(self.pie_chart_grid)
 
@@ -468,8 +468,10 @@ class JsdWindow(QMainWindow):
         timepoint = -1
 
         for i, sheets in enumerate(sheet_list):
-            hbox_label = QLabel(self.dataselectiongroupbox.file_comboboxes[i].currentText() + ':')
-            self.pie_chart_grid.addWidget(hbox_label, i, 0)
+            row_layout = QHBoxLayout()
+
+            label = QLabel(self.dataselectiongroupbox.file_comboboxes[i].currentText() + ':')
+            row_layout.addWidget(label)
 
             for j, category in enumerate(categories):
                 chart = QChart()
@@ -487,10 +489,9 @@ class JsdWindow(QMainWindow):
                 chart.addSeries(series)
                 chart.legend().setAlignment(Qt.AlignRight)
 
-                self.pie_chart_grid.addWidget(chart_view, i, j + 1)
-                self.pie_chart_grid.setColumnStretch(j + 1, 1)
+                row_layout.addWidget(chart_view, stretch=1)
 
-            self.pie_chart_grid.setRowStretch(i, 1)
+            self.pie_chart_layout.addLayout(row_layout, stretch=1)
 
         # print('end update pie chart dock')
 
