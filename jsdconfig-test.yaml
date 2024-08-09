@@ -1,0 +1,16 @@
+data sources:
+  # The data sources will be loaded in the order they are populated here
+  - name: Test 1
+    description: Test Excel File 1
+    data type: file
+    filename: test_file_1.xlsx
+
+  - name: Test 2
+    description: Test Excel File 2
+    data type: file
+    filename: test_file_2.xlsx
+
+# TODO: The following should be moved into QSettings for modifications within the GUI
+# For custom age columns, please use .inf as the maximum age in the final age group
+custom age ranges:
+  Age at Index: [ [0, 17], [18, 49], [50, 64], [65, .inf] ]
