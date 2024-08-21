@@ -264,14 +264,14 @@ class JSDController(QObject):
         Returns:
             True if the update was successful, False otherwise
         """
-        sheet_list = []
+        sheet_dict = {}
         for i in range(len(self.jsd_view.dataselectiongroupbox.file_comboboxes)):
             if self.jsd_view.dataselectiongroupbox.file_checkboxes[i].isChecked():
-                sheet_list.append(self.get_file_sheets_from_combobox(i))
+                sheet_dict[i] = (self.get_file_sheets_from_combobox(i))
 
         try:
             self.jsd_view.update_jsd_timeline_plot(self.jsd_model)
-            self.jsd_view.update_area_chart(sheet_list)
+            self.jsd_view.update_area_chart(sheet_dict)
             return True
         except Exception as e:
             print(f"An error occurred during the update of category plots: {e}")

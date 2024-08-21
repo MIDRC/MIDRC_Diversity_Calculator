@@ -560,12 +560,12 @@ class JsdWindow(QMainWindow):
         title = f"Comparison of {file1_data} and {file2_data} - JSD per category"
         self.spider_chart.setTitle(title)
 
-    def update_area_chart(self, sheet_list):
+    def update_area_chart(self, sheet_dict):
         """
         Update the area chart with new data.
 
         Parameters:
-        - sheet_list (list): A list of sheets containing data for the chart.
+        - sheet_dict (dict): A dictionary of index keys and sheets containing data for the chart.
 
         Returns:
         - None
@@ -575,46 +575,54 @@ class JsdWindow(QMainWindow):
         trends and patterns. The sheet_list parameter should be a list of sheets, where each sheet contains the
         necessary data for the chart. After updating the chart, the method does not return any value.
         """
+        # Get the selected category
         category = self._dataselectiongroupbox.category_combobox.currentText()
 
+        # Clear any existing charts in the layout
         clear_layout(self.area_chart_widget.layout())
 
-        self.area_charts = {}
-
-        for i in range(len(sheet_list)):
+        for i, sheets in sheet_dict.items():
+            # Create a new QChart object for each sheet
             area_chart = QChart()
             filename = self.dataselectiongroupbox.file_comboboxes[i].currentData()
             area_chart.setTitle(f'{filename} {category} distribution over time')
-            sheets = sheet_list[i]
 
-            df = sheets[category].df
-            cols_to_use = sheets[category].data_columns
+            # Extract data from the sheet
+            sheet_data = sheets[category]
+            df = sheet_data.df
+            cols_to_use = sheet_data.data_columns
+
+            # Calculate cumulative percentages
             total_counts = df[cols_to_use].sum(axis=1)
-            upper_counts = df[cols_to_use].cumsum(axis=1)
-            upper_counts = upper_counts.apply(lambda x: 100.0 * x / total_counts)
+            cumulative_percents = 100.0 * df[cols_to_use].cumsum(axis=1).div(total_counts, axis=0)
+
+            # Prepare dates for the X-axis
             dates = [QDateTime(numpy_datetime64_to_qdate(date), QTime()) for date in df.date.values]
+
+            # Create series for the area chart
             lower_series = None
-            for index, col in enumerate(cols_to_use):
-                if df[col].iloc[-1] == 0:
+            for col in cols_to_use:
+                if df[col].iloc[-1] == 0:  # Skip columns with no data
                     continue
 
-                points = [QPointF(dates[j].toMSecsSinceEpoch(), upper_counts.iloc[j][col]) for j in range(len(dates))]
+                # Generate data points for the series
+                points = [QPointF(dates[j].toMSecsSinceEpoch(), cumulative_percents.iloc[j][col]) for j in
+                          range(len(dates))]
                 if len(dates) == 1:
-                    points.append(QPointF(dates[0].toMSecsSinceEpoch() + 1, upper_counts.iloc[0][col]))
+                    points.append(QPointF(dates[0].toMSecsSinceEpoch() + 1, cumulative_percents.iloc[0][col]))
 
                 upper_series = QLineSeries(area_chart)
                 upper_series.append(points)
 
-                area = QAreaSeries(upper_series, lower_series)
-                area.setName(col)
-                area_chart.addSeries(area)
+                # Create the area series using the current and previous series
+                area_series = QAreaSeries(upper_series, lower_series)
+                area_series.setName(col)
+                area_chart.addSeries(area_series)
+
+                # Update the lower series for the next iteration
                 lower_series = upper_series
 
-            for axis in area_chart.axes():
-                area_chart.removeAxis(axis)
-            area_chart.createDefaultAxes()
-
-            area_chart.removeAxis(area_chart.axisX())
+            # Set up X-axis as a datetime axis
             axis_x = QDateTimeAxis()
             axis_x.setTickCount(10)
             axis_x.setFormat("MMM yyyy")
@@ -622,15 +630,20 @@ class JsdWindow(QMainWindow):
             axis_x.setRange(dates[0], dates[-1] if len(dates) > 1 else dates[0].addMSecs(1))
             area_chart.addAxis(axis_x, Qt.AlignBottom)
 
-            axis_y = area_chart.axisY()
+            # Set up Y-axis as a percentage axis
+            axis_y = QValueAxis()
             axis_y.setTitleText("Percent of total")
             axis_y.setLabelFormat('%.0f%')
             axis_y.setRange(0, 100)
-            area_chart.setProperty("current_data", filename)
+            area_chart.addAxis(axis_y, Qt.AlignLeft)
 
+            # Attach axes to each series in the chart
+            for series in area_chart.series():
+                series.attachAxis(axis_x)
+                series.attachAxis(axis_y)
+
+            # Add the configured chart to the display
             self.add_area_chart_view(area_chart)
-
-            self.area_charts[i] = area_chart
 
         return True
 
