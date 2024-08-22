@@ -12,9 +12,10 @@
 #      See the License for the specific language governing permissions and
 #      limitations under the License.
 #
-import copy
 from typing import Type, Union, List, Tuple
-import math, io, csv
+import math
+import io
+import csv
 from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, Signal,
                             QFileInfo, QEvent, QDate)
 from PySide6.QtGui import QPainter, QAction, QKeySequence, QGuiApplication
@@ -331,8 +332,8 @@ class JsdWindow(QMainWindow):
 
         # Add the 'View' menu
         view_menu: QMenu = menu_bar.addMenu("View")
-        self.dock_widget_menu: QMenu = view_menu.addMenu("Dock Widgets")
-        self.dock_widget_menu.aboutToShow.connect(self.populate_dock_widget_menu)
+        dock_widget_menu: QMenu = view_menu.addMenu("Dock Widgets")
+        dock_widget_menu.aboutToShow.connect(partial(self.populate_dock_widget_menu, dock_widget_menu))
 
         # Add the actions to the 'Settings' menu
         settings_menu.addAction(chart_animation_setting)
@@ -341,21 +342,21 @@ class JsdWindow(QMainWindow):
         # Return the menu bar
         return menu_bar
 
-    def populate_dock_widget_menu(self) -> None:
+    def populate_dock_widget_menu(self, dock_widget_menu: QMenu) -> None:
         """
         Clear the dock widget menu and populate it with actions for each dock widget.
 
         This method clears the existing menu items in the dock widget menu and creates a new action for each dock widget found.
         Each action corresponds to a dock widget and allows the user to toggle the visibility of the dock widget.
         """
-        self.dock_widget_menu.clear()
+        dock_widget_menu.clear()
         dock_widgets: Iterable[QDockWidget] = self.findChildren(QDockWidget)
         for dock in dock_widgets:
-            action: QAction = QAction(dock.windowTitle(), self.dock_widget_menu)
+            action: QAction = QAction(dock.windowTitle(), dock_widget_menu)
             action.setCheckable(True)
             action.setChecked(dock.isVisible())
             action.toggled.connect(lambda checked, d=dock: d.setVisible(checked))
-            self.dock_widget_menu.addAction(action)
+            dock_widget_menu.addAction(action)
 
     @staticmethod
     def create_table_dock_widget(table_view: QTableView, title: str) -> QDockWidget:
@@ -892,23 +893,26 @@ class JsdChart (QChart):
 
 def clear_layout(layout):
     """
-    Clears all widgets and layouts from the given layout.
+    Recursively clears all widgets and layouts from the given layout.
 
     Parameters:
         layout (QLayout): The layout to be cleared.
 
     Returns:
-        None
-
+        bool: True if the layout was cleared, False if layout was None.
     """
-    if layout is not None:
-        while layout.count():
-            child = layout.takeAt(0)
-            if child.widget() is not None:
-                child.widget().deleteLater()
-            elif child.layout() is not None:
-                clear_layout(child.layout())
-            layout.removeItem(child)
+    if layout is None:
+        return False
+
+    while layout.count():
+        child = layout.takeAt(0)
+        if child.widget() is not None:
+            child.widget().deleteLater()
+        elif child.layout() is not None:
+            clear_layout(child.layout())
+        layout.removeItem(child)
+
+    return True
 
 
 class FileOptionsDialog (QDialog):
