@@ -301,7 +301,7 @@ class JSDController(QObject):
 
         return cols_to_use
 
-    def get_spider_plot_values(self, calc_date):
+    def get_spider_plot_values(self, calc_date=None):
         """
         Compiles a dictionary of categories and JSD values for a given date.
 
@@ -309,27 +309,54 @@ class JSDController(QObject):
             calc_date (Optional[datetime.date]): The date to use for JSD calculation. Default is None.
 
         Returns:
-            A dictionary of categories and JSD values for a given date.
+            dict: A dictionary of categories and JSD values for a given date.
         """
         if calc_date is None:
             calc_date = np.datetime64('today')
 
         jsd_view = self.jsd_view
         dataselectiongroupbox = jsd_view.dataselectiongroupbox
-        categories = [dataselectiongroupbox.category_combobox.itemText(i) for i in
-                      range(dataselectiongroupbox.category_combobox.count())]
+        categories = [dataselectiongroupbox.category_combobox.itemText(i)
+                      for i in range(dataselectiongroupbox.category_combobox.count())]
 
-        cbox0 = dataselectiongroupbox.file_comboboxes[0]
-        sheets0 = self.jsd_model.data_sources[cbox0.currentData()].sheets
-        cbox1 = dataselectiongroupbox.file_comboboxes[1]
-        sheets1 = self.jsd_model.data_sources[cbox1.currentData()].sheets
+        # Determine indexes to use based on checked boxes or default to all
+        indexes_to_use = [i for i, checkbox in enumerate(dataselectiongroupbox.file_checkboxes) if checkbox.isChecked()]
+        if not indexes_to_use:
+            indexes_to_use = list(range(len(dataselectiongroupbox.file_comboboxes)))
+        if len(indexes_to_use) == 1:
+            indexes_to_use = indexes_to_use * 2  # Duplicate the single index to ensure comparison
 
-        jsd_values = {category: calculate_jsd(sheets0[category].df,
-                                              sheets1[category].df,
-                                              self.get_cols_to_use_for_jsd_calc(cbox0, category),
-                                              calc_date) for category in categories}
+        jsd_dict = {}
 
-        return jsd_values
+        # Loop over the selected indexes and calculate JSD values
+        for i, index1 in enumerate(indexes_to_use[:-1]):
+            for index2 in indexes_to_use[i + 1:]:
+                # Ensure we're not comparing the same file with itself
+                if len(indexes_to_use) == 2 and index1 == index2:
+                    index2_candidates = [idx for idx in range(len(dataselectiongroupbox.file_comboboxes)) if
+                                         idx != index1]
+                else:
+                    index2_candidates = [index2]
+
+                for idx2 in index2_candidates:
+                    cbox0 = dataselectiongroupbox.file_comboboxes[index1]
+                    cbox1 = dataselectiongroupbox.file_comboboxes[idx2]
+
+                    sheets0 = self.jsd_model.data_sources[cbox0.currentData()].sheets
+                    sheets1 = self.jsd_model.data_sources[cbox1.currentData()].sheets
+
+                    jsd_values = {
+                        category: calculate_jsd(
+                            sheets0[category].df,
+                            sheets1[category].df,
+                            self.get_cols_to_use_for_jsd_calc(cbox0, category),
+                            calc_date
+                        )
+                        for category in categories
+                    }
+                    jsd_dict[(index1, idx2)] = jsd_values
+
+        return jsd_dict
 
 
 def calculate_jsd(df1, df2, cols_to_use, calc_date):

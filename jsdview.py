@@ -511,55 +511,75 @@ class JsdWindow(QMainWindow):
 
             self.pie_chart_layout.addLayout(row_layout, stretch=1)
 
-    def update_spider_chart(self, spider_plot_values):
+    def update_spider_chart(self, spider_plot_values_dict):
         """
         Update the spider chart with new values.
 
         Parameters:
-        - spider_plot_values (list): A list of values to update the spider chart.
+        - spider_plot_values_dict (dict): A dictionary of dictionaries where each dictionary contains
+          the values for one series on the spider chart.
 
         Returns:
-        - None
-
-        Raises:
-        - None
+        - bool: True if the chart was updated, False if there was no data to update.
         """
-        # TODO: This should loop over all the file combo boxes, similar to how the main plot is generated
-        # TODO: All of them on one spider plot for comparison, or each their own? Also need data over time.
-        file1_data = self._dataselectiongroupbox.file_comboboxes[0].currentData()
-        file2_data = self._dataselectiongroupbox.file_comboboxes[1].currentData()
 
+        if not spider_plot_values_dict:
+            return False  # Early exit if there's no data
+
+        # Clear the existing series and axes from the spider chart
         self.spider_chart.removeAllSeries()
         for axis in self.spider_chart.axes():
             self.spider_chart.removeAxis(axis)
 
-        self.update_spider_chart_title(file1_data, file2_data)
+        # Extract the labels and calculate the angular axis parameters
+        first_series_values = next(iter(spider_plot_values_dict.values()))
+        labels = list(first_series_values.keys())
+        step_size = 360 / len(labels)
+        angles = [step_size * i for i in range(len(labels))]
 
-        labels = spider_plot_values.keys()
-        series = QLineSeries()
+        # Set up the angular axis
         angular_axis = QCategoryAxis()
         angular_axis.setRange(0, 360)
         angular_axis.setLabelsPosition(QCategoryAxis.AxisLabelsPositionOnValue)
-
-        step_size = 360 / len(labels)
-        for index, label in enumerate(labels):
-            angle = step_size * index
-            series.append(angle, spider_plot_values[label])
+        for angle, label in zip(angles, labels):
             angular_axis.append(label, angle)
-
-        # Close the loop in the series
-        series.append(360, series.points()[0].y())
-        series.setName(f'{file1_data} vs {file2_data}')
-
-        self.spider_chart.addSeries(series)
         self.spider_chart.addAxis(angular_axis, QPolarChart.PolarOrientationAngular)
-        series.attachAxis(angular_axis)
 
+        # Calculate the range for the radial axis
+        max_value = max(
+            value for series_values in spider_plot_values_dict.values() for value in series_values.values()
+        )
         radial_axis = QValueAxis()
-        radial_axis.setRange(0, max(point.y() for point in series.points()))
+        radial_axis.setRange(0, max_value)
         radial_axis.setLabelFormat('%.2f')
         self.spider_chart.addAxis(radial_axis, QPolarChart.PolarOrientationRadial)
-        series.attachAxis(radial_axis)
+
+        self.spider_chart.setTitle("JSD per category")
+
+        # Create and add each series to the chart
+        for index_pair, spider_plot_values in spider_plot_values_dict.items():
+            series = QLineSeries()
+
+            # Append points for each label
+            for angle, label in zip(angles, labels):
+                series.append(angle, spider_plot_values[label])
+
+            # Close the loop by connecting the last point back to the first
+            first_point_y = series.points()[0].y()
+            series.append(360, first_point_y)
+
+            # Retrieve the filenames for the series name
+            file0_data = self._dataselectiongroupbox.file_comboboxes[index_pair[0]].currentData()
+            file1_data = self._dataselectiongroupbox.file_comboboxes[index_pair[1]].currentData()
+
+            # Update the chart title if there's only one comparison
+            if len(spider_plot_values_dict) == 1:
+                self.update_spider_chart_title(file0_data, file1_data)
+
+            series.setName(f'{file0_data} vs {file1_data}')
+            self.spider_chart.addSeries(series)
+            series.attachAxis(angular_axis)
+            series.attachAxis(radial_axis)
 
         return True
 
