@@ -240,16 +240,16 @@ class JSDController(QObject):
         """
         # file_cbox_index = 0
         spider_plot_date = None
-        sheet_list = []
+        sheet_dict = {}
         for i in range(len(self.jsd_view.dataselectiongroupbox.file_comboboxes)):
             if self.jsd_view.dataselectiongroupbox.file_checkboxes[i].isChecked():
-                sheet_list.append(self.get_file_sheets_from_combobox(i))
+                sheet_dict[i] = self.get_file_sheets_from_combobox(i)
 
         spider_plot_values = self.get_spider_plot_values(spider_plot_date)
         self.jsd_view.update_spider_chart(spider_plot_values)
 
         try:
-            self.jsd_view.update_pie_chart_dock(sheet_list)
+            self.jsd_view.update_pie_chart_dock(sheet_dict)
         except Exception:
             return False
 
