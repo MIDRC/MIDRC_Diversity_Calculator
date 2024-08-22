@@ -12,9 +12,10 @@
 #      See the License for the specific language governing permissions and
 #      limitations under the License.
 #
-import copy
 from typing import Type, Union, List, Tuple
-import math, io, csv
+import math
+import io
+import csv
 from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, Signal,
                             QFileInfo, QEvent, QDate)
 from PySide6.QtGui import QPainter, QAction, QKeySequence, QGuiApplication
@@ -331,8 +332,8 @@ class JsdWindow(QMainWindow):
 
         # Add the 'View' menu
         view_menu: QMenu = menu_bar.addMenu("View")
-        self.dock_widget_menu: QMenu = view_menu.addMenu("Dock Widgets")
-        self.dock_widget_menu.aboutToShow.connect(self.populate_dock_widget_menu)
+        dock_widget_menu: QMenu = view_menu.addMenu("Dock Widgets")
+        dock_widget_menu.aboutToShow.connect(partial(self.populate_dock_widget_menu, dock_widget_menu))
 
         # Add the actions to the 'Settings' menu
         settings_menu.addAction(chart_animation_setting)
@@ -341,21 +342,21 @@ class JsdWindow(QMainWindow):
         # Return the menu bar
         return menu_bar
 
-    def populate_dock_widget_menu(self) -> None:
+    def populate_dock_widget_menu(self, dock_widget_menu: QMenu) -> None:
         """
         Clear the dock widget menu and populate it with actions for each dock widget.
 
         This method clears the existing menu items in the dock widget menu and creates a new action for each dock widget found.
         Each action corresponds to a dock widget and allows the user to toggle the visibility of the dock widget.
         """
-        self.dock_widget_menu.clear()
+        dock_widget_menu.clear()
         dock_widgets: Iterable[QDockWidget] = self.findChildren(QDockWidget)
         for dock in dock_widgets:
-            action: QAction = QAction(dock.windowTitle(), self.dock_widget_menu)
+            action: QAction = QAction(dock.windowTitle(), dock_widget_menu)
             action.setCheckable(True)
             action.setChecked(dock.isVisible())
             action.toggled.connect(lambda checked, d=dock: d.setVisible(checked))
-            self.dock_widget_menu.addAction(action)
+            dock_widget_menu.addAction(action)
 
     @staticmethod
     def create_table_dock_widget(table_view: QTableView, title: str) -> QDockWidget:
@@ -449,103 +450,137 @@ class JsdWindow(QMainWindow):
         self.spider_chart_vbox.addWidget(spider_chart_view)
         return spider_chart_view
 
-    def update_pie_chart_dock(self, sheet_list):
+    def update_pie_chart_dock(self, sheet_dict):
         """
-        Update the pie chart dock with the given sheet list.
+        Update the pie chart dock with the given sheet dict.
 
         Parameters:
-        - sheet_list (list): A list of sheets.
+        - sheet_dict (dict): A dictionary of index keys and sheets.
 
         Returns:
         - None
-
-        Raises:
-        - None
         """
-        # First, get rid of the old stuff just to be safe
+
+        # Clear any existing charts in the layout
         clear_layout(self.pie_chart_layout)
 
-        categories = [self.dataselectiongroupbox.category_combobox.itemText(i) for i in
-                      range(self.dataselectiongroupbox.category_combobox.count())]
-
-        # Set the timepoint to the last timepoint in the series for now
+        # Retrieve categories and timepoint
+        dataselectiongroupbox = self.dataselectiongroupbox
+        categories = [dataselectiongroupbox.category_combobox.itemText(i)
+                      for i in range(dataselectiongroupbox.category_combobox.count())]
         timepoint = -1
 
-        for i, sheets in enumerate(sheet_list):
+        file_comboboxes = dataselectiongroupbox.file_comboboxes
+
+        max_label_width = 0
+        for index in sheet_dict:
+            label_text = file_comboboxes[index].currentText() + ':'
+            label = QLabel(label_text)
+            label_width = label.sizeHint().width()
+            if label_width > max_label_width:
+                max_label_width = label_width
+
+        for index, sheets in sheet_dict.items():
             row_layout = QHBoxLayout()
 
-            label = QLabel(self.dataselectiongroupbox.file_comboboxes[i].currentText() + ':')
+            # Create the label
+            label_text = file_comboboxes[index].currentText() + ':'
+            label = QLabel(label_text)
+            label.setFixedWidth(max_label_width)
             row_layout.addWidget(label)
 
-            for j, category in enumerate(categories):
-                chart = QChart()
-                chart_view = GrabbableChartView(chart, save_file_prefix="diversity_pie_chart")
-                chart.setTitle(category)
-                chart.setMinimumSize(300, 240)
-
+            for category in categories:
                 df = sheets[category].df
                 cols_to_use = sheets[category].data_columns
-                series = QPieSeries(chart)
 
+                # Filter out columns with zero values and create the pie series
+                series = QPieSeries()
                 for col in cols_to_use:
-                    if df[col].iloc[timepoint] > 0:
-                        series.append(col, df[col].iloc[timepoint])
+                    value = df[col].iloc[timepoint]
+                    if value > 0:
+                        series.append(col, value)
 
-                chart.addSeries(series)
-                chart.legend().setAlignment(Qt.AlignRight)
-
-                row_layout.addWidget(chart_view, stretch=1)
+                # Only create and add the chart if there are valid series items
+                if not series.isEmpty():
+                    chart = QChart()
+                    chart_view = GrabbableChartView(chart, save_file_prefix="diversity_pie_chart")
+                    chart.setTitle(category)
+                    chart.setMinimumSize(300, 240)
+                    chart.addSeries(series)
+                    chart.legend().setAlignment(Qt.AlignRight)
+                    row_layout.addWidget(chart_view, stretch=1)
 
             self.pie_chart_layout.addLayout(row_layout, stretch=1)
 
-    def update_spider_chart(self, spider_plot_values):
+    def update_spider_chart(self, spider_plot_values_dict):
         """
         Update the spider chart with new values.
 
         Parameters:
-        - spider_plot_values (list): A list of values to update the spider chart.
+        - spider_plot_values_dict (dict): A dictionary of dictionaries where each dictionary contains
+          the values for one series on the spider chart.
 
         Returns:
-        - None
-
-        Raises:
-        - None
+        - bool: True if the chart was updated, False if there was no data to update.
         """
-        # TODO: This should loop over all the file combo boxes, similar to how the main plot is generated
-        # TODO: All of them on one spider plot for comparison, or each their own? Also need data over time.
-        file1_data = self._dataselectiongroupbox.file_comboboxes[0].currentData()
-        file2_data = self._dataselectiongroupbox.file_comboboxes[1].currentData()
 
+        if not spider_plot_values_dict:
+            return False  # Early exit if there's no data
+
+        # Clear the existing series and axes from the spider chart
         self.spider_chart.removeAllSeries()
         for axis in self.spider_chart.axes():
             self.spider_chart.removeAxis(axis)
 
-        self.update_spider_chart_title(file1_data, file2_data)
+        # Extract the labels and calculate the angular axis parameters
+        first_series_values = next(iter(spider_plot_values_dict.values()))
+        labels = list(first_series_values.keys())
+        step_size = 360 / len(labels)
+        angles = [step_size * i for i in range(len(labels))]
 
-        labels = spider_plot_values.keys()
-        series = QLineSeries()
+        # Set up the angular axis
         angular_axis = QCategoryAxis()
         angular_axis.setRange(0, 360)
         angular_axis.setLabelsPosition(QCategoryAxis.AxisLabelsPositionOnValue)
-
-        step_size = 360 / len(labels)
-        for index, label in enumerate(labels):
-            angle = step_size * index
-            series.append(angle, spider_plot_values[label])
+        for angle, label in zip(angles, labels):
             angular_axis.append(label, angle)
-
-        series.append(360, series.points()[0].y())
-        series.setName(f'{file1_data} vs {file2_data}')
-
-        self.spider_chart.addSeries(series)
         self.spider_chart.addAxis(angular_axis, QPolarChart.PolarOrientationAngular)
-        series.attachAxis(angular_axis)
 
+        # Calculate the range for the radial axis
+        max_value = max(
+            value for series_values in spider_plot_values_dict.values() for value in series_values.values()
+        )
         radial_axis = QValueAxis()
-        radial_axis.setRange(0, max(point.y() for point in series.points()))
+        radial_axis.setRange(0, max_value)
         radial_axis.setLabelFormat('%.2f')
         self.spider_chart.addAxis(radial_axis, QPolarChart.PolarOrientationRadial)
-        series.attachAxis(radial_axis)
+
+        self.spider_chart.setTitle("JSD per category")
+
+        # Create and add each series to the chart
+        for index_pair, spider_plot_values in spider_plot_values_dict.items():
+            series = QLineSeries()
+
+            # Append points for each label
+            for angle, label in zip(angles, labels):
+                series.append(angle, spider_plot_values[label])
+
+            # Close the loop by connecting the last point back to the first
+            first_point_y = series.points()[0].y()
+            series.append(360, first_point_y)
+
+            # Retrieve the filenames for the series name
+            file0_data = self._dataselectiongroupbox.file_comboboxes[index_pair[0]].currentData()
+            file1_data = self._dataselectiongroupbox.file_comboboxes[index_pair[1]].currentData()
+
+            # Update the chart title if there's only one comparison
+            if len(spider_plot_values_dict) == 1:
+                self.update_spider_chart_title(file0_data, file1_data)
+
+            series.setName(f'{file0_data} vs {file1_data}')
+            self.spider_chart.addSeries(series)
+            series.attachAxis(angular_axis)
+            series.attachAxis(radial_axis)
 
         return True
 
@@ -570,9 +605,9 @@ class JsdWindow(QMainWindow):
         Returns:
         - None
 
-        This method updates the area chart with new data provided in the sheet_list.
+        This method updates the area chart with new data provided in the sheet_dict.
         The area chart displays the data in a filled area format, allowing for easy visualization of
-        trends and patterns. The sheet_list parameter should be a list of sheets, where each sheet contains the
+        trends and patterns. The sheet_dict values should be a list of sheets, where each sheet contains the
         necessary data for the chart. After updating the chart, the method does not return any value.
         """
         # Get the selected category
@@ -581,10 +616,10 @@ class JsdWindow(QMainWindow):
         # Clear any existing charts in the layout
         clear_layout(self.area_chart_widget.layout())
 
-        for i, sheets in sheet_dict.items():
+        for index, sheets in sheet_dict.items():
             # Create a new QChart object for each sheet
             area_chart = QChart()
-            filename = self.dataselectiongroupbox.file_comboboxes[i].currentData()
+            filename = self.dataselectiongroupbox.file_comboboxes[index].currentData()
             area_chart.setTitle(f'{filename} {category} distribution over time')
 
             # Extract data from the sheet
@@ -606,7 +641,7 @@ class JsdWindow(QMainWindow):
                     continue
 
                 # Generate data points for the series
-                points = [QPointF(dates[j].toMSecsSinceEpoch(), cumulative_percents.iloc[j][col]) for j in
+                points = [QPointF(dates[i].toMSecsSinceEpoch(), cumulative_percents.iloc[i][col]) for i in
                           range(len(dates))]
                 if len(dates) == 1:
                     points.append(QPointF(dates[0].toMSecsSinceEpoch() + 1, cumulative_percents.iloc[0][col]))
@@ -858,23 +893,26 @@ class JsdChart (QChart):
 
 def clear_layout(layout):
     """
-    Clears all widgets and layouts from the given layout.
+    Recursively clears all widgets and layouts from the given layout.
 
     Parameters:
         layout (QLayout): The layout to be cleared.
 
     Returns:
-        None
-
+        bool: True if the layout was cleared, False if layout was None.
     """
-    if layout is not None:
-        while layout.count():
-            child = layout.takeAt(0)
-            if child.widget() is not None:
-                child.widget().deleteLater()
-            elif child.layout() is not None:
-                clear_layout(child.layout())
-            layout.removeItem(child)
+    if layout is None:
+        return False
+
+    while layout.count():
+        child = layout.takeAt(0)
+        if child.widget() is not None:
+            child.widget().deleteLater()
+        elif child.layout() is not None:
+            clear_layout(child.layout())
+        layout.removeItem(child)
+
+    return True
 
 
 class FileOptionsDialog (QDialog):

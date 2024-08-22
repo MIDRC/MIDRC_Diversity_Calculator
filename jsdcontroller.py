@@ -176,52 +176,47 @@ class JSDController(QObject):
 
     def category_changed(self):
         """
-        Parses the dates from all files for the current category, and updates the data in the model appropriately.
+        Parses the dates from all files for the current category and updates the data in the model appropriately.
 
         Returns:
-            None
-
-        Raises:
             None
         """
         jsd_view = self.jsd_view
         jsd_model = self.jsd_model
         dataselectiongroupbox = jsd_view.dataselectiongroupbox
-        cat = dataselectiongroupbox.category_combobox.currentText()
+        category = dataselectiongroupbox.category_combobox.currentText()
 
         model_input_data = []
         column_infos = []
 
-        column_info = {'category': cat}
+        for i, cbox1 in enumerate(dataselectiongroupbox.file_comboboxes[:-1]):
+            file1 = cbox1.currentData()
+            df1 = jsd_model.data_sources[file1].sheets[category].df
+            cols_to_use = self.get_cols_to_use_for_jsd_calc(cbox1, category)
 
-        for i, cbox1 in enumerate(dataselectiongroupbox.file_comboboxes):
-            column_info['index1'] = i
-            column_info['file1'] = cbox1.currentData()
-            df1 = jsd_model.data_sources[column_info['file1']].sheets[cat].df
-            cols_to_use = self.get_cols_to_use_for_jsd_calc(cbox1, cat)
+            for j, cbox2 in enumerate(dataselectiongroupbox.file_comboboxes[i + 1:], start=i + 1):
+                file2 = cbox2.currentData()
+                df2 = jsd_model.data_sources[file2].sheets[category].df
 
-            for j, cbox2 in enumerate(dataselectiongroupbox.file_comboboxes[i+1:], start=i+1):
-                column_info['index2'] = j
-                column_info['file2'] = cbox2.currentData()
-                df2 = jsd_model.data_sources[column_info['file2']].sheets[cat].df
                 first_date = max(df1.date.values[0], df2.date.values[0])
-                date_list = np.concatenate((df1.date.values, df2.date.values))
-                date_list = sorted(set(date_list))
+                date_list = sorted(set(np.concatenate((df1.date.values, df2.date.values))))
                 date_list = remove_elements_less_than_from_sorted_list(date_list, first_date)
 
-                # input_data = [[pandas_date_to_qdate(calcdate),
-                #                float(calculate_jsd(df1, df2, cols_to_use, calcdate))] for calcdate in date_list]
-                # jsd_model.input_data.extend(input_data)
-
                 input_data = [float(calculate_jsd(df1, df2, cols_to_use, calc_date)) for calc_date in date_list]
+
                 model_input_data.append([pandas_date_to_qdate(calc_date) for calc_date in date_list])
                 model_input_data.append(input_data)
-                # jsd_model.column_infos.append(copy.deepcopy(column_info)) # We shouldn't need to recursively copy
-                column_infos.append(column_info.copy())
+
+                column_info = {
+                    'category': category,
+                    'index1': i,
+                    'file1': file1,
+                    'index2': j,
+                    'file2': file2
+                }
+                column_infos.append(column_info)
 
         jsd_model.update_input_data(model_input_data, column_infos)
-        # print(len(jsd_model.input_data))
-        # print([len(data) for data in jsd_model.input_data])
 
         self.update_category_plots()
         jsd_model.layoutChanged.emit()
@@ -240,16 +235,16 @@ class JSDController(QObject):
         """
         # file_cbox_index = 0
         spider_plot_date = None
-        sheet_list = []
+        sheet_dict = {}
         for i in range(len(self.jsd_view.dataselectiongroupbox.file_comboboxes)):
             if self.jsd_view.dataselectiongroupbox.file_checkboxes[i].isChecked():
-                sheet_list.append(self.get_file_sheets_from_combobox(i))
+                sheet_dict[i] = self.get_file_sheets_from_combobox(i)
 
         spider_plot_values = self.get_spider_plot_values(spider_plot_date)
         self.jsd_view.update_spider_chart(spider_plot_values)
 
         try:
-            self.jsd_view.update_pie_chart_dock(sheet_list)
+            self.jsd_view.update_pie_chart_dock(sheet_dict)
         except Exception:
             return False
 
@@ -301,7 +296,7 @@ class JSDController(QObject):
 
         return cols_to_use
 
-    def get_spider_plot_values(self, calc_date):
+    def get_spider_plot_values(self, calc_date=None):
         """
         Compiles a dictionary of categories and JSD values for a given date.
 
@@ -309,27 +304,54 @@ class JSDController(QObject):
             calc_date (Optional[datetime.date]): The date to use for JSD calculation. Default is None.
 
         Returns:
-            A dictionary of categories and JSD values for a given date.
+            dict: A dictionary of categories and JSD values for a given date.
         """
         if calc_date is None:
             calc_date = np.datetime64('today')
 
         jsd_view = self.jsd_view
         dataselectiongroupbox = jsd_view.dataselectiongroupbox
-        categories = [dataselectiongroupbox.category_combobox.itemText(i) for i in
-                      range(dataselectiongroupbox.category_combobox.count())]
+        categories = [dataselectiongroupbox.category_combobox.itemText(i)
+                      for i in range(dataselectiongroupbox.category_combobox.count())]
 
-        cbox0 = dataselectiongroupbox.file_comboboxes[0]
-        sheets0 = self.jsd_model.data_sources[cbox0.currentData()].sheets
-        cbox1 = dataselectiongroupbox.file_comboboxes[1]
-        sheets1 = self.jsd_model.data_sources[cbox1.currentData()].sheets
+        # Determine indexes to use based on checked boxes or default to all
+        indexes_to_use = [i for i, checkbox in enumerate(dataselectiongroupbox.file_checkboxes) if checkbox.isChecked()]
+        if not indexes_to_use:
+            indexes_to_use = list(range(len(dataselectiongroupbox.file_comboboxes)))
+        if len(indexes_to_use) == 1:
+            indexes_to_use = indexes_to_use * 2  # Duplicate the single index to ensure comparison
 
-        jsd_values = {category: calculate_jsd(sheets0[category].df,
-                                              sheets1[category].df,
-                                              self.get_cols_to_use_for_jsd_calc(cbox0, category),
-                                              calc_date) for category in categories}
+        jsd_dict = {}
 
-        return jsd_values
+        # Loop over the selected indexes and calculate JSD values
+        for i, index1 in enumerate(indexes_to_use[:-1]):
+            for index2 in indexes_to_use[i + 1:]:
+                # Ensure we're not comparing the same file with itself
+                if len(indexes_to_use) == 2 and index1 == index2:
+                    index2_candidates = [idx for idx in range(len(dataselectiongroupbox.file_comboboxes)) if
+                                         idx != index1]
+                else:
+                    index2_candidates = [index2]
+
+                for idx2 in index2_candidates:
+                    cbox0 = dataselectiongroupbox.file_comboboxes[index1]
+                    cbox1 = dataselectiongroupbox.file_comboboxes[idx2]
+
+                    sheets0 = self.jsd_model.data_sources[cbox0.currentData()].sheets
+                    sheets1 = self.jsd_model.data_sources[cbox1.currentData()].sheets
+
+                    jsd_values = {
+                        category: calculate_jsd(
+                            sheets0[category].df,
+                            sheets1[category].df,
+                            self.get_cols_to_use_for_jsd_calc(cbox0, category),
+                            calc_date
+                        )
+                        for category in categories
+                    }
+                    jsd_dict[(index1, idx2)] = jsd_values
+
+        return jsd_dict
 
 
 def calculate_jsd(df1, df2, cols_to_use, calc_date):

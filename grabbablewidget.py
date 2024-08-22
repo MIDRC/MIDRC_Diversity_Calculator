@@ -298,6 +298,19 @@ class SaveWidgetAsImageDialog(QDialog):
         self._restore_widget()
         self.reject()
 
+    def closeEvent(self, event):
+        """
+        Handle the event when the dialog is closed.
+
+        Parameters:
+            event (QCloseEvent): The close event triggered when the dialog is closed.
+        """
+        # Call the cancel_save method when the dialog is closed
+        self.cancel_save()
+
+        # Accept the event to allow the dialog to close
+        event.accept()
+
     def save_image(self, _, ratio: int = 2):
         """
         Save the image of the widget with a specified ratio.
