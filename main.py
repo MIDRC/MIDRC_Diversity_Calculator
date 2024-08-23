@@ -60,14 +60,14 @@ class SplashScreen(QSplashScreen):
             painter.drawText(pixmap.rect(), Qt.AlignCenter, SPLASH_SCREEN_MESSAGE)
         return pixmap
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self) -> None:
         """
         Initialize the object.
 
         Args:
-            parent: The parent widget.
+            None
         """
-        super().__init__(parent)
+        super().__init__()
         pixmap = self._create_pixmap()
         self.setPixmap(pixmap)
 

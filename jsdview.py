@@ -12,12 +12,13 @@
 #      See the License for the specific language governing permissions and
 #      limitations under the License.
 #
-from typing import Type, Union, List, Tuple
+from typing import Type, Union, List, Tuple, Iterable
 import math
 import io
 import csv
+from functools import partial
 from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, Signal,
-                            QFileInfo, QEvent, QDate)
+                            QFileInfo, QEvent, QDate, QObject)
 from PySide6.QtGui import QPainter, QAction, QKeySequence, QGuiApplication
 from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu, QFileDialog,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
@@ -27,8 +28,6 @@ from PySide6.QtCharts import (QChart, QLineSeries, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
 from grabbablewidget import GrabbableChartView
-from functools import partial
-from typing import Iterable
 
 
 class JsdDataSelectionGroupBox(QGroupBox):
@@ -269,7 +268,6 @@ class JsdWindow(QMainWindow):
         self.area_chart_widget = QWidget()
         # self.area_chart_layout = QVBoxLayout()
         self.area_chart_widget.setLayout(QVBoxLayout())
-        self.area_charts = {}
         self.spider_chart_vbox = QSplitter(Qt.Vertical)
         self.spider_chart_dock_widget = self.create_spider_chart_dock_widget(self.spider_chart_vbox,
                                                                          'Diversity Charts - ' + JsdWindow.WINDOW_TITLE)
@@ -346,7 +344,7 @@ class JsdWindow(QMainWindow):
         """
         Clear the dock widget menu and populate it with actions for each dock widget.
 
-        This method clears the existing menu items in the dock widget menu and creates a new action for each dock widget found.
+        This method clears the existing menu items in the menu and creates a new action for each dock widget found.
         Each action corresponds to a dock widget and allows the user to toggle the visibility of the dock widget.
         """
         dock_widget_menu.clear()
@@ -477,8 +475,7 @@ class JsdWindow(QMainWindow):
             label_text = file_comboboxes[index].currentText() + ':'
             label = QLabel(label_text)
             label_width = label.sizeHint().width()
-            if label_width > max_label_width:
-                max_label_width = label_width
+            max_label_width = max(max_label_width, label_width)
 
         for index, sheets in sheet_dict.items():
             row_layout = QHBoxLayout()
@@ -980,7 +977,7 @@ class CopyableTableView(QTableView):
         super().__init__()
         self.installEventFilter(self)
 
-    def eventFilter(self, source, event):
+    def eventFilter(self, source: QObject, event):
         """
         Filters and handles key press events.
 

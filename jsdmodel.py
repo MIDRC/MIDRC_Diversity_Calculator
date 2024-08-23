@@ -13,10 +13,10 @@
 #      limitations under the License.
 #
 
-from ExcelLayout import DataSource
+from typing import Optional, Any, List
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, Signal
 from PySide6.QtGui import QColor
-from typing import Optional, Any, List
+from ExcelLayout import DataSource
 
 
 class JSDTableModel(QAbstractTableModel):
@@ -151,12 +151,12 @@ class JSDTableModel(QAbstractTableModel):
         for c in range(self.columnCount()):
             self.max_row_count = max(self.max_row_count, len(self._input_data[c]))
 
-    def columnCount(self, parent: QModelIndex = None) -> int:
+    def columnCount(self, _parent: QModelIndex = None) -> int:
         """
         Returns the number of columns in the model.
 
         Args:
-            parent (QModelIndex): The parent index. Defaults to QModelIndex().
+            _parent (QModelIndex): The parent index. Defaults to QModelIndex(). This is unused.
 
         Returns:
             int: The number of columns in the model.
@@ -164,7 +164,7 @@ class JSDTableModel(QAbstractTableModel):
         # return len(self.input_data[parent.row()])
         return len(self._input_data)
 
-    def headerData(self, section: int, orientation: int, role: int, *args, **kwargs) -> Any:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole, *args, **kwargs) -> Any:
         """
         Returns the header data for the specified section, orientation, and role.
 

@@ -53,7 +53,7 @@ There is a requirements.txt file available to install requirements
 #### Configure yaml
 First, configure your own jsdconfig.yaml file to select which data to load by default. There is a jsdconfig-example.yaml file provided that may be copied over or used as a template for your own config file.
 * The filename needs to be specified, and a human-readable name should be provided for use in the plots and figures. 
-* Please see the ***Generating custom excel files*** section for additional information.
+* Please see the ***Generating custom Excel files*** section for additional information.
 * On your first run, you may use ```cp jsdconfig-example.yaml jsdconfig.yaml``` to load the MIDRC data.
 
 #### Run application
@@ -70,7 +70,7 @@ To start the application, run `python main.py`
 - **Each attribute should have its own sheet** which will be automatically parsed by the application.
 - Column names within each sheet are parsed and compared between files
   - Where there is a matching column name within a worksheet of the same name, the JSD will be calculated using those values.
-  - ***A Date column is expected***, and it should be sorted. Please see how the census data is loaded using the example config file if your data does not have multiple dates and you do not have a date column.
+  - ***A Date column is expected***, and it should be sorted. Please see how the census data is loaded using the example config file if your data does not have multiple dates, and you do not have a date column.
 - The list of attributes provided in the GUI should be a list where worksheets with an identical name exist in both files. If it is not, please check your spelling
 - The ```remove column name text``` config parameter is due to how the MIDRC data is generated. There is a ```(CUSUM)``` suffix that needs to be removed to compare it to CDC and Census data.
 

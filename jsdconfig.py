@@ -32,7 +32,7 @@ class JSDConfig:
         __init__(self, filename='jsdconfig.yaml'): Initializes a new instance of the JSDConfig class.
     """
     def __init__(self, filename='jsdconfig.yaml'):
-        stream = open(filename, 'r')
-        self.data = load(stream, Loader=Loader)
+        with open(filename, 'r', encoding='utf-8') as stream:
+            self.data = load(stream, Loader=Loader)
 
         # print(dump(self.data))

@@ -37,7 +37,7 @@ class JSDController(QObject):
     """
     modelChanged = Signal()
     fileChangedSignal = Signal()
-    
+
     def __init__(self, jsd_view, jsd_model, config):
         """
         Initialize the JSDController.
@@ -168,8 +168,8 @@ class JSDController(QObject):
         """
         try:
             current_data = self.jsd_view.dataselectiongroupbox.file_comboboxes[index].currentData()
-        except IndexError:
-            raise IndexError("Index out of range")
+        except IndexError as exc:
+            raise IndexError("Index out of range") from exc
 
         sheets = self.jsd_model.data_sources[current_data].sheets
         return sheets
@@ -245,7 +245,7 @@ class JSDController(QObject):
 
         try:
             self.jsd_view.update_pie_chart_dock(sheet_dict)
-        except Exception:
+        except (ValueError, KeyError, TypeError):
             return False
 
         return True
@@ -262,13 +262,13 @@ class JSDController(QObject):
         sheet_dict = {}
         for i in range(len(self.jsd_view.dataselectiongroupbox.file_comboboxes)):
             if self.jsd_view.dataselectiongroupbox.file_checkboxes[i].isChecked():
-                sheet_dict[i] = (self.get_file_sheets_from_combobox(i))
+                sheet_dict[i] = self.get_file_sheets_from_combobox(i)
 
         try:
             self.jsd_view.update_jsd_timeline_plot(self.jsd_model)
             self.jsd_view.update_area_chart(sheet_dict)
             return True
-        except Exception as e:
+        except (ValueError, KeyError, TypeError) as e:
             print(f"An error occurred during the update of category plots: {e}")
             return False
 
