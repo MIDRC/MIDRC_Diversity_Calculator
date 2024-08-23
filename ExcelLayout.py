@@ -99,7 +99,7 @@ class DataSheet:
         create_custom_age_columns(self, age_ranges): Scans the column headers in the age category to build consistent
                                                      age columns.
     """
-    def __init__(self, sheet_name, data_source, custom_age_ranges, is_excel=False, file=None):
+    def __init__(self, sheet_name, data_source, custom_age_ranges, is_excel=False, file: pd.ExcelFile = None):
         """
         Initialize the DataSheet object.
 
@@ -116,8 +116,8 @@ class DataSheet:
         self.columns = {}
         self.data_columns = []
 
-        if is_excel:
-            self.df = pd.read_excel(file, sheet_name, usecols=lambda x: '(%)' not in str(x), engine='openpyxl')
+        if is_excel and file is not None:
+            self.df = file.parse(sheet_name=sheet_name, usecols=lambda x: '(%)' not in str(x), engine='openpyxl')
             self.df.columns = self.df.columns.astype(str)
             cols = [col for col in self.df.columns]
 

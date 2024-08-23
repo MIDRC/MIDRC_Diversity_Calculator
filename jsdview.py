@@ -17,7 +17,7 @@ import math
 import io
 import csv
 from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, Signal,
-                            QFileInfo, QEvent, QDate)
+                            QFileInfo, QEvent, QDate, QObject)
 from PySide6.QtGui import QPainter, QAction, QKeySequence, QGuiApplication
 from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu, QFileDialog,
                                QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
@@ -346,7 +346,7 @@ class JsdWindow(QMainWindow):
         """
         Clear the dock widget menu and populate it with actions for each dock widget.
 
-        This method clears the existing menu items in the dock widget menu and creates a new action for each dock widget found.
+        This method clears the existing menu items in the menu and creates a new action for each dock widget found.
         Each action corresponds to a dock widget and allows the user to toggle the visibility of the dock widget.
         """
         dock_widget_menu.clear()
@@ -980,7 +980,7 @@ class CopyableTableView(QTableView):
         super().__init__()
         self.installEventFilter(self)
 
-    def eventFilter(self, source, event):
+    def eventFilter(self, source: QObject, event):
         """
         Filters and handles key press events.
 

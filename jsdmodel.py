@@ -164,7 +164,7 @@ class JSDTableModel(QAbstractTableModel):
         # return len(self.input_data[parent.row()])
         return len(self._input_data)
 
-    def headerData(self, section: int, orientation: int, role: int, *args, **kwargs) -> Any:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole, *args, **kwargs) -> Any:
         """
         Returns the header data for the specified section, orientation, and role.
 

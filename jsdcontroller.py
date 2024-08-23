@@ -245,7 +245,7 @@ class JSDController(QObject):
 
         try:
             self.jsd_view.update_pie_chart_dock(sheet_dict)
-        except Exception:
+        except (ValueError, KeyError, TypeError):
             return False
 
         return True

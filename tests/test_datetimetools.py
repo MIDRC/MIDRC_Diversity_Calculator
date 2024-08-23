@@ -104,7 +104,6 @@ class TestConvertDateToMilliseconds:
         assert result == 253370764800000
 
 
-
 class TestPandasDateToQdate:
 
     #  Should convert a pandas Timestamp object to a QDate object with the same year, month, and day
