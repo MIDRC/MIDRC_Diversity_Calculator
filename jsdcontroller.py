@@ -37,6 +37,7 @@ class JSDController(QObject):
     """
     modelChanged = Signal()
     fileChangedSignal = Signal()
+    NOT_REPORTED_COLUMN_NAME = 'Not reported'
 
     def __init__(self, jsd_view, jsd_model, config):
         """
@@ -285,14 +286,12 @@ class JSDController(QObject):
         Returns:
             List of columns in the current sheet category
         """
-        NOT_REPORTED = 'Not reported'
-
         cols_to_use = self.jsd_model.data_sources[cbox.currentData()].sheets[category].data_columns
 
         custom_age_ranges = self._config.data.get('custom age ranges', None)
         if custom_age_ranges and category in custom_age_ranges:
             cols_to_use = [f'{age_range[0]}-{age_range[1]} Custom' for
-                           age_range in custom_age_ranges[category]] + [NOT_REPORTED]
+                           age_range in custom_age_ranges[category]] + [JSDController.NOT_REPORTED_COLUMN_NAME]
 
         return cols_to_use
 
