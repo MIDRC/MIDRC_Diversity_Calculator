@@ -32,6 +32,14 @@ class SplashScreen(QSplashScreen):
     It provides a static method _create_pixmap() to create a pixmap with a centered splash screen message.
     The __init__() method initializes the object and sets the pixmap.
     """
+    SPLASH_WIDTH = 800
+    SPLASH_HEIGHT = 600
+    FONT_FAMILY = 'Arial'
+    FONT_SIZE = 36
+    SPLASH_SCREEN_MESSAGE = 'MIDRC Diversity Calculator\n' \
+                            '\n' \
+                            'Loading Excel files, please wait...'
+    BACKGROUND_COLOR = QColor(Qt.white)
     @staticmethod
     def _create_pixmap():
         """
@@ -42,30 +50,19 @@ class SplashScreen(QSplashScreen):
         Returns:
             QPixmap: The created QPixmap object.
         """
-        SPLASH_WIDTH = 800
-        SPLASH_HEIGHT = 600
-        FONT_FAMILY = 'Arial'
-        FONT_SIZE = 36
-        SPLASH_SCREEN_MESSAGE = 'MIDRC Diversity Calculator\n' \
-                                '\n' \
-                                'Loading Excel files, please wait...'
-        BACKGROUND_COLOR = QColor(Qt.white)
 
-        pixmap = QPixmap(SPLASH_WIDTH, SPLASH_HEIGHT)
-        font = QFont(FONT_FAMILY, pointSize=FONT_SIZE)
+        pixmap = QPixmap(SplashScreen.SPLASH_WIDTH, SplashScreen.SPLASH_HEIGHT)
+        font = QFont(SplashScreen.FONT_FAMILY, pointSize=SplashScreen.FONT_SIZE)
         with QPainter(pixmap) as painter:
             painter.setRenderHint(QPainter.Antialiasing)
-            painter.fillRect(pixmap.rect(), BACKGROUND_COLOR)
+            painter.fillRect(pixmap.rect(), SplashScreen.BACKGROUND_COLOR)
             painter.setFont(font)
-            painter.drawText(pixmap.rect(), Qt.AlignCenter, SPLASH_SCREEN_MESSAGE)
+            painter.drawText(pixmap.rect(), Qt.AlignCenter, SplashScreen.SPLASH_SCREEN_MESSAGE)
         return pixmap
 
     def __init__(self) -> None:
         """
         Initialize the object.
-
-        Args:
-            None
         """
         super().__init__()
         pixmap = self._create_pixmap()
