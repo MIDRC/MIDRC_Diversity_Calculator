@@ -1,8 +1,8 @@
 from PySide6.QtCore import QDateTime, QDate
-from datetimetools import convert_date_to_milliseconds, pandas_date_to_qdate, numpy_datetime64_to_qdate
 import numpy as np
 import pandas as pd
 import pytest
+from datetimetools import convert_date_to_milliseconds, pandas_date_to_qdate, numpy_datetime64_to_qdate
 
 
 class TestConvertDateToMilliseconds:
@@ -11,10 +11,10 @@ class TestConvertDateToMilliseconds:
     def test_valid_date_input(self):
         # Arrange
         date = QDate(2022, 1, 1)
-    
+
         # Act
         result = convert_date_to_milliseconds(date)
-    
+
         # Assert
         assert isinstance(result, int)
         assert result == 1640995200000
@@ -23,10 +23,10 @@ class TestConvertDateToMilliseconds:
     def test_earliest_valid_date_input(self):
         # Arrange
         date = QDate(1, 1, 1)
-    
+
         # Act
         result = convert_date_to_milliseconds(date)
-    
+
         # Assert
         assert isinstance(result, int)
         assert result == -62135596800000
@@ -35,10 +35,10 @@ class TestConvertDateToMilliseconds:
     def test_latest_valid_date_input(self):
         # Arrange
         date = QDate(9999, 12, 31)
-    
+
         # Act
         result = convert_date_to_milliseconds(date)
-    
+
         # Assert
         assert isinstance(result, int)
         assert result == 253402214400000
@@ -47,10 +47,10 @@ class TestConvertDateToMilliseconds:
     def test_date_input_with_time_component(self):
         # Arrange
         date = QDateTime(2022, 1, 1, 12, 30, 45).date()
-    
+
         # Act
         result = convert_date_to_milliseconds(date)
-    
+
         # Assert
         assert isinstance(result, int)
         assert result == 1640995200000
@@ -59,7 +59,7 @@ class TestConvertDateToMilliseconds:
     def test_invalid_date_input(self):
         # Arrange
         date = "2022-01-01"
-    
+
         # Act and Assert
         with pytest.raises(TypeError):
             convert_date_to_milliseconds(date)
@@ -69,10 +69,10 @@ class TestConvertDateToMilliseconds:
     def test_earliest_possible_date_input(self):
         # Arrange
         date = QDate(1, 1, 1)
-    
+
         # Act
         result = convert_date_to_milliseconds(date)
-    
+
         # Assert
         assert isinstance(result, int)
         assert result == -62135596800000
@@ -82,10 +82,10 @@ class TestConvertDateToMilliseconds:
     def test_latest_possible_date_input(self):
         # Arrange
         date = QDate(9999, 12, 31)
-    
+
         # Act
         result = convert_date_to_milliseconds(date)
-    
+
         # Assert
         assert isinstance(result, int)
         assert result == 253402214400000
@@ -95,10 +95,10 @@ class TestConvertDateToMilliseconds:
     def test_date_input_with_maximum_year(self):
         # Arrange
         date = QDate(9999, 1, 1)
-    
+
         # Act
         result = convert_date_to_milliseconds(date)
-    
+
         # Assert
         assert isinstance(result, int)
         assert result == 253370764800000

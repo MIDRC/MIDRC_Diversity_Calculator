@@ -26,16 +26,16 @@ def excelparse(filename, sheet_name):
     """
 
     # This opens the file and creates a list of sheet names, along with necessary readers
-    # TODO: this should probably be separate in case we want multiple sheets
     xls = pd.ExcelFile(filename)
 
     # This reads all Excel sheets, probably not worth it
     # df_map = pd.read_excel(xls)
 
     # This reads in the specified worksheet
-    df = pd.read_excel(xls, sheet_name)
+    df = xls.parse(sheet_name=sheet_name, usecols=lambda x: '(%)' not in str(x), engine='openpyxl')
 
     # Find the columns that are percentages of the total distribution
-    pct_cols = [col for col in df.columns if '(%)' in col]
+    # pct_cols = [col for col in df.columns if '(%)' in col]
 
-    return df[['date'] + pct_cols]
+    # return df[['date'] + pct_cols]
+    return df

@@ -15,8 +15,8 @@
 
 import re
 import warnings
-import pandas as pd
 import math
+import pandas as pd
 
 
 class DataSource:
@@ -117,33 +117,57 @@ class DataSheet:
         self.data_columns = []
 
         if is_excel and file is not None:
-            self.df = file.parse(sheet_name=sheet_name, usecols=lambda x: '(%)' not in str(x), engine='openpyxl')
-            self.df.columns = self.df.columns.astype(str)
-            cols = [col for col in self.df.columns]
-
-            if data_source.get('date', None):
-                cols = ['date'] + cols[1:]
-                self.df.insert(0, 'date', data_source['date'], False)
-
-            self.df['date'] = pd.to_datetime(self.df['date'], errors='coerce')
-
-            if cols[-1].find('Not reported') == -1:
-                cols = cols + ['Not reported']
-                self.df['Not reported'] = 0
-
-            self.columns['date'] = cols[0]
-            for col in cols[1:]:
-                col_name = col
-                if data_source.get('remove column name text', None):
-                    for txt in data_source['remove column name text']:
-                        col_name = col.split(txt)[0]
-                        self.df[col_name.rstrip()] = self.df[col]
-                self.columns[col_name.rstrip()] = col
-
-            self.data_columns = list(self.columns.keys())[1:]
+            self._load_excel_data(file, sheet_name, data_source)
 
         if custom_age_ranges and self.name in custom_age_ranges:
             self.create_custom_age_columns(custom_age_ranges[self.name])
+
+    def _load_excel_data(self, file: pd.ExcelFile, sheet_name: str, data_source: dict):
+        """
+        Load and process data from an Excel file.
+
+        Args:
+            file (pd.ExcelFile): The Excel file to read the sheet from.
+            sheet_name (str): The name of the sheet to parse.
+            data_source (dict): The data source object containing additional settings.
+
+        Returns:
+            None
+        """
+        self.df = file.parse(sheet_name=sheet_name, usecols=lambda x: '(%)' not in str(x), engine='openpyxl')
+        self.df.columns = self.df.columns.astype(str)
+        self._process_date_column(data_source)
+        print(sheet_name)
+        print(self.df.columns)
+        self._process_columns(data_source)
+
+    def _process_date_column(self, data_source: dict):
+        """Process and format the date column."""
+
+        # This assumes that the first column is either the date column or does not have useful data
+        if data_source.get('date'):
+            self.df.drop(self.df.columns[0], axis=1, inplace=True)
+            self.df.insert(0, 'date', data_source['date'], False)
+
+        self.df['date'] = pd.to_datetime(self.df['date'], errors='coerce')
+
+        if 'Not reported' not in self.df.columns:
+            self.df['Not reported'] = 0
+
+        self.columns['date'] = self.df.columns[0]
+
+    def _process_columns(self, data_source: dict):
+        """Process and rename columns according to the data source settings."""
+        for col in self.df.columns[1:]:
+            col_name = col
+            if 'remove column name text' in data_source:
+                for txt in data_source['remove column name text']:
+                    col_name = col.split(txt)[0]
+            col_name = col_name.rstrip()
+            self.columns[col_name] = col
+            self.df[col_name] = self.df.pop(col)
+
+        self.data_columns = list(self.columns.keys())[1:]
 
     def create_custom_age_columns(self, age_ranges):
         """

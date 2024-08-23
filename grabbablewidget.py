@@ -264,14 +264,14 @@ class SaveWidgetAsImageDialog(QDialog):
         """
         button_layout = QHBoxLayout()
 
-        self.save_button = QPushButton("Save", self)
-        self.cancel_button = QPushButton("Cancel", self)
+        save_button = QPushButton("Save", self)
+        cancel_button = QPushButton("Cancel", self)
 
-        self.save_button.clicked.connect(self.save_image)
-        self.cancel_button.clicked.connect(self.cancel_save)
+        save_button.clicked.connect(self.save_image)
+        cancel_button.clicked.connect(self.cancel_save)
 
-        button_layout.addWidget(self.save_button)
-        button_layout.addWidget(self.cancel_button)
+        button_layout.addWidget(save_button)
+        button_layout.addWidget(cancel_button)
 
         layout.addLayout(button_layout)
 

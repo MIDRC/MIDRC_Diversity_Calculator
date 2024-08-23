@@ -12,10 +12,11 @@
 #      See the License for the specific language governing permissions and
 #      limitations under the License.
 #
-from typing import Type, Union, List, Tuple
+from typing import Type, Union, List, Tuple, Iterable
 import math
 import io
 import csv
+from functools import partial
 from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, Signal,
                             QFileInfo, QEvent, QDate, QObject)
 from PySide6.QtGui import QPainter, QAction, QKeySequence, QGuiApplication
@@ -27,8 +28,6 @@ from PySide6.QtCharts import (QChart, QLineSeries, QDateTimeAxis, QValueAxis,
                               QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
 from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
 from grabbablewidget import GrabbableChartView
-from functools import partial
-from typing import Iterable
 
 
 class JsdDataSelectionGroupBox(QGroupBox):
@@ -269,7 +268,6 @@ class JsdWindow(QMainWindow):
         self.area_chart_widget = QWidget()
         # self.area_chart_layout = QVBoxLayout()
         self.area_chart_widget.setLayout(QVBoxLayout())
-        self.area_charts = {}
         self.spider_chart_vbox = QSplitter(Qt.Vertical)
         self.spider_chart_dock_widget = self.create_spider_chart_dock_widget(self.spider_chart_vbox,
                                                                          'Diversity Charts - ' + JsdWindow.WINDOW_TITLE)
@@ -477,8 +475,7 @@ class JsdWindow(QMainWindow):
             label_text = file_comboboxes[index].currentText() + ':'
             label = QLabel(label_text)
             label_width = label.sizeHint().width()
-            if label_width > max_label_width:
-                max_label_width = label_width
+            max_label_width = max(max_label_width, label_width)
 
         for index, sheets in sheet_dict.items():
             row_layout = QHBoxLayout()
