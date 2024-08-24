@@ -1,9 +1,10 @@
 from typing import Optional
-from PySide6.QtWidgets import (QWidget, QMenu, QFileDialog, QApplication, QDialog, QVBoxLayout, QHBoxLayout,
-                               QPushButton, QLabel, QLayout)
+
+from PySide6.QtCharts import QChart, QChartView
+from PySide6.QtCore import QDateTime, QDir, QEvent, QObject, QStandardPaths, Qt
 from PySide6.QtGui import QAction, QImage, QPainter
-from PySide6.QtCore import QEvent, Qt, QObject, QDir, QStandardPaths, QDateTime
-from PySide6.QtCharts import QChartView, QChart
+from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog, QHBoxLayout, QLabel, QLayout, QMenu, QPushButton,
+                               QVBoxLayout, QWidget)
 
 
 class GrabbableWidgetMixin(QObject):

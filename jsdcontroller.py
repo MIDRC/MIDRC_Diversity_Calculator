@@ -14,9 +14,11 @@
 #
 
 from bisect import bisect_left
-from PySide6.QtCore import Qt, QObject, Signal
+
+from PySide6.QtCore import QObject, Qt, Signal
 import numpy as np
 from scipy.spatial import distance
+
 from datetimetools import pandas_date_to_qdate
 from jsdmodel import JSDTableModel
 from jsdview import JsdWindow
@@ -213,7 +215,7 @@ class JSDController(QObject):
                     'index1': i,
                     'file1': file1,
                     'index2': j,
-                    'file2': file2
+                    'file2': file2,
                 }
                 column_infos.append(column_info)
 
@@ -344,7 +346,7 @@ class JSDController(QObject):
                             sheets0[category].df,
                             sheets1[category].df,
                             self.get_cols_to_use_for_jsd_calc(cbox0, category),
-                            calc_date
+                            calc_date,
                         )
                         for category in categories
                     }

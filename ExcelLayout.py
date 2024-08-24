@@ -13,9 +13,10 @@
 #      limitations under the License.
 #
 
+import math
 import re
 import warnings
-import math
+
 import pandas as pd
 
 
@@ -210,4 +211,4 @@ class DataSheet:
         # Check to make sure all columns get used
         for col in cols:
             if col not in cols_used:
-                warnings.warn(f"Column '{col}' not used!!!")
+                warnings.warn(f"Column '{col}' not used!!!", stacklevel=2)

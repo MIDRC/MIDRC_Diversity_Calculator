@@ -13,7 +13,7 @@
 #      limitations under the License.
 #
 
-from yaml import load, dump
+from yaml import dump, load
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:

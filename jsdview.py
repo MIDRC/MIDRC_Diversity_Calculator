@@ -12,21 +12,22 @@
 #      See the License for the specific language governing permissions and
 #      limitations under the License.
 #
-from typing import Type, Union, List, Tuple, Iterable
-import math
-import io
 import csv
+import io
+import math
 from functools import partial
-from PySide6.QtCore import (QRect, Qt, QDateTime, QTime, QPointF, QSignalBlocker, Signal,
-                            QFileInfo, QEvent, QDate, QObject)
-from PySide6.QtGui import QPainter, QAction, QKeySequence, QGuiApplication
-from PySide6.QtWidgets import (QHeaderView, QTableView, QWidget, QMainWindow, QGroupBox, QMenu, QFileDialog,
-                               QVBoxLayout, QComboBox, QLabel, QHBoxLayout, QMenuBar, QDockWidget, QSplitter,
-                               QLayout, QFormLayout, QScrollArea, QLineEdit, QDialog, QDialogButtonBox, QSpinBox,
-                               QCheckBox)
-from PySide6.QtCharts import (QChart, QLineSeries, QDateTimeAxis, QValueAxis,
-                              QPieSeries, QPolarChart, QAreaSeries, QCategoryAxis)
-from datetimetools import numpy_datetime64_to_qdate, convert_date_to_milliseconds
+from typing import Iterable, List, Tuple, Type, Union
+
+from PySide6.QtCharts import (QAreaSeries, QCategoryAxis, QChart, QDateTimeAxis, QLineSeries, QPieSeries, QPolarChart,
+                              QValueAxis)
+from PySide6.QtCore import (QDate, QDateTime, QEvent, QFileInfo, QObject, QPointF, QRect, QSignalBlocker, QTime, Qt,
+                            Signal)
+from PySide6.QtGui import QAction, QGuiApplication, QKeySequence, QPainter
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDockWidget, QFileDialog, QFormLayout,
+                               QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLayout, QLineEdit, QMainWindow, QMenu,
+                               QMenuBar, QScrollArea, QSpinBox, QSplitter, QTableView, QVBoxLayout, QWidget)
+
+from datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate
 from grabbablewidget import GrabbableChartView
 
 
@@ -440,7 +441,7 @@ class JsdWindow(QMainWindow):
     def add_spider_chart_view(self):
         """
         Add a spider chart view to the spider chart vbox layout.
-    
+
         Returns:
             The spider chart view object that was added.
         """

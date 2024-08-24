@@ -12,9 +12,9 @@
 #      See the License for the specific language governing permissions and
 #      limitations under the License.
 
-from PySide6.QtCore import QDateTime, QTime, QDate, QTimeZone
-import pandas as pd
+from PySide6.QtCore import QDate, QDateTime, QTime, QTimeZone
 import numpy as np
+import pandas as pd
 
 
 def convert_date_to_milliseconds(date):
