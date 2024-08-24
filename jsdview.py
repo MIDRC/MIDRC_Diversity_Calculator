@@ -13,14 +13,14 @@
 #      limitations under the License.
 #
 import csv
+from functools import partial
 import io
 import math
-from functools import partial
 from typing import Iterable, List, Tuple, Type, Union
 
 from PySide6.QtCharts import (QAreaSeries, QCategoryAxis, QChart, QDateTimeAxis, QLineSeries, QPieSeries, QPolarChart,
                               QValueAxis)
-from PySide6.QtCore import (QDate, QDateTime, QEvent, QFileInfo, QObject, QPointF, QRect, QSignalBlocker, QTime, Qt,
+from PySide6.QtCore import (QDate, QDateTime, QEvent, QFileInfo, QObject, QPointF, QRect, QSignalBlocker, Qt, QTime,
                             Signal)
 from PySide6.QtGui import QAction, QGuiApplication, QKeySequence, QPainter
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDockWidget, QFileDialog, QFormLayout,
