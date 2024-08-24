@@ -15,13 +15,15 @@
 
 import sys
 from typing import Optional
+
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QSplashScreen, QWidget
-from PySide6.QtGui import QPixmap, QPainter, QColor, QFont
+
+from jsdconfig import JSDConfig
 from jsdcontroller import JSDController
 from jsdmodel import JSDTableModel
 from jsdview import JsdWindow
-from jsdconfig import JSDConfig
 
 
 class SplashScreen(QSplashScreen):
@@ -40,6 +42,7 @@ class SplashScreen(QSplashScreen):
                             '\n' \
                             'Loading Excel files, please wait...'
     BACKGROUND_COLOR = QColor(Qt.white)
+
     @staticmethod
     def _create_pixmap():
         """

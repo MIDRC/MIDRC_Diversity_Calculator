@@ -13,9 +13,11 @@
 #      limitations under the License.
 #
 
-from typing import Optional, Any, List
+from typing import Any, List, Optional
+
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, Signal
 from PySide6.QtGui import QColor
+
 from ExcelLayout import DataSource
 
 
@@ -48,7 +50,7 @@ class JSDTableModel(QAbstractTableModel):
     """
     HEADER_MAPPING = [
         "Date",
-        "JSD"
+        "JSD",
     ]
     data_source_added = Signal()
 
