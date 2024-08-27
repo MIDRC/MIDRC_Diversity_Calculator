@@ -135,10 +135,15 @@ class DataSheet:
         Returns:
             None
         """
-        self.df = file.parse(sheet_name=sheet_name, usecols=lambda x: '(%)' not in str(x), engine='openpyxl')
-        self.df.columns = self.df.columns.astype(str)
+        self._df = file.parse(sheet_name=sheet_name, usecols=lambda x: '(%)' not in str(x), engine='openpyxl')
+        self._df.columns = self.df.columns.astype(str)
         self._process_date_column(data_source)
         self._process_columns(data_source)
+
+    @property
+    def df(self):
+        """Return the dataframe."""
+        return self._df
 
     def _process_date_column(self, data_source: dict):
         """Process and format the date column."""
