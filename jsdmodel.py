@@ -13,12 +13,12 @@
 #      limitations under the License.
 #
 
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, Signal
 from PySide6.QtGui import QColor
 
-from ExcelLayout import DataSource
+from excel_layout import DataSource
 
 
 class JSDTableModel(QAbstractTableModel):
@@ -106,7 +106,7 @@ class JSDTableModel(QAbstractTableModel):
         self.data_sources[data_source_dict['name']] = DataSource(data_source_dict, self.custom_age_ranges)
         self.data_source_added.emit()
 
-    def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
+    def rowCount(self, parent: QModelIndex = None) -> int:
         """
         Get the number of rows in the model.
 
@@ -119,7 +119,7 @@ class JSDTableModel(QAbstractTableModel):
         Returns:
             int: The number of rows in the model.
         """
-        if parent.isValid():
+        if parent and parent.isValid():
             return len(self._input_data[parent.column()])
         else:
             return self.max_row_count

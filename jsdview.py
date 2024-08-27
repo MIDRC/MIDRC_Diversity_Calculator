@@ -16,7 +16,7 @@ import csv
 from functools import partial
 import io
 import math
-from typing import Iterable, List, Tuple, Type, Union
+from typing import Iterable
 
 from PySide6.QtCharts import (QAreaSeries, QCategoryAxis, QChart, QDateTimeAxis, QLineSeries, QPieSeries, QPolarChart,
                               QValueAxis)
@@ -270,8 +270,8 @@ class JsdWindow(QMainWindow):
         # self.area_chart_layout = QVBoxLayout()
         self.area_chart_widget.setLayout(QVBoxLayout())
         self.spider_chart_vbox = QSplitter(Qt.Vertical)
-        self.spider_chart_dock_widget = self.create_spider_chart_dock_widget(self.spider_chart_vbox,
-                                                                         'Diversity Charts - ' + JsdWindow.WINDOW_TITLE)
+        spider_dock_title = 'Diversity Charts - ' + JsdWindow.WINDOW_TITLE
+        self.spider_chart_dock_widget = self.create_spider_chart_dock_widget(self.spider_chart_vbox, spider_dock_title)
         self.addDockWidget(Qt.RightDockWidgetArea, self.spider_chart_dock_widget)
 
         self.setWindowTitle(JsdWindow.WINDOW_TITLE)

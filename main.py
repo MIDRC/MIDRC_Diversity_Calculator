@@ -14,11 +14,10 @@
 #
 
 import sys
-from typing import Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
-from PySide6.QtWidgets import QApplication, QSplashScreen, QWidget
+from PySide6.QtWidgets import QApplication, QSplashScreen
 
 from jsdconfig import JSDConfig
 from jsdcontroller import JSDController
