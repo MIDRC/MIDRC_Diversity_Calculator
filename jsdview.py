@@ -486,7 +486,7 @@ class JsdWindow(QMainWindow):
         # Create the row labels and set the fixed width
         labels = JsdWindow._create_pie_chart_labels(sheet_dict, file_comboboxes)
 
-        for index, sheets in sheet_dict.items():
+        for sheets in sheet_dict.values():
             row_layout = QHBoxLayout()
             # Add the row label
             row_layout.addWidget(labels.pop(0))
@@ -553,8 +553,7 @@ class JsdWindow(QMainWindow):
             self.spider_chart.removeAxis(axis)
 
         # Extract the labels and calculate the angular axis parameters
-        first_series_values = next(iter(spider_plot_values_dict.values()))
-        labels = list(first_series_values.keys())
+        labels = list(next(iter(spider_plot_values_dict.values())).keys())
         step_size = 360 / len(labels)
         angles = [step_size * i for i in range(len(labels))]
 
@@ -586,18 +585,17 @@ class JsdWindow(QMainWindow):
                 series.append(angle, spider_plot_values[label])
 
             # Close the loop by connecting the last point back to the first
-            first_point_y = series.points()[0].y()
-            series.append(360, first_point_y)
+            series.append(360, series.points()[0].y())
 
             # Retrieve the filenames for the series name
-            file0_data = self._dataselectiongroupbox.file_comboboxes[index_pair[0]].currentData()
-            file1_data = self._dataselectiongroupbox.file_comboboxes[index_pair[1]].currentData()
+            file_pair = [self._dataselectiongroupbox.file_comboboxes[index_pair[0]].currentData(),
+                         self._dataselectiongroupbox.file_comboboxes[index_pair[1]].currentData()]
 
             # Update the chart title if there's only one comparison
             if len(spider_plot_values_dict) == 1:
-                self.update_spider_chart_title(file0_data, file1_data)
+                self.update_spider_chart_title(file_pair[0], file_pair[1])
 
-            series.setName(f'{file0_data} vs {file1_data}')
+            series.setName(f'{file_pair[0]} vs {file_pair[1]}')
             self.spider_chart.addSeries(series)
             series.attachAxis(angular_axis)
             series.attachAxis(radial_axis)
