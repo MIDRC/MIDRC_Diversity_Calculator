@@ -227,12 +227,23 @@ class JsdWindow(QMainWindow):
 
     Attributes:
     - WINDOW_TITLE: str - The title of the window.
+    - DOCK_TITLES: dict - A dictionary containing the titles of the dock widgets.
+    - add_data_source: Signal - A signal emitted when a new data source is added.
 
     Methods:
     - None
 
     """
+
+    # pylint: disable=too-many-instance-attributes
+    # The current number of attributes is not a problem for this class because they are necessary for GUI updates
+
     WINDOW_TITLE: str = 'MIDRC Diversity Calculator'
+    DOCK_TITLES: dict = {
+        'table_dock': 'JSD Table - ' + WINDOW_TITLE,
+        'pie_chart_dock': 'Pie Charts - ' + WINDOW_TITLE,
+        'spider_chart_dock': 'Diversity Charts - ' + WINDOW_TITLE,
+    }
     add_data_source = Signal(dict)
 
     def __init__(self, data_sources):
@@ -246,9 +257,11 @@ class JsdWindow(QMainWindow):
         # Set up graphical layout
         self._dataselectiongroupbox = JsdDataSelectionGroupBox(data_sources)
 
+        self.widgets = {}
+
         self.table_view = CopyableTableView()
         self.addDockWidget(Qt.LeftDockWidgetArea,
-                           self.create_table_dock_widget(self.table_view, 'JSD Table - ' + JsdWindow.WINDOW_TITLE))
+                           self.create_table_dock_widget(self.table_view, JsdWindow.DOCK_TITLES['table_dock']))
 
         self.jsd_timeline_chart = JsdChart()
         self.jsd_timeline_chart_view = GrabbableChartView(self.jsd_timeline_chart)
@@ -262,7 +275,7 @@ class JsdWindow(QMainWindow):
 
         self.pie_chart_layout = QVBoxLayout()
         self.pie_chart_dock_widget = self.create_pie_chart_dock_widget(self.pie_chart_layout,
-                                                                       'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
+                                                                       JsdWindow.DOCK_TITLES['pie_chart_dock'])
         self.addDockWidget(Qt.BottomDockWidgetArea, self.pie_chart_dock_widget)
 
         self.spider_chart = QPolarChart()
@@ -270,8 +283,8 @@ class JsdWindow(QMainWindow):
         # self.area_chart_layout = QVBoxLayout()
         self.area_chart_widget.setLayout(QVBoxLayout())
         self.spider_chart_vbox = QSplitter(Qt.Vertical)
-        spider_dock_title = 'Diversity Charts - ' + JsdWindow.WINDOW_TITLE
-        self.spider_chart_dock_widget = self.create_spider_chart_dock_widget(self.spider_chart_vbox, spider_dock_title)
+        self.spider_chart_dock_widget = self.create_spider_chart_dock_widget(self.spider_chart_vbox,
+                                                                             JsdWindow.DOCK_TITLES['spider_chart_dock'])
         self.addDockWidget(Qt.RightDockWidgetArea, self.spider_chart_dock_widget)
 
         self.setWindowTitle(JsdWindow.WINDOW_TITLE)
@@ -324,7 +337,7 @@ class JsdWindow(QMainWindow):
         chart_animation_setting: QAction = QAction("Chart Animations", self)
         chart_animation_setting.setCheckable(True)
         chart_animation_setting.setChecked(True)
-        chart_animation_setting.toggled.connect(lambda checked: self.set_animation_options(checked))
+        chart_animation_setting.toggled.connect(self.set_animation_options)
 
         num_files_setting: QAction = QAction("Number of Files to Compare", self)
         num_files_setting.triggered.connect(self.adjust_number_of_files_to_compare)
@@ -464,28 +477,19 @@ class JsdWindow(QMainWindow):
         clear_layout(self.pie_chart_layout)
 
         # Retrieve categories and timepoint
-        dataselectiongroupbox = self.dataselectiongroupbox
-        categories = [dataselectiongroupbox.category_combobox.itemText(i)
-                      for i in range(dataselectiongroupbox.category_combobox.count())]
+        categories = [self.dataselectiongroupbox.category_combobox.itemText(i)
+                      for i in range(self.dataselectiongroupbox.category_combobox.count())]
         timepoint = -1
 
-        file_comboboxes = dataselectiongroupbox.file_comboboxes
+        file_comboboxes = self.dataselectiongroupbox.file_comboboxes
 
-        max_label_width = 0
-        for index in sheet_dict:
-            label_text = file_comboboxes[index].currentText() + ':'
-            label = QLabel(label_text)
-            label_width = label.sizeHint().width()
-            max_label_width = max(max_label_width, label_width)
+        # Create the row labels and set the fixed width
+        labels = JsdWindow._create_pie_chart_labels(sheet_dict, file_comboboxes)
 
         for index, sheets in sheet_dict.items():
             row_layout = QHBoxLayout()
-
-            # Create the label
-            label_text = file_comboboxes[index].currentText() + ':'
-            label = QLabel(label_text)
-            label.setFixedWidth(max_label_width)
-            row_layout.addWidget(label)
+            # Add the row label
+            row_layout.addWidget(labels.pop(0))
 
             for category in categories:
                 df = sheets[category].df
@@ -500,15 +504,33 @@ class JsdWindow(QMainWindow):
 
                 # Only create and add the chart if there are valid series items
                 if not series.isEmpty():
-                    chart = QChart()
-                    chart_view = GrabbableChartView(chart, save_file_prefix="diversity_pie_chart")
-                    chart.setTitle(category)
-                    chart.setMinimumSize(300, 240)
-                    chart.addSeries(series)
-                    chart.legend().setAlignment(Qt.AlignRight)
-                    row_layout.addWidget(chart_view, stretch=1)
+                    row_layout.addWidget(JsdWindow._create_pie_chart_series(series, category), stretch=1)
 
             self.pie_chart_layout.addLayout(row_layout, stretch=1)
+
+    @staticmethod
+    def _create_pie_chart_labels(sheet_dict, file_comboboxes):
+        """
+        Create a list of labels for the pie chart dock widget.
+        """
+        labels = [QLabel(file_comboboxes[index].currentText() + ':') for index in sheet_dict]
+        max_label_width = max(label.sizeHint().width() for label in labels)
+        for label in labels:
+            label.setFixedWidth(max_label_width)
+        return labels
+
+    @staticmethod
+    def _create_pie_chart_series(series, category):
+        """
+        Create a pie chart series.
+        """
+        chart = QChart()
+        chart_view = GrabbableChartView(chart, save_file_prefix="diversity_pie_chart")
+        chart.setTitle(category)
+        chart.setMinimumSize(300, 240)
+        chart.addSeries(series)
+        chart.legend().setAlignment(Qt.AlignRight)
+        return chart_view
 
     def update_spider_chart(self, spider_plot_values_dict):
         """
