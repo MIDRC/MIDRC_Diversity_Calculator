@@ -47,7 +47,7 @@ jobs:
     - name: Lint with pylint
       run: |
         # stop the build if the pylint score is lower than 9.5
-        pylint --fail-under=9.5 --fail-on=E --ignore-patterns="tests/" $(git ls-files '*.py')
+        pylint --fail-under=9.5 --fail-on=E --ignore-patterns=test_.*?py $(git ls-files '*.py')
     - name: Test with pytest
       run: |
         ls -l
