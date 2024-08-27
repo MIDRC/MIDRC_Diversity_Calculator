@@ -16,7 +16,7 @@
 from bisect import bisect_left
 
 import numpy as np
-from PySide6.QtCore import QObject, Qt, Signal
+from PySide6.QtCore import QObject, Signal
 from scipy.spatial import distance
 
 from datetimetools import pandas_date_to_qdate

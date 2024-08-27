@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v4
@@ -26,16 +26,31 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
+        # We need GUI components for PySide6
+        sudo apt update && sudo apt install -y libegl1-mesa-dev
+        
         python -m pip install --upgrade pip
-        python -m pip install flake8 pytest
+        python -m pip install flake8 pylint pytest
+        
+        # additional flake8 plugins
+        python -m pip install flake8-bugbear flake8-commas flake8-import-order
+        
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        
+        # This installs the package in editable mode, which is useful for development
         # pip install -e .
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        # flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        # custom flake8 job using the .flake8 file
+        flake8 . --count --exit-zero --statistics
+    - name: Lint with pylint
+      run: |
+        # stop the build if the pylint score is lower than 9.5
+        pylint --ignore-patterns=test_.*?py $(git ls-files '*.py')
     - name: Test with pytest
       run: |
         ls -l
