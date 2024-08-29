@@ -1,6 +1,7 @@
 [flake8]
 max-line-length = 120
 # extend-ignore = I201
-application-import-names = jsdcontroller,jsdmodel,jsdview,jsdconfig,datetimetools,excel_layout,grabbablewidget
+application-import-names = jsdcontroller,jsdmodel,jsdview,jsdconfig,datetimetools,excel_layout,grabbablewidget,
+                           dataselectiongroupbox
 import-order-style = google
 max-complexity = 10

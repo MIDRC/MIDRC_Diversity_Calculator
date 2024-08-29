@@ -20,203 +20,15 @@ from typing import Iterable
 
 from PySide6.QtCharts import (QAreaSeries, QCategoryAxis, QChart, QDateTimeAxis, QLineSeries, QPieSeries, QPolarChart,
                               QValueAxis)
-from PySide6.QtCore import (QDate, QDateTime, QEvent, QFileInfo, QObject, QPointF, QRect, QSignalBlocker, Qt, QTime,
-                            Signal)
+from PySide6.QtCore import (QDate, QDateTime, QEvent, QFileInfo, QObject, QPointF, QRect, Qt, QTime, Signal)
 from PySide6.QtGui import QAction, QGuiApplication, QKeySequence, QPainter
-from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDockWidget, QFileDialog, QFormLayout,
-                               QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLayout, QLineEdit, QMainWindow, QMenu,
+from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QDockWidget, QFileDialog, QFormLayout,
+                               QHBoxLayout, QHeaderView, QLabel, QLayout, QLineEdit, QMainWindow, QMenu,
                                QMenuBar, QScrollArea, QSpinBox, QSplitter, QTableView, QVBoxLayout, QWidget)
 
+from dataselectiongroupbox import JsdDataSelectionGroupBox
 from datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate
 from grabbablewidget import GrabbableChartView
-
-
-class JsdDataSelectionGroupBox(QGroupBox):
-    """
-    Class: JsdDataSelectionGroupBox
-
-    This class represents a group box widget for data selection. It provides functionality for creating labels and
-    combo boxes for data files and a category combo box. The class has methods for setting up the layout,
-    updating the category combo box, and initializing the widget.
-
-    Attributes:
-        num_data_items_changed (Signal): A signal emitted when the number of data items in the JsdDataSelectionGroupBox
-                                         changes.
-        NUM_DEFAULT_DATA_ITEMS (int): The default number of data items.
-
-    Methods:
-        __init__(self, data_sources): Initializes the JsdDataSelectionGroupBox object.
-        set_layout(self, data_sources): Sets the layout for the given data sources.
-        add_file_combobox_to_layout(self, auto_populate: bool = True): Adds a file combobox to the layout.
-        remove_file_combobox_from_layout(self): Removes a file combobox from the layout.
-        set_num_data_items(self, count: int): Sets the number of data items in the JsdDataSelectionGroupBox.
-        add_file_to_comboboxes(self, description: str, name: str): Adds a file to the file comboboxes.
-        update_category_combo_box(self, categorylist, categoryindex): Updates the category combo box with the given
-                                                                      category list and selected index.
-    """
-    num_data_items_changed = Signal(int)
-    file_checkbox_state_changed = Signal(bool)
-    NUM_DEFAULT_DATA_ITEMS = 2
-
-    def __init__(self, data_sources):
-        """
-        Initialize the JsdDataSelectionGroupBox.
-
-        This method sets up the data selection group box by creating labels and combo boxes for data files and a
-        category combo box.
-        """
-        super().__init__()
-
-        self.setTitle('Data Selection')
-
-        self.form_layout = QFormLayout()
-        self.file_comboboxes = []
-        self.file_checkboxes = []
-        self.category_label = QLabel('Attribute')
-        self.category_combobox = QComboBox()
-        self.set_layout(data_sources)
-
-    def set_layout(self, data_sources):
-        """
-        Set the layout for the given data sources.
-
-        Parameters:
-        - data_sources: A list of data sources.
-
-        Returns:
-        None
-        """
-        # Create the form layout
-        form_layout = self.form_layout
-
-        # Set the layout for the widget
-        self.setLayout(form_layout)
-
-        # Add the category label and combobox to the form layout
-        form_layout.addRow(self.category_label, self.category_combobox)
-
-        # First, add the first combobox
-        self.add_file_combobox_to_layout(auto_populate=False)
-
-        # Add the file comboboxes and labels to the form layout
-        items = [(d['description'], d['name']) for d in data_sources]
-        for combobox_item in items:
-            self.add_file_to_comboboxes(combobox_item[0], combobox_item[1])
-        self.file_comboboxes[0].setCurrentIndex(0)
-        self.file_checkboxes[0].setChecked(True)
-
-        # Now we can copy the data from the first combobox to the rest of them
-        self.set_num_data_items(self.NUM_DEFAULT_DATA_ITEMS)
-
-    def add_file_combobox_to_layout(self, auto_populate: bool = True):
-        """
-        Add a file combobox to the layout.
-
-        Parameters:
-        - auto_populate (bool): If True, the combobox will be populated with items from the first combobox.
-
-        Returns:
-        None
-        """
-        new_hbox = QHBoxLayout()
-        new_combobox = QComboBox()
-        new_checkbox = QCheckBox()
-        new_hbox.addWidget(new_combobox, stretch=1)
-        new_hbox.addWidget(new_checkbox, stretch=0)
-
-        index = self.form_layout.rowCount()
-        new_label = QLabel(f'Data File {index}')
-        self.form_layout.insertRow(index - 1, new_label, new_hbox)
-
-        self.file_comboboxes.append(new_combobox)
-        self.file_checkboxes.append(new_checkbox)
-        new_checkbox.toggled.connect(self.file_checkbox_state_changed.emit)
-
-        if auto_populate:
-            cbox: QComboBox = self.file_comboboxes[0]
-            for i in range(cbox.count()):
-                new_combobox.addItem(cbox.itemText(i), userData=cbox.itemData(i))
-            new_combobox.setCurrentIndex(index - 1)
-
-    def remove_file_combobox_from_layout(self):
-        """
-        Remove a file combobox from the layout.
-
-        This method removes the last file combobox from the layout, including its corresponding label. It updates the
-        form layout by removing the row at the specified index. It also removes the label and combobox from the
-        respective lists.
-
-        Parameters:
-        - None
-
-        Returns:
-        - None
-        """
-        index = len(self.file_comboboxes) - 1
-        self.form_layout.removeRow(index)
-        self.file_comboboxes.pop(index)
-        self.file_checkboxes.pop(index)
-
-    def set_num_data_items(self, count: int):
-        """
-        Set the number of data items in the JsdDataSelectionGroupBox.
-
-        This method adjusts the number of file comboboxes in the layout based on the given count.
-        * If the current number of file comboboxes is equal to the count, the method returns without making any changes.
-        * If the current number of file comboboxes is less than the count, the method adds file comboboxes to the layout
-          using the add_file_combobox_to_layout method.
-        * If the current number of file comboboxes is greater than the count, the method removes file comboboxes from
-          the layout using the remove_file_combobox_from_layout method.
-        * Finally, the method emits the num_data_items_changed signal with the updated count.
-
-        Parameters:
-        - count (int): The desired number of data items.
-
-        Returns:
-        None
-        """
-        if len(self.file_comboboxes) == count:
-            return
-        while len(self.file_comboboxes) < count:
-            self.add_file_combobox_to_layout()
-        while len(self.file_comboboxes) > count:
-            self.remove_file_combobox_from_layout()
-        self.num_data_items_changed.emit(count)
-
-    def add_file_to_comboboxes(self, description: str, name: str):
-        """
-        Add a file to the file comboboxes.
-
-        This method adds a file to each of the file comboboxes in the JsdDataSelectionGroupBox.
-        The file is represented by a description and a name.
-        The description is displayed in the combobox as the item text, and the name is stored as the item data.
-
-        Parameters:
-        - description (str): The description of the file.
-        - name (str): The name of the file.
-
-        Returns:
-        None
-        """
-        for combobox in self.file_comboboxes:
-            combobox.addItem(description, userData=name)
-
-    def update_category_combo_box(self, categorylist, categoryindex):
-        """
-        Update the category combo box with the given category list and set the selected index to the specified
-        category index.
-
-        Parameters:
-        - categorylist (list): The list of categories to populate the combo box.
-        - categoryindex (int): The index of the category to select in the combo box.
-
-        Returns:
-        None
-        """
-        with QSignalBlocker(self.category_combobox):
-            self.category_combobox.clear()
-            self.category_combobox.addItems(categorylist)
-            self.category_combobox.setCurrentIndex(categoryindex)
 
 
 class JsdWindow(QMainWindow):
@@ -227,12 +39,23 @@ class JsdWindow(QMainWindow):
 
     Attributes:
     - WINDOW_TITLE: str - The title of the window.
+    - DOCK_TITLES: dict - A dictionary containing the titles of the dock widgets.
+    - add_data_source: Signal - A signal emitted when a new data source is added.
 
     Methods:
     - None
 
     """
+
+    # pylint: disable=too-many-instance-attributes
+    # The current number of attributes is not a problem for this class because they are necessary for GUI updates
+
     WINDOW_TITLE: str = 'MIDRC Diversity Calculator'
+    DOCK_TITLES: dict = {
+        'table_dock': 'JSD Table - ' + WINDOW_TITLE,
+        'pie_chart_dock': 'Pie Charts - ' + WINDOW_TITLE,
+        'spider_chart_dock': 'Diversity Charts - ' + WINDOW_TITLE,
+    }
     add_data_source = Signal(dict)
 
     def __init__(self, data_sources):
@@ -246,9 +69,11 @@ class JsdWindow(QMainWindow):
         # Set up graphical layout
         self._dataselectiongroupbox = JsdDataSelectionGroupBox(data_sources)
 
+        self.widgets = {}
+
         self.table_view = CopyableTableView()
         self.addDockWidget(Qt.LeftDockWidgetArea,
-                           self.create_table_dock_widget(self.table_view, 'JSD Table - ' + JsdWindow.WINDOW_TITLE))
+                           self.create_table_dock_widget(self.table_view, JsdWindow.DOCK_TITLES['table_dock']))
 
         self.jsd_timeline_chart = JsdChart()
         self.jsd_timeline_chart_view = GrabbableChartView(self.jsd_timeline_chart)
@@ -262,7 +87,7 @@ class JsdWindow(QMainWindow):
 
         self.pie_chart_layout = QVBoxLayout()
         self.pie_chart_dock_widget = self.create_pie_chart_dock_widget(self.pie_chart_layout,
-                                                                       'Pie Charts - ' + JsdWindow.WINDOW_TITLE)
+                                                                       JsdWindow.DOCK_TITLES['pie_chart_dock'])
         self.addDockWidget(Qt.BottomDockWidgetArea, self.pie_chart_dock_widget)
 
         self.spider_chart = QPolarChart()
@@ -270,8 +95,8 @@ class JsdWindow(QMainWindow):
         # self.area_chart_layout = QVBoxLayout()
         self.area_chart_widget.setLayout(QVBoxLayout())
         self.spider_chart_vbox = QSplitter(Qt.Vertical)
-        spider_dock_title = 'Diversity Charts - ' + JsdWindow.WINDOW_TITLE
-        self.spider_chart_dock_widget = self.create_spider_chart_dock_widget(self.spider_chart_vbox, spider_dock_title)
+        self.spider_chart_dock_widget = self.create_spider_chart_dock_widget(self.spider_chart_vbox,
+                                                                             JsdWindow.DOCK_TITLES['spider_chart_dock'])
         self.addDockWidget(Qt.RightDockWidgetArea, self.spider_chart_dock_widget)
 
         self.setWindowTitle(JsdWindow.WINDOW_TITLE)
@@ -324,7 +149,7 @@ class JsdWindow(QMainWindow):
         chart_animation_setting: QAction = QAction("Chart Animations", self)
         chart_animation_setting.setCheckable(True)
         chart_animation_setting.setChecked(True)
-        chart_animation_setting.toggled.connect(lambda checked: self.set_animation_options(checked))
+        chart_animation_setting.toggled.connect(self.set_animation_options)
 
         num_files_setting: QAction = QAction("Number of Files to Compare", self)
         num_files_setting.triggered.connect(self.adjust_number_of_files_to_compare)
@@ -464,28 +289,19 @@ class JsdWindow(QMainWindow):
         clear_layout(self.pie_chart_layout)
 
         # Retrieve categories and timepoint
-        dataselectiongroupbox = self.dataselectiongroupbox
-        categories = [dataselectiongroupbox.category_combobox.itemText(i)
-                      for i in range(dataselectiongroupbox.category_combobox.count())]
+        categories = [self.dataselectiongroupbox.category_combobox.itemText(i)
+                      for i in range(self.dataselectiongroupbox.category_combobox.count())]
         timepoint = -1
 
-        file_comboboxes = dataselectiongroupbox.file_comboboxes
+        file_comboboxes = self.dataselectiongroupbox.file_comboboxes
 
-        max_label_width = 0
-        for index in sheet_dict:
-            label_text = file_comboboxes[index].currentText() + ':'
-            label = QLabel(label_text)
-            label_width = label.sizeHint().width()
-            max_label_width = max(max_label_width, label_width)
+        # Create the row labels and set the fixed width
+        labels = JsdWindow._create_pie_chart_labels(sheet_dict, file_comboboxes)
 
-        for index, sheets in sheet_dict.items():
+        for sheets in sheet_dict.values():
             row_layout = QHBoxLayout()
-
-            # Create the label
-            label_text = file_comboboxes[index].currentText() + ':'
-            label = QLabel(label_text)
-            label.setFixedWidth(max_label_width)
-            row_layout.addWidget(label)
+            # Add the row label
+            row_layout.addWidget(labels.pop(0))
 
             for category in categories:
                 df = sheets[category].df
@@ -500,15 +316,33 @@ class JsdWindow(QMainWindow):
 
                 # Only create and add the chart if there are valid series items
                 if not series.isEmpty():
-                    chart = QChart()
-                    chart_view = GrabbableChartView(chart, save_file_prefix="diversity_pie_chart")
-                    chart.setTitle(category)
-                    chart.setMinimumSize(300, 240)
-                    chart.addSeries(series)
-                    chart.legend().setAlignment(Qt.AlignRight)
-                    row_layout.addWidget(chart_view, stretch=1)
+                    row_layout.addWidget(JsdWindow._create_pie_chart_series(series, category), stretch=1)
 
             self.pie_chart_layout.addLayout(row_layout, stretch=1)
+
+    @staticmethod
+    def _create_pie_chart_labels(sheet_dict, file_comboboxes):
+        """
+        Create a list of labels for the pie chart dock widget.
+        """
+        labels = [QLabel(file_comboboxes[index].currentText() + ':') for index in sheet_dict]
+        max_label_width = max(label.sizeHint().width() for label in labels)
+        for label in labels:
+            label.setFixedWidth(max_label_width)
+        return labels
+
+    @staticmethod
+    def _create_pie_chart_series(series, category):
+        """
+        Create a pie chart series.
+        """
+        chart = QChart()
+        chart_view = GrabbableChartView(chart, save_file_prefix="diversity_pie_chart")
+        chart.setTitle(category)
+        chart.setMinimumSize(300, 240)
+        chart.addSeries(series)
+        chart.legend().setAlignment(Qt.AlignRight)
+        return chart_view
 
     def update_spider_chart(self, spider_plot_values_dict):
         """
@@ -531,8 +365,7 @@ class JsdWindow(QMainWindow):
             self.spider_chart.removeAxis(axis)
 
         # Extract the labels and calculate the angular axis parameters
-        first_series_values = next(iter(spider_plot_values_dict.values()))
-        labels = list(first_series_values.keys())
+        labels = list(next(iter(spider_plot_values_dict.values())).keys())
         step_size = 360 / len(labels)
         angles = [step_size * i for i in range(len(labels))]
 
@@ -564,18 +397,17 @@ class JsdWindow(QMainWindow):
                 series.append(angle, spider_plot_values[label])
 
             # Close the loop by connecting the last point back to the first
-            first_point_y = series.points()[0].y()
-            series.append(360, first_point_y)
+            series.append(360, series.points()[0].y())
 
             # Retrieve the filenames for the series name
-            file0_data = self._dataselectiongroupbox.file_comboboxes[index_pair[0]].currentData()
-            file1_data = self._dataselectiongroupbox.file_comboboxes[index_pair[1]].currentData()
+            file_pair = [self._dataselectiongroupbox.file_comboboxes[index_pair[0]].currentData(),
+                         self._dataselectiongroupbox.file_comboboxes[index_pair[1]].currentData()]
 
             # Update the chart title if there's only one comparison
             if len(spider_plot_values_dict) == 1:
-                self.update_spider_chart_title(file0_data, file1_data)
+                self.update_spider_chart_title(file_pair[0], file_pair[1])
 
-            series.setName(f'{file0_data} vs {file1_data}')
+            series.setName(f'{file_pair[0]} vs {file_pair[1]}')
             self.spider_chart.addSeries(series)
             series.attachAxis(angular_axis)
             series.attachAxis(radial_axis)
@@ -621,64 +453,93 @@ class JsdWindow(QMainWindow):
             area_chart.setTitle(f'{filename} {category} distribution over time')
 
             # Extract data from the sheet
-            sheet_data = sheets[category]
-            df = sheet_data.df
-            cols_to_use = sheet_data.data_columns
-
-            # Calculate cumulative percentages
-            total_counts = df[cols_to_use].sum(axis=1)
-            cumulative_percents = 100.0 * df[cols_to_use].cumsum(axis=1).div(total_counts, axis=0)
+            df = sheets[category].df
+            cols_to_use = sheets[category].data_columns
 
             # Prepare dates for the X-axis
             dates = [QDateTime(numpy_datetime64_to_qdate(date), QTime()) for date in df.date.values]
 
-            # Create series for the area chart
-            lower_series = None
-            for col in cols_to_use:
-                if df[col].iloc[-1] == 0:  # Skip columns with no data
-                    continue
-
-                # Generate data points for the series
-                points = [QPointF(dates[i].toMSecsSinceEpoch(), cumulative_percents.iloc[i][col]) for i in
-                          range(len(dates))]
-                if len(dates) == 1:
-                    points.append(QPointF(dates[0].toMSecsSinceEpoch() + 1, cumulative_percents.iloc[0][col]))
-
-                upper_series = QLineSeries(area_chart)
-                upper_series.append(points)
-
-                # Create the area series using the current and previous series
-                area_series = QAreaSeries(upper_series, lower_series)
-                area_series.setName(col)
-                area_chart.addSeries(area_series)
-
-                # Update the lower series for the next iteration
-                lower_series = upper_series
-
-            # Set up X-axis as a datetime axis
-            axis_x = QDateTimeAxis()
-            axis_x.setTickCount(10)
-            axis_x.setFormat("MMM yyyy")
-            axis_x.setTitleText("Date")
-            axis_x.setRange(dates[0], dates[-1] if len(dates) > 1 else dates[0].addMSecs(1))
-            area_chart.addAxis(axis_x, Qt.AlignBottom)
-
-            # Set up Y-axis as a percentage axis
-            axis_y = QValueAxis()
-            axis_y.setTitleText("Percent of total")
-            axis_y.setLabelFormat('%.0f%')
-            axis_y.setRange(0, 100)
-            area_chart.addAxis(axis_y, Qt.AlignLeft)
-
-            # Attach axes to each series in the chart
-            for series in area_chart.series():
-                series.attachAxis(axis_x)
-                series.attachAxis(axis_y)
+            JsdWindow._add_area_chart_series(area_chart, df, cols_to_use, dates)
+            JsdWindow._attach_axes_to_area_chart(area_chart, dates)
 
             # Add the configured chart to the display
             self.add_area_chart_view(area_chart)
 
         return True
+
+    @staticmethod
+    def _add_area_chart_series(area_chart, df, cols_to_use, dates):
+        """
+        Adds multiple series to the given area chart.
+
+        Parameters:
+            area_chart (QChart): The area chart to add the series to.
+            df (DataFrame): The DataFrame containing the data for the series.
+            cols_to_use (list): A list of column names to use for the series.
+            dates (list): A list of QDateTime objects representing the dates for the X-axis.
+
+        Returns:
+            None
+        """
+        # Calculate cumulative percentages
+        total_counts = df[cols_to_use].sum(axis=1)
+        cumulative_percents = 100.0 * df[cols_to_use].cumsum(axis=1).div(total_counts, axis=0)
+
+        # Create series for the area chart
+        lower_series = None
+        for col in cols_to_use:
+            if df[col].iloc[-1] == 0:  # Skip columns with no data
+                continue
+
+            # Generate data points for the series
+            points = [QPointF(dates[i].toMSecsSinceEpoch(), cumulative_percents.iloc[i][col]) for i in
+                      range(len(dates))]
+            if len(dates) == 1:
+                points.append(QPointF(dates[0].toMSecsSinceEpoch() + 1, cumulative_percents.iloc[0][col]))
+
+            upper_series = QLineSeries(area_chart)
+            upper_series.append(points)
+
+            # Create the area series using the current and previous series
+            area_series = QAreaSeries(upper_series, lower_series)
+            area_series.setName(col)
+            area_chart.addSeries(area_series)
+
+            # Update the lower series for the next iteration
+            lower_series = upper_series
+
+    @staticmethod
+    def _attach_axes_to_area_chart(area_chart, dates):
+        """
+        Attaches axes to the given area chart.
+
+        Parameters:
+            area_chart (QChart): The area chart to attach the axis to.
+            dates (list): A list of QDateTime objects representing the dates for the X-axis.
+
+        Returns:
+            None
+        """
+
+        # Set up X-axis as a datetime axis
+        axis_x = QDateTimeAxis()
+        axis_x.setTickCount(10)
+        axis_x.setFormat("MMM yyyy")
+        axis_x.setTitleText("Date")
+        axis_x.setRange(dates[0], dates[-1] if len(dates) > 1 else dates[0].addMSecs(1))
+        area_chart.addAxis(axis_x, Qt.AlignBottom)
+
+        # Set up Y-axis as a percentage axis
+        axis_y = QValueAxis()
+        axis_y.setTitleText("Percent of total")
+        axis_y.setLabelFormat('%.0f%')
+        axis_y.setRange(0, 100)
+        area_chart.addAxis(axis_y, Qt.AlignLeft)
+
+        # Attach axes to each series in the chart
+        for series in area_chart.series():
+            series.attachAxis(axis_x)
+            series.attachAxis(axis_y)
 
     def update_jsd_timeline_plot(self, jsd_model):
         """

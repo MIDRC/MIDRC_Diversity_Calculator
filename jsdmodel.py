@@ -121,8 +121,8 @@ class JSDTableModel(QAbstractTableModel):
         """
         if parent and parent.isValid():
             return len(self._input_data[parent.column()])
-        else:
-            return self.max_row_count
+        # else:
+        return self.max_row_count
 
     def update_input_data(self, new_input_data, new_column_infos):
         """
@@ -166,7 +166,7 @@ class JSDTableModel(QAbstractTableModel):
         # return len(self.input_data[parent.row()])
         return len(self._input_data)
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole, *args, **kwargs) -> Any:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole) -> Any:
         """
         Returns the header data for the specified section, orientation, and role.
 
@@ -174,19 +174,17 @@ class JSDTableModel(QAbstractTableModel):
             section (int): The section index.
             orientation (int): The orientation of the header (Qt.Horizontal or Qt.Vertical).
             role (int): The role of the header data.
-            *args: Additional positional arguments.
-            **kwargs: Additional keyword arguments.
 
         Returns:
             Any: The header data for the specified section, orientation, and role.
         """
         if role != Qt.DisplayRole:
             return None
-
+        # else:
         if orientation == Qt.Horizontal:
             return JSDTableModel.HEADER_MAPPING[section % 2]
-        else:
-            return str(section + 1)
+        # else:
+        return str(section + 1)
 
     def data(self, index: QModelIndex, role: int = Qt.DisplayRole) -> Optional[Any]:
         """

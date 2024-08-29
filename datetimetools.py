@@ -38,10 +38,11 @@ def pandas_date_to_qdate(pandas_date):
     """
     if isinstance(pandas_date, pd.Timestamp):
         return QDate(pandas_date.year, pandas_date.month, pandas_date.day)
-    elif isinstance(pandas_date, np.datetime64):
+    # else:
+    if isinstance(pandas_date, np.datetime64):
         return numpy_datetime64_to_qdate(pandas_date)
-    else:
-        raise ValueError("Input must be a Pandas Timestamp or datetime object")
+    # else:
+    raise ValueError("Input must be a Pandas Timestamp or datetime object")
 
 
 def numpy_datetime64_to_qdate(numpy_datetime):

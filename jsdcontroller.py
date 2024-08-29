@@ -184,9 +184,7 @@ class JSDController(QObject):
         Returns:
             None
         """
-        jsd_view = self.jsd_view
-        jsd_model = self.jsd_model
-        dataselectiongroupbox = jsd_view.dataselectiongroupbox
+        dataselectiongroupbox = self.jsd_view.dataselectiongroupbox
         category = dataselectiongroupbox.category_combobox.currentText()
 
         model_input_data = []
@@ -194,12 +192,12 @@ class JSDController(QObject):
 
         for i, cbox1 in enumerate(dataselectiongroupbox.file_comboboxes[:-1]):
             file1 = cbox1.currentData()
-            df1 = jsd_model.data_sources[file1].sheets[category].df
+            df1 = self.jsd_model.data_sources[file1].sheets[category].df
             cols_to_use = self.get_cols_to_use_for_jsd_calc(cbox1, category)
 
             for j, cbox2 in enumerate(dataselectiongroupbox.file_comboboxes[i + 1:], start=i + 1):
                 file2 = cbox2.currentData()
-                df2 = jsd_model.data_sources[file2].sheets[category].df
+                df2 = self.jsd_model.data_sources[file2].sheets[category].df
 
                 first_date = max(df1.date.values[0], df2.date.values[0])
                 date_list = sorted(set(np.concatenate((df1.date.values, df2.date.values))))
@@ -210,19 +208,18 @@ class JSDController(QObject):
                 model_input_data.append([pandas_date_to_qdate(calc_date) for calc_date in date_list])
                 model_input_data.append(input_data)
 
-                column_info = {
+                column_infos.append({
                     'category': category,
                     'index1': i,
                     'file1': file1,
                     'index2': j,
                     'file2': file2,
-                }
-                column_infos.append(column_info)
+                })
 
-        jsd_model.update_input_data(model_input_data, column_infos)
+        self.jsd_model.update_input_data(model_input_data, column_infos)
 
         self.update_category_plots()
-        jsd_model.layoutChanged.emit()
+        self.jsd_model.layoutChanged.emit()
 
     def update_file_based_charts(self):
         """
@@ -310,8 +307,7 @@ class JSDController(QObject):
         if calc_date is None:
             calc_date = np.datetime64('today')
 
-        jsd_view = self.jsd_view
-        dataselectiongroupbox = jsd_view.dataselectiongroupbox
+        dataselectiongroupbox = self.jsd_view.dataselectiongroupbox
         categories = [dataselectiongroupbox.category_combobox.itemText(i)
                       for i in range(dataselectiongroupbox.category_combobox.count())]
 
@@ -341,7 +337,7 @@ class JSDController(QObject):
                     sheets0 = self.jsd_model.data_sources[cbox0.currentData()].sheets
                     sheets1 = self.jsd_model.data_sources[cbox1.currentData()].sheets
 
-                    jsd_values = {
+                    jsd_dict[(index1, idx2)] = {
                         category: calculate_jsd(
                             sheets0[category].df,
                             sheets1[category].df,
@@ -350,7 +346,6 @@ class JSDController(QObject):
                         )
                         for category in categories
                     }
-                    jsd_dict[(index1, idx2)] = jsd_values
 
         return jsd_dict
 
