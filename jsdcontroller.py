@@ -21,7 +21,8 @@ from scipy.spatial import distance
 
 from datetimetools import pandas_date_to_qdate
 from jsdmodel import JSDTableModel
-from jsdview import JsdWindow
+from jsdview_base import JsdViewBase
+from dataselectiongroupbox import JsdDataSelectionGroupBox
 
 
 class JSDController(QObject):
@@ -53,8 +54,8 @@ class JSDController(QObject):
             None
         """
         super().__init__()
-        if jsd_view is None or not isinstance(jsd_view, JsdWindow):
-            raise ValueError("jsd_view must be a valid JsdWindow instance")
+        if jsd_view is None or not isinstance(jsd_view, JsdViewBase):
+            raise ValueError("jsd_view must be a valid JsdViewBase instance")
         if jsd_model is None or not isinstance(jsd_model, JSDTableModel):
             raise ValueError("jsd_model must be a valid JSDTableModel instance")
         self._jsd_view = jsd_view
@@ -79,17 +80,18 @@ class JSDController(QObject):
         """
         jsd_view = self.jsd_view  # Store the result of jsd_view() in a variable
         jsd_view.add_data_source.connect(self.jsd_model.add_data_source)
-        for f_c in jsd_view.dataselectiongroupbox.file_comboboxes:
-            f_c.currentIndexChanged.connect(self.file_changed)
-        jsd_view.dataselectiongroupbox.num_data_items_changed.connect(self.file_changed)
-        jsd_view.dataselectiongroupbox.file_checkbox_state_changed.connect(self.file_changed)
-        jsd_view.dataselectiongroupbox.category_combobox.currentIndexChanged.connect(self.category_changed)
+        if isinstance(jsd_view.dataselectiongroupbox, JsdDataSelectionGroupBox):
+            for f_c in jsd_view.dataselectiongroupbox.file_comboboxes:
+                f_c.currentIndexChanged.connect(self.file_changed)
+            jsd_view.dataselectiongroupbox.num_data_items_changed.connect(self.file_changed)
+            jsd_view.dataselectiongroupbox.file_checkbox_state_changed.connect(self.file_changed)
+            jsd_view.dataselectiongroupbox.category_combobox.currentIndexChanged.connect(self.category_changed)
 
         self.fileChangedSignal.connect(self.update_file_based_charts)
         self.fileChangedSignal.connect(self.category_changed)
 
     @property
-    def jsd_view(self) -> JsdWindow:
+    def jsd_view(self) -> JsdViewBase:
         """
         Get the JSD view object.
 
@@ -99,15 +101,15 @@ class JSDController(QObject):
         return self._jsd_view
 
     @jsd_view.setter
-    def jsd_view(self, jsd_view: JsdWindow) -> None:
+    def jsd_view(self, jsd_view: JsdViewBase) -> None:
         """
         Set the JSD view object.
 
         Parameters:
             jsd_view: The JSD view object.
         """
-        if jsd_view is None:
-            raise ValueError("jsd_view must be a valid JsdWindow instance")
+        if jsd_view is None or not isinstance(jsd_view, JsdViewBase):
+            raise ValueError("jsd_view must be a valid JsdViewBase instance")
         self._jsd_view = jsd_view
 
     @property
@@ -143,23 +145,24 @@ class JSDController(QObject):
             newcategoryindex Optional(int): The index of the category to set, if None then use previous index.
         """
         dataselectiongroupbox = self.jsd_view.dataselectiongroupbox
-        category_combobox = dataselectiongroupbox.category_combobox
-        categoryindex = category_combobox.currentIndex()
+        file_infos = dataselectiongroupbox.get_file_infos()
+        category_info = dataselectiongroupbox.get_category_info()
+        categoryindex = category_info['current_index']
         if newcategoryindex is not None:
             categoryindex = newcategoryindex
 
-        cbox0 = dataselectiongroupbox.file_comboboxes[0]
-        categorylist = self.jsd_model.data_sources[cbox0.currentData()].sheets.keys()
+        cbox0 = file_infos[0]
+        categorylist = self.jsd_model.data_sources[cbox0['source_id']].sheets.keys()
 
-        for cbox2 in dataselectiongroupbox.file_comboboxes[1:]:
-            categorylist2 = self.jsd_model.data_sources[cbox2.currentData()].sheets.keys()
+        for cbox2 in file_infos[1:]:
+            categorylist2 = self.jsd_model.data_sources[cbox2['source_id']].sheets.keys()
             categorylist = [value for value in categorylist if value in categorylist2]
 
-        dataselectiongroupbox.update_category_combo_box(categorylist, categoryindex)
+        dataselectiongroupbox.update_category_list(categorylist, categoryindex)
 
         self.fileChangedSignal.emit()
 
-    def get_file_sheets_from_combobox(self, index=0):
+    def get_file_sheets_from_index(self, index=0):
         """
         Get the sheets from the selected file combobox.
 
@@ -170,7 +173,7 @@ class JSDController(QObject):
             dict: A dictionary containing the sheets from the selected file.
         """
         try:
-            current_data = self.jsd_view.dataselectiongroupbox.file_comboboxes[index].currentData()
+            current_data = self.jsd_view.dataselectiongroupbox.get_file_infos()[index]['source_id']
         except IndexError as exc:
             raise IndexError("Index out of range") from exc
 
@@ -185,18 +188,19 @@ class JSDController(QObject):
             None
         """
         dataselectiongroupbox = self.jsd_view.dataselectiongroupbox
-        category = dataselectiongroupbox.category_combobox.currentText()
+        file_infos = dataselectiongroupbox.get_file_infos()
+        category = dataselectiongroupbox.get_category_info()['current_text']
 
         model_input_data = []
         column_infos = []
 
-        for i, cbox1 in enumerate(dataselectiongroupbox.file_comboboxes[:-1]):
-            file1 = cbox1.currentData()
+        for i, cbox1 in enumerate(file_infos[:-1]):
+            file1 = cbox1['source_id']
             df1 = self.jsd_model.data_sources[file1].sheets[category].df
-            cols_to_use = self.get_cols_to_use_for_jsd_calc(cbox1, category)
+            cols_to_use = self.get_cols_to_use_for_jsd_calc(file1, category)
 
-            for j, cbox2 in enumerate(dataselectiongroupbox.file_comboboxes[i + 1:], start=i + 1):
-                file2 = cbox2.currentData()
+            for j, cbox2 in enumerate(file_infos[i + 1:], start=i + 1):
+                file2 = cbox2['source_id']
                 df2 = self.jsd_model.data_sources[file2].sheets[category].df
 
                 first_date = max(df1.date.values[0], df2.date.values[0])
@@ -236,9 +240,10 @@ class JSDController(QObject):
         # file_cbox_index = 0
         spider_plot_date = None
         sheet_dict = {}
-        for i in range(len(self.jsd_view.dataselectiongroupbox.file_comboboxes)):
-            if self.jsd_view.dataselectiongroupbox.file_checkboxes[i].isChecked():
-                sheet_dict[i] = self.get_file_sheets_from_combobox(i)
+        file_infos = self.jsd_view.dataselectiongroupbox.get_file_infos()
+        for i in range(len(file_infos)):
+            if file_infos[i]['checked']:
+                sheet_dict[i] = self.get_file_sheets_from_index(i)
 
         spider_plot_values = self.get_spider_plot_values(spider_plot_date)
         self.jsd_view.update_spider_chart(spider_plot_values)
@@ -260,9 +265,10 @@ class JSDController(QObject):
             True if the update was successful, False otherwise
         """
         sheet_dict = {}
-        for i in range(len(self.jsd_view.dataselectiongroupbox.file_comboboxes)):
-            if self.jsd_view.dataselectiongroupbox.file_checkboxes[i].isChecked():
-                sheet_dict[i] = self.get_file_sheets_from_combobox(i)
+        file_infos = self.jsd_view.dataselectiongroupbox.get_file_infos()
+        for i in range(len(file_infos)):
+            if file_infos[i]['checked']:
+                sheet_dict[i] = self.get_file_sheets_from_index(i)
 
         try:
             self.jsd_view.update_jsd_timeline_plot(self.jsd_model)
@@ -272,20 +278,20 @@ class JSDController(QObject):
             print(f"An error occurred during the update of category plots: {e}")
             return False
 
-    def get_cols_to_use_for_jsd_calc(self, cbox, category):
+    def get_cols_to_use_for_jsd_calc(self, source_id, category):
         """
         Generates a list of columns from a sheet that should be used in the JSD calculation.
 
         This handles custom categories i.e. for custom age ranges
 
         Parameters:
-            cbox (QComboBox): The combobox used to get the data file from.
+            source_id (str): The combobox used to get the data file from.
             category (str): The sheet category to get the columns from.
 
         Returns:
             List of columns in the current sheet category
         """
-        cols_to_use = self.jsd_model.data_sources[cbox.currentData()].sheets[category].data_columns
+        cols_to_use = self.jsd_model.data_sources[source_id].sheets[category].data_columns
 
         custom_age_ranges = self._config.data.get('custom age ranges', None)
         if custom_age_ranges and category in custom_age_ranges:
@@ -308,13 +314,13 @@ class JSDController(QObject):
             calc_date = np.datetime64('today')
 
         dataselectiongroupbox = self.jsd_view.dataselectiongroupbox
-        categories = [dataselectiongroupbox.category_combobox.itemText(i)
-                      for i in range(dataselectiongroupbox.category_combobox.count())]
+        categories = dataselectiongroupbox.get_category_info()['category_list']
 
         # Determine indexes to use based on checked boxes or default to all
-        indexes_to_use = [i for i, checkbox in enumerate(dataselectiongroupbox.file_checkboxes) if checkbox.isChecked()]
+        file_infos = dataselectiongroupbox.get_file_infos()
+        indexes_to_use = [i for i, file_info in enumerate(file_infos) if file_info['checked']]
         if not indexes_to_use:
-            indexes_to_use = list(range(len(dataselectiongroupbox.file_comboboxes)))
+            indexes_to_use = list(range(len(file_infos)))
         if len(indexes_to_use) == 1:
             indexes_to_use = indexes_to_use * 2  # Duplicate the single index to ensure comparison
 
@@ -325,23 +331,22 @@ class JSDController(QObject):
             for index2 in indexes_to_use[i + 1:]:
                 # Ensure we're not comparing the same file with itself
                 if len(indexes_to_use) == 2 and index1 == index2:
-                    index2_candidates = [idx for idx in range(len(dataselectiongroupbox.file_comboboxes)) if
-                                         idx != index1]
+                    index2_candidates = [idx for idx in range(len(file_infos)) if idx != index1]
                 else:
                     index2_candidates = [index2]
 
                 for idx2 in index2_candidates:
-                    cbox0 = dataselectiongroupbox.file_comboboxes[index1]
-                    cbox1 = dataselectiongroupbox.file_comboboxes[idx2]
+                    source_id0 = file_infos[index1]['source_id']
+                    source_id1 = file_infos[idx2]['source_id']
 
-                    sheets0 = self.jsd_model.data_sources[cbox0.currentData()].sheets
-                    sheets1 = self.jsd_model.data_sources[cbox1.currentData()].sheets
+                    sheets0 = self.jsd_model.data_sources[source_id0].sheets
+                    sheets1 = self.jsd_model.data_sources[source_id1].sheets
 
                     jsd_dict[(index1, idx2)] = {
                         category: calculate_jsd(
                             sheets0[category].df,
                             sheets1[category].df,
-                            self.get_cols_to_use_for_jsd_calc(cbox0, category),
+                            self.get_cols_to_use_for_jsd_calc(source_id0, category),
                             calc_date,
                         )
                         for category in categories

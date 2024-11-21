@@ -16,8 +16,10 @@
 from PySide6.QtCore import QSignalBlocker, Signal
 from PySide6.QtWidgets import QCheckBox, QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel
 
+from jsdview_base import GroupBoxData
 
-class JsdDataSelectionGroupBox(QGroupBox):
+
+class JsdDataSelectionGroupBox(QGroupBox, GroupBoxData):
     """
     Class: JsdDataSelectionGroupBox
 
@@ -218,7 +220,7 @@ class JsdDataSelectionGroupBox(QGroupBox):
         for combobox in self.file_comboboxes:
             combobox.addItem(description, userData=name)
 
-    def update_category_combo_box(self, categorylist, categoryindex):
+    def update_category_list(self, categorylist, categoryindex):
         """
         Update the category combo box with the given category list and set the selected index to the specified
         category index.
