@@ -1,4 +1,4 @@
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, QObject
 
 from dataclasses import dataclass
 
@@ -12,14 +12,21 @@ class GroupBoxData:
     }
 
     @property
+    def file_infos(self):
+        return self._file_infos
+
     def get_file_infos(self):
         return self._file_infos
 
     def append_file_info(self, file_info: dict):
+        file_info['checked'] = file_info.get('checked', True)
         self._file_infos.append(file_info)
         # TODO: Update the category list too?
 
     @property
+    def category_info(self):
+        return self._category_info
+
     def get_category_info(self):
         return self._category_info
 
@@ -31,11 +38,11 @@ class GroupBoxData:
         }
 
 
-class JsdViewBase:
-
+class JsdViewBase(QObject):
     add_data_source = Signal(dict)
 
     def __init__(self):
+        super().__init__()
         self._dataselectiongroupbox = GroupBoxData()
 
     @property
@@ -46,7 +53,7 @@ class JsdViewBase:
         self._dataselectiongroupbox.append_file_info({
             'description': data_source_dict['description'],
             'source_id': data_source_dict['name'],
-            'index': len(self._dataselectiongroupbox.file_infos()),
+            'index': len(self._dataselectiongroupbox.file_infos),
             'checked': True,
         })
 
