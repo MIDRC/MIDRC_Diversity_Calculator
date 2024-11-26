@@ -72,7 +72,8 @@ class JSDController(QObject):
             None
         """
         self.connect_signals()
-        self.file_changed(None, newcategoryindex=0)
+        if self.jsd_view.update_view_on_controller_initialization is True:
+            self.file_changed(None, newcategoryindex=0)
 
     def connect_signals(self):
         """

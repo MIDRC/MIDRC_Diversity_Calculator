@@ -7,21 +7,21 @@ from ipywidgets import VBox, HBox, Label
 import numpy as np
 import pandas as pd
 
-from jsdview_base import JsdViewBase
+from jsdview_base import JsdViewBase, GroupBoxData
 from jsdmodel import JSDTableModel
 
 
 
 # Define the data selection group box
-class DataSelectionGroupBox(QObject):
+class DataSelectionGroupBox(QObject, GroupBoxData):
     category_changed = Signal(str)
     file_selection_changed = Signal()
 
     def __init__(self, jsd_model):
         super().__init__()
         self.jsd_model = jsd_model
-        self.file_comboboxes = []
-        self.category_combobox = widgets.Dropdown(
+        self._file_comboboxes = []
+        self._category_combobox = widgets.Dropdown(
             options=[],
             value=None,
             description='Attribute:',
@@ -34,12 +34,12 @@ class DataSelectionGroupBox(QObject):
         self._initialize_data_sources()
 
         # Connect signals
-        self.category_combobox.observe(self.on_category_changed, names='value')
+        self._category_combobox.observe(self.on_category_changed, names='value')
         for combobox in self.file_comboboxes:
             combobox.observe(self.on_file_selection_changed, names='value')
 
     def _setup_layout(self):
-        self.layout.children = [self.category_combobox]
+        self.layout.children = [self._category_combobox]
 
     def _initialize_data_sources(self):
         # Initialize file comboboxes based on data sources from JSDController
@@ -62,10 +62,14 @@ class DataSelectionGroupBox(QObject):
     def update_file_comboboxes(self):
         # Update file comboboxes based on data sources
         data_sources = self.jsd_model.data_sources
-        for combobox in self.file_comboboxes:
+        for combobox in self._file_comboboxes:
             combobox.options = list(data_sources.keys())
-        if self.num_fileboxes > len(self.file_comboboxes):
+        if self.num_fileboxes > len(self._file_comboboxes):
             self._initialize_data_sources()
+
+    @property
+    def file_comboboxes(self):
+        return self._file_comboboxes
 
     def change_number_of_fileboxes(self, num_fileboxes):
         self.num_fileboxes = num_fileboxes
@@ -79,17 +83,18 @@ class DataSelectionGroupBox(QObject):
             # Remove excess comboboxes from the layout and list
             excess_comboboxes = len(self.file_comboboxes) - self.num_fileboxes
             for _ in range(excess_comboboxes):
-                combobox_to_remove = self.file_comboboxes.pop()
+                combobox_to_remove = self._file_comboboxes.pop()
                 self.layout.children = tuple(child for child in self.layout.children if child != combobox_to_remove)
 
     def update_category_combobox(self):
         # Update category combobox based on selected data sources
         selected_sheets = [combobox.value for combobox in self.file_comboboxes]
         common_categories = set.intersection(*[set(self.jsd_model.data_sources[combobox.value].sheets.keys()) for combobox in self.file_comboboxes])
-        self.category_combobox.options = list(common_categories)
-        self.category_combobox.disabled = False
+        self._category_combobox.options = list(common_categories)
+        self._category_combobox.disabled = False
 
     def on_category_changed(self, change):
+        self.update_category_text(change['new'])
         self.category_changed.emit(change['new'])
 
     def on_file_selection_changed(self, change):
@@ -106,8 +111,10 @@ class JsdViewIPython(JsdViewBase):
 
     def __init__(self, jsd_model):
         super().__init__()
+        self.update_view_on_controller_initialization = False
+
         self.jsd_model = jsd_model
-        self.data_selection_groupbox = DataSelectionGroupBox(jsd_model)
+        self._dataselectiongroupbox = DataSelectionGroupBox(jsd_model)
 
     def open_excel_file(self, data_source_dict):
         super().open_excel_file(data_source_dict)
@@ -116,8 +123,8 @@ class JsdViewIPython(JsdViewBase):
     def update_jsd_timeline_plot(self, jsd_model):
         print("Plotting timeline chart...")
         plt.figure(figsize=(10, 6))
-        category = self.data_selection_groupbox.category_combobox.value
-        for combobox in self.data_selection_groupbox.file_comboboxes:
+        category = self.dataselectiongroupbox.get_category_info()['current_text']
+        for combobox in self.dataselectiongroupbox.file_comboboxes:
             if combobox.value:
                 try:
                     print(f"Processing: {combobox.value}")
@@ -142,7 +149,7 @@ class JsdViewIPython(JsdViewBase):
     def update_area_chart(self, sheet_dict):
         print("Plotting area charts...")
 
-        category = self.data_selection_groupbox.category_combobox.value
+        category = self.dataselectiongroupbox.get_category_info()['current_text']
 
         # Set up the figure with multiple subplots
         fig, axes = plt.subplots(len(sheet_dict), 1, figsize=(10, 6 * len(sheet_dict)), sharex=True)

@@ -37,12 +37,21 @@ class GroupBoxData:
             'category_list': categorylist,
         }
 
+    def update_category_index(self, categoryindex):
+        self._category_info['current_index'] = categoryindex
+        self._category_info['current_text'] = self._category_info['category_list'][categoryindex]
+
+    def update_category_text(self, categorytext):
+        self._category_info['current_text'] = categorytext
+        self._category_info['current_index'] = self._category_info['category_list'].index(categorytext)
+
 
 class JsdViewBase(QObject):
     add_data_source = Signal(dict)
 
     def __init__(self):
         super().__init__()
+        self.update_view_on_controller_initialization = True
         self._dataselectiongroupbox = GroupBoxData()
 
     @property
