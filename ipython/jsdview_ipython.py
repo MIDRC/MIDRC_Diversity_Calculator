@@ -5,6 +5,7 @@ import ipywidgets as widgets
 from IPython.display import display
 from ipywidgets import VBox, HBox, Label
 import numpy as np
+import pandas as pd
 
 from jsdview_base import JsdViewBase
 from jsdmodel import JSDTableModel
@@ -149,11 +150,20 @@ class JsdViewIPython(JsdViewBase):
         if len(sheet_dict) == 1:
             axes = [axes]  # Ensure axes is always iterable
 
+        # Find the global maximum date
+        global_max_date = max(sheets[category].df['date'].max() for sheets in sheet_dict.values())
+
         # Loop through each sheet in the provided dictionary
         for ax, (index, sheets) in zip(axes, sheet_dict.items()):
             # Extract dataframe and columns to use for plotting
             df = sheets[category].df
             cols_to_use = sheets[category].data_columns
+
+            # Add a data point with the global maximum date if necessary
+            if df['date'].max() < global_max_date:
+                last_row = df.iloc[-1].copy()
+                last_row['date'] = global_max_date
+                df = pd.concat([df, pd.DataFrame([last_row])], ignore_index=True)
 
             # Prepare cumulative percentages for area plot
             total_counts = df[cols_to_use].sum(axis=1)
@@ -177,8 +187,7 @@ class JsdViewIPython(JsdViewBase):
             # Final plot settings for each subplot
             ax.set_xlabel('Date')
             ax.set_ylabel(f'{category} Distribution Over Time')
-            ax.set_title(
-                f'{self.dataselectiongroupbox.file_infos[index]} {category} Distribution Over Time')
+            ax.set_title(f'{self.dataselectiongroupbox.file_infos[index]['source_id']} {category} Distribution Over Time')
             ax.grid(True)
             ax.legend()
 
