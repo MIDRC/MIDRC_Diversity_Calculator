@@ -12,7 +12,7 @@
 #      See the License for the specific language governing permissions and
 #      limitations under the License.
 #
-
+import io
 import math
 import re
 import warnings
@@ -55,9 +55,11 @@ class DataSource:
         self.data_source = data_source
         self.custom_age_ranges = custom_age_ranges
         if self.datatype == 'file' and self.filename:
-            self.build_data_frames(self.filename)
+            self.build_data_frames_from_file(self.filename)
+        if self.datatype == 'content' and 'content' in data_source:
+            self.build_data_frames_from_content(data_source['content'])
 
-    def build_data_frames(self, filename: str):
+    def build_data_frames_from_file(self, filename: str):
         """
         Builds dataframes.
 
@@ -68,6 +70,20 @@ class DataSource:
             None
         """
         file = pd.ExcelFile(filename)
+        if file is not None:
+            self.create_sheets(file)
+
+    def build_data_frames_from_content(self, content: io.BytesIO):
+        """
+        Builds dataframes from content.
+
+        Parameters:
+            content (dict): The content binary data.
+
+        Returns:
+            None
+        """
+        file = pd.ExcelFile(content)
         if file is not None:
             self.create_sheets(file)
 

@@ -28,9 +28,11 @@ class JsdViewIPython(JsdViewBase):
         self.output_area_chart = widgets.Output()
         self._dataselectiongroupbox = DataSelectionGroupBox(jsd_model)
 
+        self._dataselectiongroupbox.excel_file_uploaded.connect(self.open_excel_file)
+
     def open_excel_file(self, data_source_dict):
         super().open_excel_file(data_source_dict)
-        self.jsd_model.add_data_source(data_source_dict)
+        self.add_data_source.emit(data_source_dict)
 
     def update_jsd_timeline_plot(self, jsd_model):
         if self.plot_method == 'interactive_plotly':

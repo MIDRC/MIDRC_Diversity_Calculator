@@ -1,6 +1,7 @@
+import io
+
 from PySide6.QtCore import Signal, QObject
 import ipywidgets as widgets
-from ipywidgets import VBox, HBox
 
 from jsdview_base import GroupBoxData
 
@@ -8,6 +9,7 @@ from jsdview_base import GroupBoxData
 class DataSelectionGroupBox(QObject, GroupBoxData):
     category_changed = Signal()
     file_selection_changed = Signal(str)
+    excel_file_uploaded = Signal(object)  # Signal to emit the uploaded file content
 
     def __init__(self, jsd_model):
         super().__init__()
@@ -24,9 +26,16 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
             value=2,
             description='Number of Fileboxes:',
             disabled=False,
-            style = {'description_width': 'initial'}
+            style = {'description_width': 'initial'},
         )
-        self.layout = VBox()
+        self._file_upload = widgets.FileUpload(
+            accept='.xlsx',
+            multiple=False,
+            description='Upload Excel File',
+            layout=widgets.Layout(width='180px'),
+        )
+        self._file_upload.observe(self._on_file_upload, names='value')
+        self.layout = widgets.VBox()
         self._setup_layout()
 
         self.num_fileboxes = 2
@@ -40,7 +49,7 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
 
     def _setup_layout(self):
         spacer = widgets.Box(layout=widgets.Layout(flex='1 1 auto', width='auto'))
-        self.layout.children = [HBox([self._category_combobox, spacer, self._num_fileboxes_combobox])]
+        self.layout.children = [widgets.HBox([self._category_combobox, spacer, self._num_fileboxes_combobox, self._file_upload])]
 
     def _initialize_data_sources(self):
         # Initialize file comboboxes based on data sources from JSDController
@@ -96,6 +105,18 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
                 combobox_to_remove = self._file_comboboxes.pop()
                 self.layout.children = tuple(child for child in self.layout.children if child != combobox_to_remove)
             self.on_file_selection_changed()
+
+    def _on_file_upload(self, change):
+        for filename, file_info in change['new'].items():
+            content = file_info['content']
+            file_content = io.BytesIO(content)
+            data_source_dict = {
+                'description': filename,
+                'name': filename,
+                'content': file_content,
+                'data type': 'content',
+            }
+            self.excel_file_uploaded.emit(data_source_dict)
 
     def update_category_combobox(self):
         # Update category combobox based on selected data sources
