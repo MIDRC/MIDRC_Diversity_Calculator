@@ -236,7 +236,6 @@ class JsdViewIPython(JsdViewBase):
             margin=dict(l=0, r=0, t=40, b=0),
             paper_bgcolor="white",
             plot_bgcolor="white",
-            responsive=True
         )
 
         # Clear previous output and display the plot inside `self.output_timeline`
