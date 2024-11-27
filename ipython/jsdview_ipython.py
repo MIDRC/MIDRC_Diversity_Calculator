@@ -228,6 +228,17 @@ class JsdViewIPython(JsdViewBase):
         # Set Y-axis limits to 0.0 and 1.0
         fig.update_yaxes(range=[0.0, 1.0])
 
+        # Make the figure responsive
+        fig.update_layout(
+            autosize=True,
+            width=None,
+            height=None,
+            margin=dict(l=0, r=0, t=40, b=0),
+            paper_bgcolor="white",
+            plot_bgcolor="white",
+            responsive=True
+        )
+
         # Clear previous output and display the plot inside `self.output_timeline`
         with self.output_timeline:
             self.output_timeline.clear_output(wait=True)
