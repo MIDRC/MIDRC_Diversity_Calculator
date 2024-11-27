@@ -41,7 +41,7 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
     def _setup_layout(self):
         spacer = widgets.Box(layout=widgets.Layout(flex='1 1 auto', width='auto'))
         self.layout.children = [HBox([self._category_combobox, spacer, self._num_fileboxes_combobox])]
-        
+
     def _initialize_data_sources(self):
         # Initialize file comboboxes based on data sources from JSDController
         data_sources = self.jsd_model.data_sources
