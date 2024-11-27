@@ -229,7 +229,7 @@ class JsdViewIPython(JsdViewBase):
         fig.update_yaxes(range=[0.0, 1.0])
 
         fig_widget = go.FigureWidget(fig)
-        vbox = widgets.VBox(fig_widget)
+        vbox = widgets.VBox([fig_widget])
 
         # Clear previous output and display the plot inside `self.output_timeline`
         with self.output_timeline:
