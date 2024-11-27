@@ -14,8 +14,8 @@ from jsdmodel import JSDTableModel
 
 # Define the data selection group box
 class DataSelectionGroupBox(QObject, GroupBoxData):
-    category_changed = Signal(str)
-    file_selection_changed = Signal()
+    category_changed = Signal()
+    file_selection_changed = Signal(str)
 
     def __init__(self, jsd_model):
         super().__init__()
@@ -57,7 +57,7 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
 
         # Initialize category combobox based on the current data selection
         if self.file_comboboxes:
-            self.update_category_combobox()
+            self.on_file_selection_changed()
 
     def update_file_comboboxes(self):
         # Update file comboboxes based on data sources
@@ -85,21 +85,46 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
             for _ in range(excess_comboboxes):
                 combobox_to_remove = self._file_comboboxes.pop()
                 self.layout.children = tuple(child for child in self.layout.children if child != combobox_to_remove)
+            self.on_file_selection_changed()
 
     def update_category_combobox(self):
         # Update category combobox based on selected data sources
-        selected_sheets = [combobox.value for combobox in self.file_comboboxes]
-        common_categories = set.intersection(*[set(self.jsd_model.data_sources[combobox.value].sheets.keys()) for combobox in self.file_comboboxes])
-        self._category_combobox.options = list(common_categories)
+        previous_value = self.get_category_info()['current_text']
+
+        file_infos = self.get_file_infos()
+        cbox0 = file_infos[0]
+        common_categories = self.jsd_model.data_sources[cbox0['source_id']].sheets.keys()
+
+        for cbox2 in file_infos[1:]:
+            categorylist2 = self.jsd_model.data_sources[cbox2['source_id']].sheets.keys()
+            common_categories = [value for value in common_categories if value in categorylist2]
+        self._category_combobox.options = common_categories
+        if previous_value not in common_categories:
+            self.update_category_list(common_categories, 0)
+            self._category_combobox.index = 0
+        else:
+            self.update_category_list(common_categories, common_categories.index(previous_value))
+            self._category_combobox.value = previous_value
         self._category_combobox.disabled = False
 
     def on_category_changed(self, change):
         self.update_category_text(change['new'])
-        self.category_changed.emit(change['new'])
+        self.category_changed.emit()
 
-    def on_file_selection_changed(self, change):
-        self.file_selection_changed.emit()
+    def on_file_selection_changed(self, change=None):
+        data_sources = self.jsd_model.data_sources
+        file_infos = []
+        for index, file_combobox in enumerate(self.file_comboboxes):
+            data_source_dict = data_sources[file_combobox.value].data_source
+            file_infos.append({
+                'description': data_source_dict['description'],
+                'source_id': data_source_dict['name'],
+                'index': index,
+                'checked': True,
+            })
+        self._file_infos = file_infos
         self.update_category_combobox()
+        self.file_selection_changed.emit(change)
 
     def display(self):
         return self.layout
@@ -114,6 +139,8 @@ class JsdViewIPython(JsdViewBase):
         self.update_view_on_controller_initialization = False
 
         self.jsd_model = jsd_model
+        self.output_timeline = widgets.Output()
+        self.output_area_chart = widgets.Output()
         self._dataselectiongroupbox = DataSelectionGroupBox(jsd_model)
 
     def open_excel_file(self, data_source_dict):
@@ -143,8 +170,10 @@ class JsdViewIPython(JsdViewBase):
         plt.title('JSD Timeline Chart')
         plt.grid(True)
         plt.legend()
-        plt.show()
-        plt.close()
+        with self.output_timeline:
+            self.output_timeline.clear_output(wait=True)
+            plt.show()
+            plt.close()
 
     def update_area_chart(self, sheet_dict):
         print("Plotting area charts...")
@@ -199,7 +228,9 @@ class JsdViewIPython(JsdViewBase):
             ax.legend()
 
         plt.tight_layout()  # Adjust layout to prevent label overlap
-        plt.show()
-        plt.close()
+        with self.output_area_chart:
+            self.output_area_chart.clear_output(wait=True)
+            plt.show()
+            plt.close()
 
         print('done with this step')

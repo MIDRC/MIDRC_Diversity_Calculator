@@ -55,7 +55,7 @@ class JsdViewBase(QObject):
         self._dataselectiongroupbox = GroupBoxData()
 
     @property
-    def dataselectiongroupbox(self) -> GroupBoxData:
+    def dataselectiongroupbox(self):
         return self._dataselectiongroupbox
 
     def open_excel_file(self, data_source_dict):
