@@ -222,21 +222,11 @@ class JsdViewIPython(JsdViewBase):
             color='label',
             title=title,
             labels={'date': 'Date', 'value': 'JSD Value', 'label': 'Data Sources'},
-            height=600  # Set the height to make the plot taller
+            # height=600  # Set the height to make the plot taller
         )
 
         # Set Y-axis limits to 0.0 and 1.0
         fig.update_yaxes(range=[0.0, 1.0])
-
-        # Make the figure responsive
-        fig.update_layout(
-            autosize=True,
-            width=None,
-            height=None,
-            margin=dict(l=0, r=0, t=40, b=0),
-            paper_bgcolor="white",
-            plot_bgcolor="white",
-        )
 
         # Clear previous output and display the plot inside `self.output_timeline`
         with self.output_timeline:
