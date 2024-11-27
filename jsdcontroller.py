@@ -22,8 +22,6 @@ from scipy.spatial import distance
 from datetimetools import pandas_date_to_qdate
 from jsdmodel import JSDTableModel
 from jsdview_base import JsdViewBase
-from dataselectiongroupbox import JsdDataSelectionGroupBox as JsdDataSelectionGroupBoxPySide
-from ipython.jsdview_ipython import DataSelectionGroupBox as DataSelectionGroupBoxIpython
 
 
 class JSDController(QObject):
@@ -82,14 +80,17 @@ class JSDController(QObject):
         """
         jsd_view = self.jsd_view  # Store the result of jsd_view() in a variable
         jsd_view.add_data_source.connect(self.jsd_model.add_data_source)
-        if isinstance(jsd_view.dataselectiongroupbox, JsdDataSelectionGroupBoxPySide):
+
+        dataselectiongroupbox_class_name = type(jsd_view.dataselectiongroupbox).__name__
+
+        if dataselectiongroupbox_class_name == 'JsdDataSelectionGroupBox':
             for f_c in jsd_view.dataselectiongroupbox.file_comboboxes:
                 f_c.currentIndexChanged.connect(self.file_changed)
             jsd_view.dataselectiongroupbox.num_data_items_changed.connect(self.file_changed)
             jsd_view.dataselectiongroupbox.file_checkbox_state_changed.connect(self.file_changed)
             jsd_view.dataselectiongroupbox.category_combobox.currentIndexChanged.connect(self.category_changed)
 
-        elif isinstance(jsd_view.dataselectiongroupbox, DataSelectionGroupBoxIpython):
+        elif dataselectiongroupbox_class_name == 'DataSelectionGroupBox':
             jsd_view.dataselectiongroupbox.file_selection_changed.connect(self.file_changed)
             jsd_view.dataselectiongroupbox.category_changed.connect(self.category_changed)
 
