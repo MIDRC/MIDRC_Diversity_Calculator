@@ -1,4 +1,4 @@
-from PySide6.QtCore import Signal, QObject
+from PySide6.QtCore import Signal, QObject, QDate
 import matplotlib.pyplot as plt
 import seaborn as sns
 import ipywidgets as widgets
@@ -148,32 +148,67 @@ class JsdViewIPython(JsdViewBase):
         self.jsd_model.add_data_source(data_source_dict)
 
     def update_jsd_timeline_plot(self, jsd_model):
-        print("Plotting timeline chart...")
+        print("Plotting timeline chart using Seaborn...")
+
+        # Initialize plot_data to None for proper handling of the first iteration
+        plot_data = None
+
+        # Iterate over `column_infos` to get each pair as its own series
+        for c, column_info in enumerate(jsd_model.column_infos):
+            try:
+                # Access every other column, as per your PySide6 logic
+                col = c * 2
+                date_column = jsd_model.input_data[col]
+                value_column = jsd_model.input_data[col + 1]
+
+                # Convert QDate to datetime strings if necessary
+                if isinstance(date_column[0], QDate):
+                    date_column = [date.toString("yyyy-MM-dd") for date in date_column]
+
+                # Create a temporary DataFrame for the current series
+                temp_data = pd.DataFrame({
+                    'date': pd.to_datetime(date_column, format='%Y-%m-%d', errors='coerce'),
+                    'value': value_column,
+                    'label': f"{column_info['file1']} vs {column_info['file2']} {column_info['category']} JSD"
+                })
+
+                # Filter out rows with invalid date values (if any date failed to convert)
+                temp_data.dropna(subset=['date'], inplace=True)
+
+                # Handle the first iteration by directly assigning temp_data to plot_data
+                if plot_data is None:
+                    plot_data = temp_data
+                else:
+                    # Concatenate subsequent series
+                    plot_data = pd.concat([plot_data, temp_data], ignore_index=True)
+
+            except Exception as e:
+                print(f"An error occurred while processing column info {column_info}: {e}")
+
+        # Check if we have any data to plot
+        if plot_data is None or plot_data.empty:
+            print("No data available for plotting.")
+            return
+
+        # Plotting using Seaborn
         plt.figure(figsize=(10, 6))
-        category = self.dataselectiongroupbox.get_category_info()['current_text']
-        for combobox in self.dataselectiongroupbox.file_comboboxes:
-            if combobox.value:
-                try:
-                    print(f"Processing: {combobox.value}")
-                    file_data = self.jsd_model.data_sources[combobox.value].sheets[category].df
-                    print(file_data.head())  # Debug to see if file_data is accessible
-                    if file_data.empty:
-                        print(f"No data available for {combobox.value} and category {category}. Skipping.")
-                        continue  # Skip empty data
-                    sns.lineplot(data=file_data, x='date', y=file_data.columns[1],
-                                 label=f'{combobox.value}: {category} ({file_data.columns[1]})')
-                except Exception as e:
-                    print(f"An error occurred while processing {combobox.value}: {e}")
-        print('done with this step')
+        sns.lineplot(data=plot_data, x='date', y='value', hue='label', marker='o')
         plt.xlabel('Date')
-        plt.ylabel(f'JSD for Category: {category}')
+        plt.ylabel('JSD Value')
         plt.title('JSD Timeline Chart')
         plt.grid(True)
-        plt.legend()
+        plt.legend(title='Data Sources', loc='upper right')
+
+        # Set Y-axis limits
+        plt.ylim(0.0, 1.0)
+
+        # Display the plot in the Jupyter notebook
         with self.output_timeline:
             self.output_timeline.clear_output(wait=True)
             plt.show()
             plt.close()
+
+        print("Plotting complete.")
 
     def update_area_chart(self, sheet_dict):
         print("Plotting area charts...")
