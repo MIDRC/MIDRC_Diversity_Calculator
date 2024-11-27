@@ -42,9 +42,10 @@ class GroupBoxData:
         self._category_info['current_text'] = self._category_info['category_list'][categoryindex]
 
     def update_category_text(self, categorytext):
-        if categorytext in self._category_info['category_list']:
+        category_list = self._category_info['category_list']
+        if categorytext in category_list:
             self._category_info['current_text'] = categorytext
-            self._category_info['current_index'] = self._category_info['category_list'].index(categorytext)
+            self._category_info['current_index'] = category_list.index(categorytext)
 
 
 class JsdViewBase(QObject):
