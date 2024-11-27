@@ -282,7 +282,7 @@ class JsdViewIPython(JsdViewBase):
             # Final plot settings for each subplot
             ax.set_xlabel('Date')
             ax.set_ylabel(f'{category} Distribution Over Time')
-            ax.set_title(f'{self.dataselectiongroupbox.file_infos[index]['source_id']} {category} Distribution Over Time')
+            ax.set_title(f"{self.dataselectiongroupbox.file_infos[index]['source_id']} {category} Distribution Over Time")
             ax.grid(True)
             ax.legend()
 
