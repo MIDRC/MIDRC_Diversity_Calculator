@@ -7,7 +7,7 @@ import pandas as pd
 from IPython.display import display
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import time
 
 from jsdview_base import JsdViewBase
 from jsdmodel import JSDTableModel
@@ -231,6 +231,7 @@ class JsdViewIPython(JsdViewBase):
         # Clear previous output and display the plot inside `self.output_timeline`
         with self.output_timeline:
             self.output_timeline.clear_output(wait=True)
+            time.sleep(0.1)
             display(fig)
 
     def update_area_chart(self, sheet_dict):
