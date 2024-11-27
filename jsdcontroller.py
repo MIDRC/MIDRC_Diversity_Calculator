@@ -198,6 +198,10 @@ class JSDController(QObject):
         file_infos = dataselectiongroupbox.get_file_infos()
         category = dataselectiongroupbox.get_category_info()['current_text']
 
+        # Try to avoid a race condition where the category is changed before the file is changed
+        if not category:
+            return
+
         model_input_data = []
         column_infos = []
 
