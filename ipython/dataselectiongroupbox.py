@@ -38,7 +38,7 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
         self.layout = widgets.VBox()
         self._setup_layout()
 
-        self.num_fileboxes = 2
+        self.num_fileboxes = 5  # Set the default number of fileboxes
         self._initialize_data_sources()
 
         # Connect signals
