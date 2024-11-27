@@ -229,11 +229,12 @@ class JsdViewIPython(JsdViewBase):
         fig.update_yaxes(range=[0.0, 1.0])
 
         fig_widget = go.FigureWidget(fig)
+        vbox = widgets.VBox(fig_widgets)
 
         # Clear previous output and display the plot inside `self.output_timeline`
         with self.output_timeline:
             self.output_timeline.clear_output(wait=True)
-            display(fig_widget)
+            display(vbox)
 
     def update_area_chart(self, sheet_dict):
         if self.plot_method == 'interactive_plotly':
