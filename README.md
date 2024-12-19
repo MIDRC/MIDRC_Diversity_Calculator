@@ -1,6 +1,6 @@
                   
  
-<h1 align="center" style="font-weight: bold;">MIDRC-REACT Representativeness Enquiry and Comparison Tool</h1>
+<h1 align="center" style="font-weight: bold;">MIDRC-REACT Representativeness Exploration and Comparison Tool</h1>
 
 <p align="center">
 <a href="#tech">Technologies</a> |
@@ -16,7 +16,7 @@
 
 <h2>:information_source: Overview</h2>
 
-The MIDRC Representativeness Enquiry and Comparison Tool (REACT) is a tool designed to compare the representativeness of biomedical data. 
+The MIDRC Representativeness Exploration and Comparison Tool (REACT) is a tool designed to compare the representativeness of biomedical data. 
 By leveraging the Jensen-Shannon distance (JSD) measure, this tool provides insights into the demographic representativeness of datasets within the biomedical field.
 It also supports monitoring the representativeness of datasets over time by assessing the representativeness of historical data.
 Developed and utilized by MIDRC, this tool assesses the representativeness of data within the open data commons to the US population.
