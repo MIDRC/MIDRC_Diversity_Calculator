@@ -37,7 +37,7 @@ class SplashScreen(QSplashScreen):
     SPLASH_HEIGHT = 600
     FONT_FAMILY = 'Arial'
     FONT_SIZE = 36
-    SPLASH_SCREEN_MESSAGE = 'MIDRC Diversity Calculator\n' \
+    SPLASH_SCREEN_MESSAGE = 'MIDRC-REACT Representativeness Exploration and Comparison Tool\n' \
                             '\n' \
                             'Loading Excel files, please wait...'
     BACKGROUND_COLOR = QColor(Qt.white)
@@ -71,11 +71,11 @@ class SplashScreen(QSplashScreen):
         self.setPixmap(pixmap)
 
 
-def launch_diversity_calculator():
+def launch_react():
     """
-    Function: launch_diversity_calculator
+    Function: launch_react
 
-    This function launches the diversity calculator application.
+    This function launches the MIDRC-REACT application.
     * It checks if a QApplication instance already exists, and if not, creates one.
     * It then creates a SplashScreen object and displays it.
     * Next, it initializes a JSDConfig object and retrieves the data source list from the configuration.
@@ -113,4 +113,4 @@ def launch_diversity_calculator():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    launch_diversity_calculator()
+    launch_react()

@@ -36,7 +36,7 @@ class JsdWindow(QMainWindow, JsdViewBase):
     """
     Class: JsdWindow
 
-    Represents the main window of the MIDRC Diversity Calculator application.
+    Represents the main window of the MIDRC-REACT application.
 
     Attributes:
     - WINDOW_TITLE: str - The title of the window.
@@ -51,11 +51,11 @@ class JsdWindow(QMainWindow, JsdViewBase):
     # pylint: disable=too-many-instance-attributes
     # The current number of attributes is not a problem for this class because they are necessary for GUI updates
 
-    WINDOW_TITLE: str = 'MIDRC Diversity Calculator'
+    WINDOW_TITLE: str = 'MIDRC-REACT Representativeness Exploration and Comparison Tool'
     DOCK_TITLES: dict = {
         'table_dock': 'JSD Table - ' + WINDOW_TITLE,
         'pie_chart_dock': 'Pie Charts - ' + WINDOW_TITLE,
-        'spider_chart_dock': 'Diversity Charts - ' + WINDOW_TITLE,
+        'spider_chart_dock': 'Distribution Charts - ' + WINDOW_TITLE,
     }
 
     def __init__(self, data_sources):
@@ -259,7 +259,7 @@ class JsdWindow(QMainWindow, JsdViewBase):
         Raises:
             None
         """
-        area_chart_view = GrabbableChartView(area_chart, save_file_prefix="diversity_area_chart")
+        area_chart_view = GrabbableChartView(area_chart, save_file_prefix="MIDRC-REACT_area_chart")
         self.area_chart_widget.layout().addWidget(area_chart_view, stretch=1)
         return area_chart_view
 
@@ -270,7 +270,7 @@ class JsdWindow(QMainWindow, JsdViewBase):
         Returns:
             The spider chart view object that was added.
         """
-        spider_chart_view = GrabbableChartView(self.spider_chart, save_file_prefix="diversity_spider_chart")
+        spider_chart_view = GrabbableChartView(self.spider_chart, save_file_prefix="MIDRC-REACT_spider_chart")
         self.spider_chart_vbox.addWidget(spider_chart_view)
         return spider_chart_view
 
@@ -337,7 +337,7 @@ class JsdWindow(QMainWindow, JsdViewBase):
         Create a pie chart series.
         """
         chart = QChart()
-        chart_view = GrabbableChartView(chart, save_file_prefix="diversity_pie_chart")
+        chart_view = GrabbableChartView(chart, save_file_prefix="MIDRC-REACT_pie_chart")
         chart.setTitle(category)
         chart.setMinimumSize(300, 240)
         chart.addSeries(series)

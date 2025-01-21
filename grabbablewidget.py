@@ -32,7 +32,7 @@ class GrabbableWidgetMixin(QObject):
         saveHighResToDisk(self):
             Save a high-resolution snapshot of the parent widget to disk.
     """
-    DEFAULT_SAVE_FILE_PREFIX = "diversity_plot_"
+    DEFAULT_SAVE_FILE_PREFIX = "MIDRC-REACT_plot_"
     DATE_TIME_FORMAT = "yyyyMMddhhmmss"  # Constant for date-time format
 
     def __init__(self, parent: QWidget = None, save_file_prefix: str = DEFAULT_SAVE_FILE_PREFIX) -> None:
