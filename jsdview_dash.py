@@ -46,8 +46,10 @@ class JSDViewDash:
 
     def update_timeline_chart(self, category):
         plot_data = None
-        for sheets in self.jsd_model.data_sources.values():
-            temp_data = sheets[category].df
+        for data_source in self.jsd_model.data_sources.values():
+            print('data_source.name:', data_source.name)
+            print('data_source.filename:', data_source.filename)
+            temp_data = data_source.sheets[category].df
             if plot_data is None:
                 plot_data = temp_data
             else:
@@ -56,16 +58,24 @@ class JSDViewDash:
         if plot_data is None or plot_data.empty:
             return px.line(title="No data available for plotting.")
 
-        fig = px.line(
-            plot_data,
-            x='date',
-            y='value',
-            color='label',
+        fig = go.Figure()
+
+        for label, df in plot_data.groupby('label'):
+            fig.add_trace(go.Scatter(
+                x=df['date'],
+                y=df['value'],
+                mode='lines',
+                name=label
+            ))
+
+        fig.update_layout(
             title=f"JSD Timeline Chart - {category}",
-            labels={'date': 'Date', 'value': 'JSD Value', 'label': 'Data Sources'},
+            xaxis_title="Date",
+            yaxis_title="JSD Value",
+            yaxis=dict(range=[0.0, 1.0]),
             height=600
         )
-        fig.update_yaxes(range=[0.0, 1.0])
+
         return fig
 
     def update_area_chart(self, category):
