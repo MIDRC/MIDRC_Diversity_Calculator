@@ -79,8 +79,8 @@ class JSDTableModel(QAbstractTableModel):
         self.custom_age_ranges = custom_age_ranges
         self.max_row_count = 0
 
+        self.data_sources = {}
         if data_source_list is not None:
-            self.data_sources = {}
             for data_source_dict in data_source_list:
                 self.add_data_source(data_source_dict)
 

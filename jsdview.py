@@ -29,9 +29,10 @@ from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QDockWidget, QFileDial
 from dataselectiongroupbox import JsdDataSelectionGroupBox
 from datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate
 from grabbablewidget import GrabbableChartView
+from jsdview_base import JsdViewBase
 
 
-class JsdWindow(QMainWindow):
+class JsdWindow(QMainWindow, JsdViewBase):
     """
     Class: JsdWindow
 
@@ -56,7 +57,6 @@ class JsdWindow(QMainWindow):
         'pie_chart_dock': 'Pie Charts - ' + WINDOW_TITLE,
         'spider_chart_dock': 'Diversity Charts - ' + WINDOW_TITLE,
     }
-    add_data_source = Signal(dict)
 
     def __init__(self, data_sources):
         """
@@ -139,7 +139,7 @@ class JsdWindow(QMainWindow):
 
         # Create the 'Open Excel File' action
         open_excel_file_action: QAction = QAction("Open Excel File...", self)
-        open_excel_file_action.triggered.connect(self.open_excel_file)
+        open_excel_file_action.triggered.connect(self.open_excel_file_dialog)
         file_menu.addAction(open_excel_file_action)
 
         # Add the 'Settings' menu
@@ -617,7 +617,7 @@ class JsdWindow(QMainWindow):
             self.jsd_timeline_chart.setAnimationOptions(QChart.NoAnimation)
         return True
 
-    def open_excel_file(self):
+    def open_excel_file_dialog(self):
         """
         Open an Excel file and add it as a data source.
 

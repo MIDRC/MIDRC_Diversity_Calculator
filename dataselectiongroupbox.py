@@ -16,8 +16,10 @@
 from PySide6.QtCore import QSignalBlocker, Signal
 from PySide6.QtWidgets import QCheckBox, QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel
 
+from jsdview_base import GroupBoxData
 
-class JsdDataSelectionGroupBox(QGroupBox):
+
+class JsdDataSelectionGroupBox(QGroupBox, GroupBoxData):
     """
     Class: JsdDataSelectionGroupBox
 
@@ -93,6 +95,37 @@ class JsdDataSelectionGroupBox(QGroupBox):
 
         # Now we can copy the data from the first combobox to the rest of them
         self.set_num_data_items(self.NUM_DEFAULT_DATA_ITEMS)
+
+    def get_file_infos(self):
+        """
+        Get the file information for all files.
+
+        Returns:
+            List[dict]: A list of dictionaries containing information about each file.
+        """
+        self._file_infos = []
+        for i, cbox in enumerate(self.file_comboboxes):
+            self._file_infos.append({
+                'description': cbox.currentText(),
+                'source_id': cbox.currentData(),
+                'index': i,
+                'checked': self.file_checkboxes[i].isChecked(),
+            })
+        return self._file_infos
+
+    def get_category_info(self):
+        """
+        Get the category information and current category.
+
+        Returns:
+            dict: A dictionary containing the category information.
+        """
+        self._category_info = {
+            'current_text': self.category_combobox.currentText(),
+            'current_index': self.category_combobox.currentIndex(),
+            'category_list': [self.category_combobox.itemText(i) for i in range(self.category_combobox.count())],
+        }
+        return self._category_info
 
     def add_file_combobox_to_layout(self, auto_populate: bool = True):
         """
@@ -187,7 +220,7 @@ class JsdDataSelectionGroupBox(QGroupBox):
         for combobox in self.file_comboboxes:
             combobox.addItem(description, userData=name)
 
-    def update_category_combo_box(self, categorylist, categoryindex):
+    def update_category_list(self, categorylist, categoryindex):
         """
         Update the category combo box with the given category list and set the selected index to the specified
         category index.
