@@ -16,6 +16,7 @@
 from bisect import bisect_left
 
 import numpy as np
+import pandas as pd
 from PySide6.QtCore import QObject, Signal
 from scipy.spatial import distance
 
@@ -153,6 +154,10 @@ class JSDController(QObject):
         """
         dataselectiongroupbox = self.jsd_view.dataselectiongroupbox
         file_infos = dataselectiongroupbox.get_file_infos()
+        if not file_infos:
+            print("No files available.")
+            return
+
         category_info = dataselectiongroupbox.get_category_info()
         categoryindex = category_info['current_index']
         if newcategoryindex is not None:
@@ -186,6 +191,18 @@ class JSDController(QObject):
 
         sheets = self.jsd_model.data_sources[current_data].sheets
         return sheets
+
+    def get_categories(self):
+        """
+        Get the list of categories from the data sources.
+
+        Returns:
+            list: A list of categories.
+        """
+        categories = set()
+        for data_source in self._jsd_model.data_sources.values():
+            categories.update(data_source.sheets.keys())
+        return list(categories)
 
     def category_changed(self):
         """
@@ -235,6 +252,46 @@ class JSDController(QObject):
 
         self.update_category_plots()
         self.jsd_model.layoutChanged.emit()
+
+    def get_timeline_data(self, category):
+        """
+        Get the timeline data for the specified category.
+
+        Args:
+            category (str): The category for which to get the timeline data.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the timeline data.
+        """
+        data_frames = []
+        data_sources = list(self.jsd_model.data_sources.values())
+        num_sources = len(data_sources)
+
+        for i in range(num_sources):
+            for j in range(i + 1, num_sources):
+                data_source_1 = data_sources[i]
+                data_source_2 = data_sources[j]
+
+                if category in data_source_1.sheets and category in data_source_2.sheets:
+                    df1 = data_source_1.sheets[category].df.copy()
+                    df2 = data_source_2.sheets[category].df.copy()
+
+                    df1['label'] = f"{data_source_1.name} vs {data_source_2.name}"
+                    df1['value'] = df1.apply(
+                        lambda row: calculate_jsd(
+                            df1=data_source_1.sheets[category].df,
+                            df2=data_source_2.sheets[category].df,
+                            cols_to_use=self.get_cols_to_use_for_jsd_calc(data_source_1.name, category),
+                            calc_date=row['date']
+                        ),
+                        axis=1
+                    )
+                    data_frames.append(df1)
+
+        if data_frames:
+            return pd.concat(data_frames, ignore_index=True)
+        else:
+            return pd.DataFrame()
 
     def update_file_based_charts(self):
         """

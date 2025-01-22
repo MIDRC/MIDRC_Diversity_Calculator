@@ -8,10 +8,14 @@ import numpy as np
 
 from jsdconfig import JSDConfig
 from jsdmodel import JSDTableModel
+from jsdcontroller import JSDController
+from jsdview_base import JsdViewBase
 
-class JSDViewDash:
-    def __init__(self, jsd_model):
+class JSDViewDash(JsdViewBase):
+    def __init__(self, jsd_model, config):
+        super().__init__()
         self.jsd_model = jsd_model
+        self.controller = JSDController(self, jsd_model, config)
         self.app = dash.Dash(__name__)
         self.setup_layout()
 
@@ -41,22 +45,17 @@ class JSDViewDash:
             return self.update_area_chart(selected_category)
 
     def get_categories(self):
-        # Assuming categories are the same across all data sources
-        return list(list(self.jsd_model.data_sources.values())[0].sheets.keys())
+        return self.controller.get_categories()
 
     def update_timeline_chart(self, category):
-        plot_data = None
-        for data_source in self.jsd_model.data_sources.values():
-            print('data_source.name:', data_source.name)
-            print('data_source.filename:', data_source.filename)
-            temp_data = data_source.sheets[category].df
-            if plot_data is None:
-                plot_data = temp_data
-            else:
-                plot_data = pd.concat([plot_data, temp_data], ignore_index=True)
+        plot_data = self.controller.get_timeline_data(category)
 
         if plot_data is None or plot_data.empty:
             return px.line(title="No data available for plotting.")
+
+        if 'label' not in plot_data.columns:
+            print("The 'label' column is missing in the plot data.")
+            return
 
         fig = go.Figure()
 
@@ -79,13 +78,11 @@ class JSDViewDash:
         return fig
 
     def update_area_chart(self, category):
-        global_max_date = max(sheets[category].df['date'].max() for sheets in self.jsd_model.data_sources.values())
+        plot_data = self.controller.get_area_data(category)
+        global_max_date = plot_data['global_max_date']
         fig = go.Figure()
 
-        for sheets in self.jsd_model.data_sources.values():
-            df = sheets[category].df
-            cols_to_use = sheets[category].data_columns
-
+        for df, cols_to_use in plot_data['data']:
             if df['date'].max() < global_max_date:
                 last_row = df.iloc[-1].copy()
                 last_row['date'] = global_max_date
@@ -141,5 +138,13 @@ class JSDViewDash:
 config = JSDConfig()
 data_source_list = config.data['data sources']
 jsd_model = JSDTableModel(data_source_list, config.data.get('custom age ranges', None))
-view = JSDViewDash(jsd_model)
+view = JSDViewDash(jsd_model, config)
+
+# Load data sources
+for data_source in data_source_list:
+    print(f"Loading: {data_source['description']}...")
+    view.open_excel_file(data_source)
+
+print("Done Loading Files")
+
 view.run()
