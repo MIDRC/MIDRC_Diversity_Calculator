@@ -27,7 +27,7 @@ class JSDViewDash(JsdViewBase):
                 value=self.get_categories()[0]
             ),
             dcc.Graph(id='timeline-chart'),
-            dcc.Graph(id='area-chart')
+            html.Div(id='area-chart-container')
         ])
 
         @self.app.callback(
@@ -38,7 +38,7 @@ class JSDViewDash(JsdViewBase):
             return self.update_timeline_chart(selected_category)
 
         @self.app.callback(
-            Output('area-chart', 'figure'),
+            Output('area-chart-container', 'children'),
             Input('category-dropdown', 'value')
         )
         def update_area_chart(selected_category):
@@ -78,58 +78,94 @@ class JSDViewDash(JsdViewBase):
         return fig
 
     def update_area_chart(self, category):
-        plot_data = self.controller.get_area_data(category)
-        global_max_date = plot_data['global_max_date']
-        fig = go.Figure()
+        data_sources = list(self.jsd_model.data_sources.values())
 
-        for df, cols_to_use in plot_data['data']:
-            if df['date'].max() < global_max_date:
-                last_row = df.iloc[-1].copy()
-                last_row['date'] = global_max_date
-                df = pd.concat([df, pd.DataFrame([last_row])], ignore_index=True)
+        # Find the global minimum and maximum date
+        global_min_date = min(data_source.sheets[category].df['date'].min() for data_source in data_sources if
+                              category in data_source.sheets)
+        global_max_date = max(data_source.sheets[category].df['date'].max() for data_source in data_sources if
+                              category in data_source.sheets)
 
-            total_counts = df[cols_to_use].sum(axis=1)
-            cumulative_percents = 100.0 * df[cols_to_use].cumsum(axis=1).div(total_counts, axis=0)
+        # Create a list to hold each plotly figure
+        figures = []
 
-            lower_values = np.zeros(len(df))
-            for col in cols_to_use:
-                if df[col].iloc[-1] == 0:
-                    continue
-                upper_values = cumulative_percents[col]
-                fig.add_trace(
-                    go.Scatter(
-                        x=df['date'],
-                        y=upper_values,
-                        fill='tonexty',
-                        name=col,
-                        mode='lines',
-                        line=dict(width=0.5),
-                        opacity=0.5,
-                        hoverinfo='none'
+        # Loop through each data source
+        for data_source in data_sources:
+            if category in data_source.sheets:
+                df = data_source.sheets[category].df.copy()
+                cols_to_use = data_source.sheets[category].data_columns
+
+                # Add a data point with the global maximum date if necessary
+                if df['date'].max() < global_max_date:
+                    last_row = df.iloc[-1].copy()
+                    last_row['date'] = global_max_date
+                    df = pd.concat([df, pd.DataFrame([last_row])], ignore_index=True)
+
+                # Prepare cumulative percentages for area plot
+                total_counts = df[cols_to_use].sum(axis=1)
+                cumulative_percents = 100.0 * df[cols_to_use].cumsum(axis=1).div(total_counts, axis=0)
+                individual_percents = 100.0 * df[cols_to_use].div(total_counts, axis=0)
+
+                # Create a new Plotly figure for each dataset
+                fig = go.Figure()
+
+                # Plotting area chart using cumulative percentages
+                lower_values = np.zeros(len(df))
+
+                for col in cols_to_use:
+                    if df[col].iloc[-1] == 0:  # Skip columns with no data
+                        continue
+
+                    upper_values = cumulative_percents[col]
+
+                    # Add a trace for the stacked area effect
+                    fig.add_trace(
+                        go.Scatter(
+                            x=df['date'],
+                            y=upper_values,
+                            fill='tonexty',
+                            name=col,
+                            mode='lines',
+                            line=dict(width=0.5),
+                            opacity=0.5,
+                            hoverinfo='none'  # Prevent default cumulative percentage from being shown
+                        )
                     )
-                )
-                fig.add_trace(
-                    go.Scatter(
-                        x=df['date'],
-                        y=upper_values,
-                        text=100.0 * df[col].div(total_counts, axis=0),
-                        name=col,
-                        mode='lines',
-                        line=dict(width=0.5, color='rgba(0,0,0,0)'),
-                        hovertemplate='%{text:.2f}%',
-                        showlegend=False
-                    )
-                )
-                lower_values = upper_values
 
-        fig.update_layout(
-            title=f"{category} Distribution Over Time",
-            xaxis_title="Date",
-            yaxis_title="Percentage (%)",
-            height=400,
-            showlegend=True
-        )
-        return fig
+                    # Add a separate trace for hover information with actual column percentages
+                    fig.add_trace(
+                        go.Scatter(
+                            x=df['date'],
+                            y=upper_values,
+                            text=individual_percents[col],
+                            name=col,
+                            mode='lines',
+                            line=dict(width=0.5, color='rgba(0,0,0,0)'),  # Invisible line
+                            hovertemplate='%{text:.2f}%',
+                            showlegend=False  # Hide these hover traces from the legend
+                        )
+                    )
+
+                # Update the layout for each individual figure
+                fig.update_layout(
+                    title=f"{data_source.name} {category} Distribution Over Time",
+                    xaxis_title="Date",
+                    yaxis_title="Percentage (%)",
+                    height=400,
+                    showlegend=True,
+                    xaxis=dict(range=[global_min_date, global_max_date])  # Set the x-axis range for consistency
+                )
+
+                # Append the figure as a dcc.Graph component
+                figures.append(dcc.Graph(figure=fig))
+
+        # Arrange figures in a grid layout with two figures per row
+        rows = []
+        for i in range(0, len(figures), 2):
+            row = html.Div(figures[i:i + 2], style={'display': 'flex', 'justify-content': 'space-around'})
+            rows.append(row)
+
+        return rows
 
     def run(self):
         self.app.run_server(debug=True)
