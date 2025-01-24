@@ -14,8 +14,10 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
 
     def __init__(self, jsd_model, app: Dash):
         super().__init__()
-        self.jsd_model = jsd_model
         self.app = app
+        self.app.config.suppress_callback_exceptions = True  # Allow dynamically generated components
+
+        self.jsd_model = jsd_model
         self._file_comboboxes = []
         self._category_combobox = dcc.Dropdown(
             options=[],
@@ -79,13 +81,20 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
             [State('upload-data', 'filename')]
         )(self._on_file_upload)
 
+        # Callback to update filebox layout dynamically
+        self.app.callback(
+            Output('filebox-container', 'children'),
+            Input(self._num_fileboxes_combobox, 'value')
+        )(self.update_filebox_layout)
+
     def _setup_layout(self):
         self.layout.children = [
             html.Div([
                 self._category_combobox,
                 self._num_fileboxes_combobox,
                 self._file_upload,
-                html.Div(id='output-data-upload')
+                html.Div(id='output-data-upload'),
+                html.Div(id='filebox-container')  # This will hold the fileboxes dynamically
             ])
         ]
 
@@ -100,7 +109,7 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
                 disabled=False,
             )
             self.file_comboboxes.append(combobox)
-            self.layout.children.append(combobox)
+            # self.layout.children.append(combobox)
 
         self._num_fileboxes_combobox.options = [{'label': str(i), 'value': i} for i in range(2, len(data_sources) + 1)]
         if len(data_sources) > 1:
@@ -108,13 +117,35 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
 
         # Initialize category combobox based on the current data selection
         if self.file_comboboxes:
-            self.on_file_selection_changed(None)
+            self.on_file_selection_changed()
 
     def on_num_fileboxes_changed(self, value, previous_value=None):
         if value is None:
             return previous_value
         self.change_number_of_fileboxes(value)
         return value
+
+    def update_filebox_layout(self, num_fileboxes):
+        """Dynamically updates the displayed fileboxes when the number changes."""
+        self.num_fileboxes = num_fileboxes
+        data_sources = self.jsd_model.data_sources
+
+        # Generate new dropdowns
+        filebox_dropdowns = []
+        for i in range(self.num_fileboxes):
+            combobox = dcc.Dropdown(
+                id=f'filebox-{i}',
+                options=[{'label': key, 'value': key} for key in data_sources.keys()],
+                value=self._file_comboboxes[i].value if i < len(self._file_comboboxes) else None,
+                placeholder=f'Data Source {i + 1}',
+                disabled=False,
+            )
+            filebox_dropdowns.append(combobox)
+
+        # Update the internal list of comboboxes
+        self._file_comboboxes = filebox_dropdowns
+
+        return filebox_dropdowns
 
     def update_file_comboboxes(self):
         # Update file comboboxes based on data sources
@@ -143,9 +174,6 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
         elif self.num_fileboxes < len(self.file_comboboxes):
             # Remove excess comboboxes from the layout and list
             excess_comboboxes = len(self.file_comboboxes) - self.num_fileboxes
-            for _ in range(excess_comboboxes):
-                combobox_to_remove = self._file_comboboxes.pop()
-                self.layout.children.remove(combobox_to_remove)
             self.on_file_selection_changed()
 
     def _on_file_upload(self, contents, filename):
@@ -188,7 +216,7 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
         self.category_changed.emit()
         return value
 
-    def on_file_selection_changed(self, value, previous_value=None):
+    def on_file_selection_changed(self, value=None, previous_value=None):
         data_sources = self.jsd_model.data_sources
         file_infos = []
 
