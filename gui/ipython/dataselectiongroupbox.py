@@ -3,7 +3,7 @@ import io
 from PySide6.QtCore import Signal, QObject
 import ipywidgets as widgets
 
-from jsdview_base import GroupBoxData
+from gui.jsdview_base import GroupBoxData
 
 # Define the data selection group box
 class DataSelectionGroupBox(QObject, GroupBoxData):

@@ -20,9 +20,9 @@ import pandas as pd
 from PySide6.QtCore import QObject, Signal
 from scipy.spatial import distance
 
-from datetimetools import pandas_date_to_qdate
-from jsdmodel import JSDTableModel
-from jsdview_base import JsdViewBase
+from core.datetimetools import pandas_date_to_qdate
+from core.jsdmodel import JSDTableModel
+from gui.jsdview_base import JsdViewBase
 
 
 class JSDController(QObject):

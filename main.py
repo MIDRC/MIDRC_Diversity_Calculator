@@ -19,10 +19,10 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QSplashScreen
 
-from jsdconfig import JSDConfig
-from jsdcontroller import JSDController
-from jsdmodel import JSDTableModel
-from jsdview import JsdWindow
+from core.jsdconfig import JSDConfig
+from core.jsdcontroller import JSDController
+from core.jsdmodel import JSDTableModel
+from gui.pyside6.jsdview import JsdWindow
 
 
 class SplashScreen(QSplashScreen):

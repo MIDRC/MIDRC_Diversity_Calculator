@@ -26,10 +26,10 @@ from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QDockWidget, QFileDial
                                QHBoxLayout, QHeaderView, QLabel, QLayout, QLineEdit, QMainWindow, QMenu,
                                QMenuBar, QScrollArea, QSpinBox, QSplitter, QTableView, QVBoxLayout, QWidget)
 
-from dataselectiongroupbox import JsdDataSelectionGroupBox
-from datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate
-from grabbablewidget import GrabbableChartView
-from jsdview_base import JsdViewBase
+from gui.pyside6.dataselectiongroupbox import JsdDataSelectionGroupBox
+from core.datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate
+from gui.pyside6.grabbablewidget import GrabbableChartView
+from gui.jsdview_base import JsdViewBase
 
 
 class JsdWindow(QMainWindow, JsdViewBase):

@@ -14,6 +14,7 @@
 #
 
 from dataclasses import dataclass, field
+import os
 
 from yaml import dump, load
 try:
@@ -40,10 +41,17 @@ class JSDConfig:
     data: dict = field(init=False)
 
     def __post_init__(self):
+        os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
         self._load_data()
 
     def _load_data(self):
         """Load the YAML data from the current filename."""
+        if not os.path.exists(self.filename):
+            print(f"File {self.filename} does not exist. Skipping load.")
+            print(f"Current working directory: {os.getcwd()}")
+            self.data = {}
+            return
+
         with open(self.filename, 'r', encoding='utf-8') as stream:
             self.data = load(stream, Loader=Loader)
         # print(dump(self.data))

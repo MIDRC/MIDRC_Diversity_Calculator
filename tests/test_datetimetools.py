@@ -3,7 +3,7 @@ import pandas as pd
 from PySide6.QtCore import QDate, QDateTime
 import pytest
 
-from datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate, pandas_date_to_qdate
+from core.datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate, pandas_date_to_qdate
 
 
 class TestConvertDateToMilliseconds:

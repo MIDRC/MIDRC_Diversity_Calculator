@@ -16,7 +16,7 @@
 from PySide6.QtCore import QSignalBlocker, Signal
 from PySide6.QtWidgets import QCheckBox, QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel
 
-from jsdview_base import GroupBoxData
+from gui.jsdview_base import GroupBoxData
 
 
 class JsdDataSelectionGroupBox(QGroupBox, GroupBoxData):

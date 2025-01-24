@@ -7,11 +7,10 @@ import pandas as pd
 from IPython.display import display
 import plotly.express as px
 import plotly.graph_objects as go
-import time
 
-from jsdview_base import JsdViewBase
-from jsdmodel import JSDTableModel
-from ipython.dataselectiongroupbox import DataSelectionGroupBox
+from gui.jsdview_base import JsdViewBase
+from core.jsdmodel import JSDTableModel
+from gui.ipython.dataselectiongroupbox import DataSelectionGroupBox
 
 
 class JsdViewIPython(JsdViewBase):

@@ -18,7 +18,7 @@ from typing import Any, Optional
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, Signal
 from PySide6.QtGui import QColor
 
-from excel_layout import DataSource
+from core.excel_layout import DataSource
 
 
 class JSDTableModel(QAbstractTableModel):

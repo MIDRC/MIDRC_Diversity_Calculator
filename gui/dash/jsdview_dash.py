@@ -1,3 +1,5 @@
+import os
+
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
@@ -6,10 +8,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 
-from jsdconfig import JSDConfig
-from jsdmodel import JSDTableModel
-from jsdcontroller import JSDController
-from jsdview_base import JsdViewBase
+from core.jsdconfig import JSDConfig
+from core.jsdmodel import JSDTableModel
+from core.jsdcontroller import JSDController
+from gui.jsdview_base import JsdViewBase
 
 class JSDViewDash(JsdViewBase):
     def __init__(self, jsd_model, config):
