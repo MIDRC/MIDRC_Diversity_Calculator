@@ -1,4 +1,5 @@
 from PySide6.QtCore import Signal, QObject
+from PySide6.QtWidgets import QMainWindow
 
 from dataclasses import dataclass
 
@@ -52,7 +53,8 @@ class JsdViewBase(QObject):
     add_data_source = Signal(dict)
 
     def __init__(self):
-        super().__init__()
+        if not isinstance(self, QMainWindow):
+            super().__init__()
         self.update_view_on_controller_initialization = True
         self._dataselectiongroupbox = GroupBoxData()
 

@@ -51,6 +51,8 @@ class JsdWindow(QMainWindow, JsdViewBase):
     # pylint: disable=too-many-instance-attributes
     # The current number of attributes is not a problem for this class because they are necessary for GUI updates
 
+    add_data_source = Signal(dict)
+
     WINDOW_TITLE: str = 'MIDRC-REACT Representativeness Exploration and Comparison Tool'
     DOCK_TITLES: dict = {
         'table_dock': 'JSD Table - ' + WINDOW_TITLE,
