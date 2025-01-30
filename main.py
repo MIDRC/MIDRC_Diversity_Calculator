@@ -12,6 +12,12 @@
 #      See the License for the specific language governing permissions and
 #      limitations under the License.
 #
+#
+#  This work was supported in part by The Medical Imaging and Data Resource
+#  Center (MIDRC), which is funded by the National Institute of Biomedical
+#  Imaging and Bioengineering (NIBIB) of the National Institutes of Health under
+#  contract 75N92020D00021/5N92023F00002 and through the Advanced Research
+#  Projects Agency for Health (ARPA-H).
 
 import sys
 
