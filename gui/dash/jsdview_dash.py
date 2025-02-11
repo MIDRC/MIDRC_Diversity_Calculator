@@ -23,6 +23,12 @@ class JSDViewDash(JsdViewBase):
         self.data_selection_group_box = DataSelectionGroupBox(jsd_model, self.app)
         self.setup_layout()
 
+        # Connect the signal to the slot
+        # if not self.data_selection_group_box.excel_file_uploaded.connect(self.handle_excel_file_uploaded):
+        #     print("⚠️ Failed to connect excel_file_uploaded signal!")
+        # else:
+        #     print("✅ Successfully connected excel_file_uploaded signal to handle_excel_file_uploaded")
+
     def setup_layout(self):
         self.app.layout = html.Div([
             self.data_selection_group_box.display(),
@@ -167,8 +173,16 @@ class JSDViewDash(JsdViewBase):
 
         return rows
 
+    def handle_excel_file_uploaded(self, data_source_dict):
+        print(f"handle_excel_file_uploaded() triggered with file: {data_source_dict['name']}")  # Debugging print
+        self.open_excel_file(data_source_dict)
+        print("Excel file loaded, try to update layout")
+        self.data_selection_group_box.update_filebox_layout(self.data_selection_group_box.num_fileboxes)
+
     def run(self):
         self.app.run_server(debug=True)
+        # Remove threading if we want to use Qt Signals and Slots
+        # self.app.run_server(debug=False, threaded=False)
 
 # Example usage:
 config = JSDConfig()

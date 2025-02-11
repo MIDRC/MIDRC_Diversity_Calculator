@@ -3,14 +3,9 @@ import io
 
 from dash import Dash, dcc, html, callback_context
 from dash.dependencies import Input, Output, State
-from dash.exceptions import PreventUpdate
-from PySide6.QtCore import Signal, QObject
 from gui.jsdview_base import GroupBoxData
 
-class DataSelectionGroupBox(QObject, GroupBoxData):
-    category_changed = Signal()
-    file_selection_changed = Signal(str)
-    excel_file_uploaded = Signal(object)  # Signal to emit the uploaded file content
+class DataSelectionGroupBox(GroupBoxData):
 
     def __init__(self, jsd_model, app: Dash):
         super().__init__()
@@ -129,6 +124,7 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
         """Dynamically updates the displayed fileboxes when the number changes."""
         self.num_fileboxes = num_fileboxes
         data_sources = self.jsd_model.data_sources
+        print(f"Updating fileboxes to {num_fileboxes} using data sources: {data_sources.keys()}")
 
         # Generate new dropdowns
         filebox_dropdowns = []
@@ -187,7 +183,14 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
                 'content': file_content,
                 'data type': 'content',
             }
-            self.excel_file_uploaded.emit(data_source_dict)
+
+            print("⚠️ Manually calling handle_excel_file_uploaded")
+            from gui.dash.jsdview_dash import JSDViewDash
+            JSDViewDash.handle_excel_file_uploaded(self.app, data_source_dict)  # Call manually
+
+            return html.Div([
+                'File uploaded: {}'.format(filename)
+            ])
 
     def update_category_combobox(self):
         # Update category combobox based on selected data sources
@@ -213,7 +216,6 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
         if value is None:
             return previous_value
         self.update_category_text(value)
-        self.category_changed.emit()
         return value
 
     def on_file_selection_changed(self, value=None, previous_value=None):
@@ -237,8 +239,6 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
 
         if value is not None:
             return previous_value
-
-        self.file_selection_changed.emit(value)
 
         return value
 
