@@ -15,6 +15,7 @@
 
 from bisect import bisect_left
 
+import itertools
 import numpy as np
 import pandas as pd
 from PySide6.QtCore import QObject, Signal
@@ -40,7 +41,7 @@ class JSDController(QObject):
     """
     modelChanged = Signal()
     fileChangedSignal = Signal()
-    NOT_REPORTED_COLUMN_NAME = 'Not reported'
+    NOT_REPORTED_COLUMN_NAME = 'Not Reported'
 
     def __init__(self, jsd_view, jsd_model, config):
         """
@@ -61,6 +62,8 @@ class JSDController(QObject):
         self._jsd_view = jsd_view
         self._jsd_model = jsd_model
         self._config = config
+        self._num_categories = 0
+        self._raw_data_available = False
 
         self.initialize()
 
@@ -73,7 +76,7 @@ class JSDController(QObject):
         """
         self.connect_signals()
         if self.jsd_view.update_view_on_controller_initialization is True:
-            self.file_changed(None, newcategoryindex=0)
+            self.file_changed(None, new_category_index=0)
 
     def connect_signals(self):
         """
@@ -144,13 +147,23 @@ class JSDController(QObject):
             self._jsd_model = jsd_model
             self.modelChanged.emit()
 
-    def file_changed(self, _, newcategoryindex=None):
+    @property
+    def num_categories(self) -> int:
+        """
+        Get the number of categories.
+
+        Returns:
+            int: The number of categories.
+        """
+        return self._num_categories
+
+    def file_changed(self, _, new_category_index=None):
         """
         Parses the categories from the files selected in the comboboxes and updates the category box appropriately.
         Emits the fileChangedSignal signal upon completion.
 
         Args:
-            newcategoryindex Optional(int): The index of the category to set, if None then use previous index.
+            new_category_index Optional(int): The index of the category to set, if None then use previous index.
         """
         dataselectiongroupbox = self.jsd_view.dataselectiongroupbox
         file_infos = dataselectiongroupbox.get_file_infos()
@@ -159,18 +172,33 @@ class JSDController(QObject):
             return
 
         category_info = dataselectiongroupbox.get_category_info()
-        categoryindex = category_info['current_index']
-        if newcategoryindex is not None:
-            categoryindex = newcategoryindex
+        category_index = category_info['current_index']
+        if new_category_index is not None:
+            category_index = new_category_index
 
-        cbox0 = file_infos[0]
-        categorylist = self.jsd_model.data_sources[cbox0['source_id']].sheets.keys()
+        # Compute the intersection of category keys across all file_infos.
+        category_set = None
+        for cbox in file_infos:
+            ds = self.jsd_model.data_sources[cbox['source_id']]
+            if category_set is None:
+                category_set = set(ds.sheets.keys())
+            else:
+                category_set.intersection_update(ds.sheets.keys())
 
-        for cbox2 in file_infos[1:]:
-            categorylist2 = self.jsd_model.data_sources[cbox2['source_id']].sheets.keys()
-            categorylist = [value for value in categorylist if value in categorylist2]
+        category_list = list(category_set)
 
-        dataselectiongroupbox.update_category_list(categorylist, categoryindex)
+        # Compute has_raw_data using all() with a generator expression.
+        has_raw_data = all(
+            self.jsd_model.data_sources[cbox['source_id']].raw_data is not None
+            for cbox in file_infos
+        )
+
+        self._num_categories = len(category_list)
+        self._raw_data_available = has_raw_data
+        if self._raw_data_available:
+            category_list.append('Aggregate')
+
+        dataselectiongroupbox.update_category_list(category_list, category_index)
 
         self.fileChangedSignal.emit()
 
@@ -222,38 +250,41 @@ class JSDController(QObject):
         model_input_data = []
         column_infos = []
 
-        for i, cbox1 in enumerate(file_infos[:-1]):
+        for (i, cbox1), (j, cbox2) in itertools.combinations(enumerate(file_infos), 2):
             file1 = cbox1['source_id']
-            df1 = self.jsd_model.data_sources[file1].sheets[category].df
+            file2 = cbox2['source_id']
+            data_source_1 = self.jsd_model.data_sources[file1]
+            data_source_2 = self.jsd_model.data_sources[file2]
+            if not all(category in ds.sheets for ds in (data_source_1, data_source_2)):
+                continue
+
+            df1 = data_source_1.sheets[category].df
+            df2 = data_source_2.sheets[category].df
             cols_to_use = self.get_cols_to_use_for_jsd_calc(file1, category)
 
-            for j, cbox2 in enumerate(file_infos[i + 1:], start=i + 1):
-                file2 = cbox2['source_id']
-                df2 = self.jsd_model.data_sources[file2].sheets[category].df
+            first_date = max(df1.date.values[0], df2.date.values[0])
+            date_list = sorted(set(np.concatenate((df1.date.values, df2.date.values))))
+            date_list = remove_elements_less_than_from_sorted_list(date_list, first_date)
 
-                first_date = max(df1.date.values[0], df2.date.values[0])
-                date_list = sorted(set(np.concatenate((df1.date.values, df2.date.values))))
-                date_list = remove_elements_less_than_from_sorted_list(date_list, first_date)
+            input_data = [float(calculate_jsd(df1, df2, cols_to_use, calc_date)) for calc_date in date_list]
 
-                input_data = [float(calculate_jsd(df1, df2, cols_to_use, calc_date)) for calc_date in date_list]
+            model_input_data.append([pandas_date_to_qdate(calc_date) for calc_date in date_list])
+            model_input_data.append(input_data)
 
-                model_input_data.append([pandas_date_to_qdate(calc_date) for calc_date in date_list])
-                model_input_data.append(input_data)
-
-                column_infos.append({
-                    'category': category,
-                    'index1': i,
-                    'file1': file1,
-                    'index2': j,
-                    'file2': file2,
-                })
+            column_infos.append({
+                'category': category,
+                'index1': i,
+                'file1': file1,
+                'index2': j,
+                'file2': file2,
+            })
 
         self.jsd_model.update_input_data(model_input_data, column_infos)
 
         self.update_category_plots()
         self.jsd_model.layoutChanged.emit()
 
-    def get_timeline_data(self, category):
+    def get_timeline_data(self, category: str):
         """
         Get the timeline data for the specified category.
 
@@ -264,34 +295,27 @@ class JSDController(QObject):
             pd.DataFrame: A DataFrame containing the timeline data.
         """
         data_frames = []
-        data_sources = list(self.jsd_model.data_sources.values())
-        num_sources = len(data_sources)
+        for ds1, ds2 in itertools.combinations(self.jsd_model.data_sources.values(), 2):
+            # Ensure both data sources contain the category.
+            if not all(category in ds.sheets for ds in (ds1, ds2)):
+                continue
 
-        for i in range(num_sources):
-            for j in range(i + 1, num_sources):
-                data_source_1 = data_sources[i]
-                data_source_2 = data_sources[j]
+            # Copy ds1's dataframe for modifications.
+            df = ds1.sheets[category].df.copy()
+            df['label'] = f"{ds1.name} vs {ds2.name}"
 
-                if category in data_source_1.sheets and category in data_source_2.sheets:
-                    df1 = data_source_1.sheets[category].df.copy()
-                    df2 = data_source_2.sheets[category].df.copy()
+            cols_to_use = self.get_cols_to_use_for_jsd_calc(ds1.name, category)
+            df['value'] = df['date'].apply(
+                lambda calc_date: calculate_jsd(
+                    df1=ds1.sheets[category].df,
+                    df2=ds2.sheets[category].df,
+                    cols_to_use=cols_to_use,
+                    calc_date=calc_date
+                )
+            )
+            data_frames.append(df)
 
-                    df1['label'] = f"{data_source_1.name} vs {data_source_2.name}"
-                    df1['value'] = df1.apply(
-                        lambda row: calculate_jsd(
-                            df1=data_source_1.sheets[category].df,
-                            df2=data_source_2.sheets[category].df,
-                            cols_to_use=self.get_cols_to_use_for_jsd_calc(data_source_1.name, category),
-                            calc_date=row['date']
-                        ),
-                        axis=1
-                    )
-                    data_frames.append(df1)
-
-        if data_frames:
-            return pd.concat(data_frames, ignore_index=True)
-        else:
-            return pd.DataFrame()
+        return pd.concat(data_frames, ignore_index=True) if data_frames else pd.DataFrame()
 
     def update_file_based_charts(self):
         """
@@ -395,30 +419,29 @@ class JSDController(QObject):
         jsd_dict = {}
 
         # Loop over the selected indexes and calculate JSD values
-        for i, index1 in enumerate(indexes_to_use[:-1]):
-            for index2 in indexes_to_use[i + 1:]:
-                # Ensure we're not comparing the same file with itself
-                if len(indexes_to_use) == 2 and index1 == index2:
-                    index2_candidates = [idx for idx in range(len(file_infos)) if idx != index1]
-                else:
-                    index2_candidates = [index2]
+        for index1, index2 in itertools.combinations(indexes_to_use, 2):
+            # Ensure we're not comparing the same file with itself
+            if len(indexes_to_use) == 2 and index1 == index2:
+                index2_candidates = [idx for idx in range(len(file_infos)) if idx != index1]
+            else:
+                index2_candidates = [index2]
 
-                for idx2 in index2_candidates:
-                    source_id0 = file_infos[index1]['source_id']
-                    source_id1 = file_infos[idx2]['source_id']
+            for idx2 in index2_candidates:
+                source_id0 = file_infos[index1]['source_id']
+                source_id1 = file_infos[idx2]['source_id']
 
-                    sheets0 = self.jsd_model.data_sources[source_id0].sheets
-                    sheets1 = self.jsd_model.data_sources[source_id1].sheets
+                sheets0 = self.jsd_model.data_sources[source_id0].sheets
+                sheets1 = self.jsd_model.data_sources[source_id1].sheets
 
-                    jsd_dict[(index1, idx2)] = {
-                        category: calculate_jsd(
-                            sheets0[category].df,
-                            sheets1[category].df,
-                            self.get_cols_to_use_for_jsd_calc(source_id0, category),
-                            calc_date,
-                        )
-                        for category in categories
-                    }
+                jsd_dict[(index1, idx2)] = {
+                    category: calculate_jsd(
+                        sheets0[category].df,
+                        sheets1[category].df,
+                        self.get_cols_to_use_for_jsd_calc(source_id0, category),
+                        calc_date,
+                    )
+                    for category in categories[:self._num_categories]
+                }
 
         return jsd_dict
 
@@ -447,10 +470,11 @@ def calculate_jsd(df1, df2, cols_to_use, calc_date):
     df2_row = df2.date.searchsorted(calc_date, side='right') - 1
 
     # Create a temporary dataframe with missing columns filled with zeros
+    df1_temp = df1.reindex(columns=cols_to_use, fill_value=0)
     df2_temp = df2.reindex(columns=cols_to_use, fill_value=0)
 
     # Extract data without modifying df2
-    df1_data = df1[cols_to_use].iloc[df1_row].values.astype(float)
+    df1_data = df1_temp.iloc[df1_row].values.astype(float)
     df2_data = df2_temp.iloc[df2_row].values.astype(float)
 
     return distance.jensenshannon(df1_data, df2_data, base=2.0)

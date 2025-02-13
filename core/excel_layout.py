@@ -43,8 +43,8 @@ class DataSource:
         self.filename = data_source['filename']
         self.data_source = data_source
         self.custom_age_ranges = custom_age_ranges
-        self.numeric_cols = data_source.get('numeric_cols', {})  # Extract numeric columns from config
-        self.columns = data_source.get('columns', [])
+        self._numeric_cols = data_source.get('numeric_cols', {})  # Extract numeric columns from config
+        self._columns = data_source.get('columns', [])
         self.raw_data = None
 
         # Load preprocessing plugin if specified
@@ -98,7 +98,7 @@ class DataSource:
         Returns:
             pd.DataFrame: The DataFrame with numeric column adjustments.
         """
-        for str_col, col_dict in self.numeric_cols.items():
+        for str_col, col_dict in self._numeric_cols.items():
             num_col = col_dict['raw column'] if 'raw column' in col_dict else num_col
             bins = col_dict['bins'] if 'bins' in col_dict else None
             labels = col_dict['labels'] if 'labels' in col_dict else None
@@ -191,7 +191,7 @@ class DataSource:
         Returns:
             None
         """
-        for col in self.columns:
+        for col in self._columns:
             if col in df.columns:
                 df_cumsum = self.calculate_cumulative_sums(df, col)
                 self.sheets[col] = DataSheet(col, self.data_source, self.custom_age_ranges, is_excel=False,
@@ -247,8 +247,7 @@ class DataSheet:
             None
         """
         self.name = sheet_name
-        self.columns = {}
-        self.data_columns = []
+        self._columns = {}
 
         if is_excel and file is not None:
             self._df = file.parse(sheet_name=sheet_name, usecols=lambda x: '(%)' not in str(x), engine='openpyxl')
@@ -277,6 +276,16 @@ class DataSheet:
         """Return the dataframe."""
         return self._df
 
+    @property
+    def columns(self):
+        """Return the columns."""
+        return self._columns
+
+    @property
+    def data_columns(self):
+        """Return the data columns. This skips the first column, which is the date column."""
+        return list(self.columns.keys())[1:]
+
     def _process_date_column(self, data_source: dict):
         """Process and format the date column."""
 
@@ -287,10 +296,7 @@ class DataSheet:
 
         self._df['date'] = pd.to_datetime(self._df['date'], errors='coerce')
 
-        if 'Not reported' not in self._df.columns:
-            self._df['Not reported'] = 0
-
-        self.columns['date'] = self._df.columns[0]
+        self._columns['date'] = self._df.columns[0]
 
     def _process_columns(self, data_source: dict):
         """Process and rename columns according to the data source settings."""
@@ -300,52 +306,71 @@ class DataSheet:
                 for txt in data_source['remove column name text']:
                     col_name = col.split(txt)[0]
             col_name = col_name.rstrip()
-            self.columns[col_name] = col
+            self._columns[col_name] = col
             self._df[col_name] = self._df.pop(col)
 
-        self.data_columns = list(self.columns.keys())[1:]
+        # Find all columns matching the pattern (case-insensitive)
+        matches = [col for col in self._df.columns if re.search(r'not\s*reported', col, flags=re.IGNORECASE)]
 
-    def create_custom_age_columns(self, age_ranges):
+        if len(matches) > 1:
+            raise ValueError(f"Expected one match for 'Not Reported', found multiple: {matches}")
+        elif len(matches) == 1:
+            self._df.rename(columns={matches[0]: 'Not Reported'}, inplace=True)
+            self._columns['Not Reported'] = self._columns.pop(matches[0])
+            print('Set self.data_columns to ', self.data_columns)
+
+
+    def create_custom_age_columns(self, age_ranges: list[tuple]):
         """
-        Scans the column headers in the age category to build consistent age columns.
+        Creates custom age columns by summing values from columns that match each age range.
 
         Parameters:
-            age_ranges (list): A list of age ranges to be used for creating custom age columns.
-
-        Returns:
-            None
-
-        Raises:
-            None
+            age_ranges (list of tuple): Each tuple is (min_age, max_age).
 
         Notes:
-            - This method drops any previously created custom age columns.
-            - It identifies the columns that need to be altered for JSD calculation.
-            - It sums the values of the identified columns for each age range and creates a new custom age column.
-            - It checks if all columns have been used and raises a warning if any column is not used.
+            - Drops any previously created custom columns.
+            - Considers only columns that start with a digit and do not contain '(%)' or '(CUSUM)'.
+            - A column is included for an age range if:
+                • Its lower bound (the first number in the header) is within the range.
+                • If an upper bound exists (a second number), the age range's max is not less than it.
+                • If no upper bound exists, the column is only included if max_age is infinite.
+            - Warns if any eligible column is unused.
         """
-        # Drop previously created custom columns
-        cols_to_drop = [col for col in self._df.columns if 'Custom' in col]
-        self._df.drop(columns=cols_to_drop, inplace=True)
 
-        # The 'Age at Index' columns need alteration for JSD calculation
-        cols = [col for col in self._df.columns if '(%)' not in col and '(CUSUM)' not in col and col[0].isdigit()]
+        # Drop previously created custom columns.
+        self._df.drop(columns=[col for col in self._df.columns if 'Custom' in col], inplace=True)
+
+        # Filter eligible columns: those starting with a digit and not containing '(%)' or '(CUSUM)'.
+        cols = [col for col in self._df.columns if
+                col and col[0].isdigit() and '(%)' not in col and '(CUSUM)' not in col]
         cols_used = []
-        for agerange in age_ranges:
-            cols_to_sum = []
-            for col in cols:
-                colrange = re.findall(r'\d+', col)
-                skip_col = (agerange[0] > int(colrange[0]) or
-                            agerange[1] < int(colrange[0]) or
-                            (len(colrange) == 1 and not math.isinf(agerange[1])) or
-                            (len(colrange) > 1 and agerange[1] < int(colrange[1])))
 
-                if not skip_col:
-                    cols_to_sum.append(col)
+        def should_include(col, age_range):
+            """
+            Returns True if the column should be included for the given age_range.
+
+            The column is included only if:
+              - Its lower bound (first number) is within the age range.
+              - If a second number exists (upper bound), then age_range[1] must be at least that value.
+              - If no upper bound exists, the column is only included when age_range[1] is infinite.
+            """
+            nums = re.findall(r'\d+', col)
+            lower = int(nums[0])
+            if age_range[0] > lower or age_range[1] < lower:
+                return False
+            if len(nums) == 1:
+                return math.isinf(age_range[1])
+            else:
+                upper = int(nums[1])
+                return not (age_range[1] < upper)
+
+        # Create custom age columns.
+        for age_range in age_ranges:
+            cols_to_sum = [col for col in cols if should_include(col, age_range)]
             cols_used.extend(cols_to_sum)
-            self._df[f'{agerange[0]}-{agerange[1]} Custom'] = self._df[cols_to_sum].sum(axis=1)
+            self._df[f'{age_range[0]}-{age_range[1]} Custom'] = self._df[cols_to_sum].sum(axis=1)
 
-        # Check to make sure all columns get used
+        # Warn if any eligible column was not used.
         for col in cols:
             if col not in cols_used:
-                warnings.warn(f"Column '{col}' not used!!!", stacklevel=2)
+                warnings.warn(f"Column '{col}' not used!", stacklevel=2)

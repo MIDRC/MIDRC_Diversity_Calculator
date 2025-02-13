@@ -291,8 +291,8 @@ class JsdWindow(QMainWindow, JsdViewBase):
         clear_layout(self.pie_chart_layout)
 
         # Retrieve categories and timepoint
-        categories = [self.dataselectiongroupbox.category_combobox.itemText(i)
-                      for i in range(self.dataselectiongroupbox.category_combobox.count())]
+        categorybox = self.dataselectiongroupbox.category_combobox
+        categories = list(map(categorybox.itemText, range(categorybox.count())))
         timepoint = -1
 
         file_comboboxes = self.dataselectiongroupbox.file_comboboxes
@@ -306,6 +306,9 @@ class JsdWindow(QMainWindow, JsdViewBase):
             row_layout.addWidget(labels.pop(0))
 
             for category in categories:
+                if category not in sheets:
+                    continue
+
                 df = sheets[category].df
                 cols_to_use = sheets[category].data_columns
 
@@ -454,6 +457,9 @@ class JsdWindow(QMainWindow, JsdViewBase):
             filename = self.dataselectiongroupbox.file_comboboxes[index].currentData()
             area_chart.setTitle(f'{filename} {category} distribution over time')
 
+            if category not in sheets:
+                continue
+
             # Extract data from the sheet
             df = sheets[category].df
             cols_to_use = sheets[category].data_columns
@@ -484,13 +490,14 @@ class JsdWindow(QMainWindow, JsdViewBase):
             None
         """
         # Calculate cumulative percentages
-        total_counts = df[cols_to_use].sum(axis=1)
-        cumulative_percents = 100.0 * df[cols_to_use].cumsum(axis=1).div(total_counts, axis=0)
+        df_cols = df[cols_to_use]
+        total_counts = df_cols.sum(axis=1)
+        cumulative_percents = 100.0 * df_cols.cumsum(axis=1).div(total_counts, axis=0)
 
         # Create series for the area chart
         lower_series = None
         for col in cols_to_use:
-            if df[col].iloc[-1] == 0:  # Skip columns with no data
+            if df_cols[col].iloc[-1] == 0:  # Skip columns with no data
                 continue
 
             # Generate data points for the series
