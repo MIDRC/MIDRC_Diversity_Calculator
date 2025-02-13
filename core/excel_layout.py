@@ -21,6 +21,8 @@ import warnings
 
 import pandas as pd
 
+from core.data_preprocessing import bin_dataframe_column
+
 
 class DataSource:
     """
@@ -88,15 +90,10 @@ class DataSource:
 
     def apply_numeric_column_adjustments(self, df: pd.DataFrame):
         """
-        Applies numeric column adjustments to a DataFrame.
-
-        - Converts numeric columns to "N-N" format.
-        - If bins and labels are provided, applies binning instead.
+        Applies numeric column adjustments to a DataFrame using binning.
 
         Args:
             df (pd.DataFrame): The input DataFrame.
-            bins (list, optional): The bin edges for categorization.
-            labels (list, optional): The labels corresponding to the bins.
 
         Returns:
             pd.DataFrame: The DataFrame with numeric column adjustments.
@@ -106,28 +103,16 @@ class DataSource:
             bins = col_dict['bins'] if 'bins' in col_dict else None
             labels = col_dict['labels'] if 'labels' in col_dict else None
 
-            if bins is not None and labels is None:
-                labels = []
-                for i in range(len(bins) - 1):
-                    if isinstance(bins[i], int) and isinstance(bins[i + 1], int):
-                        if i < len(bins) - 2:
-                            # Adjust the upper limit for integer values
-                            labels.append(f"{bins[i]}-{bins[i + 1] - 1}")
-                        else:
-                            # Last bin with '>=' format
-                            labels.append(f">={bins[i]}")
-                    else:
-                        # Use raw values for non-integer bins
-                        labels.append(f"{bins[i]}-{bins[i + 1]}")
-                # print("Generated labels:", labels)  # Uncomment to see the generated labels
-
             if num_col in df.columns:
-                if bins and labels:
-                    # Apply binning if bins and labels are provided
-                    df[str_col] = pd.cut(df[num_col], bins=bins, labels=labels, right=False)
+                df = bin_dataframe_column(df, num_col, str_col, bins=bins, labels=labels)
+                '''
+                if bins:
+                    # Apply binning if bins are provided
+                    df = bin_dataframe_column(df, num_col, str_col, bins=bins, labels=labels)
                 else:
                     # Default "N-N" format conversion
                     df[str_col] = df[num_col].apply(lambda x: f'{int(x)}-{int(x)}' if pd.notna(x) else x)
+                '''
 
         return df
 
