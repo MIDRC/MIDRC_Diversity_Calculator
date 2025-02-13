@@ -444,21 +444,31 @@ class JSDController(QObject):
                 index2_candidates = [index2]
 
             for idx2 in index2_candidates:
-                source_id0 = file_infos[index1]['source_id']
-                source_id1 = file_infos[idx2]['source_id']
+                source_id1 = file_infos[index1]['source_id']
+                source_id2 = file_infos[idx2]['source_id']
 
-                sheets0 = self.jsd_model.data_sources[source_id0].sheets
-                sheets1 = self.jsd_model.data_sources[source_id1].sheets
+                data_source_1 = self.jsd_model.data_sources[source_id1]
+                data_source_2 = self.jsd_model.data_sources[source_id2]
 
                 jsd_dict[(index1, idx2)] = {
                     category: calculate_jsd(
-                        sheets0[category].df,
-                        sheets1[category].df,
-                        self.get_cols_to_use_for_jsd_calc(source_id0, category),
+                        data_source_1.sheets[category].df,
+                        data_source_2.sheets[category].df,
+                        self.get_cols_to_use_for_jsd_calc(source_id1, category),
                         calc_date,
                     )
                     for category in categories[:self._num_categories]
                 }
+                for category in categories[self._num_categories:]:
+                    if category == 'Aggregate':
+                        cols_to_use = set(data_source_1.raw_columns_to_use())
+                        cols_to_use = list(cols_to_use.intersection(data_source_2.raw_columns_to_use()))
+                        jsd_dict[(index1, idx2)][category] = calc_aggregate_jsd_at_date(
+                            data_source_1.raw_data,
+                            data_source_2.raw_data,
+                            cols_to_use,
+                            calc_date,
+                        )
 
         return jsd_dict
 
