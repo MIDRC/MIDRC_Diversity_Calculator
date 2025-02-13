@@ -23,6 +23,7 @@ from scipy.spatial import distance
 
 from core.aggregate_jsd_calc import calc_aggregate_jsd_at_date
 from core.datetimetools import pandas_date_to_qdate
+from core.famd_calc import calc_famd_ks2_at_date, calc_famd_ks2_at_dates
 from core.jsdmodel import JSDTableModel
 from gui.jsdview_base import JsdViewBase
 
@@ -198,6 +199,7 @@ class JSDController(QObject):
         self._raw_data_available = has_raw_data
         if self._raw_data_available:
             category_list.append('Aggregate')
+            category_list.append('FAMD')
 
         dataselectiongroupbox.update_category_list(category_list, category_index)
 
@@ -282,6 +284,29 @@ class JSDController(QObject):
                     cols_to_use.remove('Race and Ethnicity')
 
                 input_data = [float(calc_aggregate_jsd_at_date(raw_df1, raw_df2, cols_to_use, calc_date)) for calc_date in date_list]
+
+            elif category == 'FAMD':
+                raw_df1 = data_source_1.raw_data
+                raw_df2 = data_source_2.raw_data
+                date_list = build_date_list(raw_df1, raw_df2)
+                cols_to_use = set(data_source_1.raw_columns_to_use())
+                cols_to_use = list(cols_to_use.intersection(data_source_2.raw_columns_to_use()))
+                if 'Race and Ethnicity' in cols_to_use:
+                    cols_to_use.remove('Race and Ethnicity')
+                numeric_cols = []
+                for str_col, col_info in data_source_1.numeric_cols.items():
+                    cols_to_use.remove(str_col)
+                    num_col = col_info['raw column']
+                    cols_to_use.append(num_col)
+                    numeric_cols.append(num_col)
+                print('numeric_cols: ', numeric_cols)
+                input_data = calc_famd_ks2_at_dates(
+                    data_source_1.raw_data,
+                    data_source_2.raw_data,
+                    cols_to_use,
+                    numeric_cols,
+                    date_list,
+                )
 
             if input_data is not None:
                 model_input_data.append([pandas_date_to_qdate(calc_date) for calc_date in date_list])
@@ -463,10 +488,30 @@ class JSDController(QObject):
                     if category == 'Aggregate':
                         cols_to_use = set(data_source_1.raw_columns_to_use())
                         cols_to_use = list(cols_to_use.intersection(data_source_2.raw_columns_to_use()))
+                        if 'Race and Ethnicity' in cols_to_use:
+                            cols_to_use.remove('Race and Ethnicity')
                         jsd_dict[(index1, idx2)][category] = calc_aggregate_jsd_at_date(
                             data_source_1.raw_data,
                             data_source_2.raw_data,
                             cols_to_use,
+                            calc_date,
+                        )
+                    elif category == 'FAMD':
+                        cols_to_use = set(data_source_1.raw_columns_to_use())
+                        cols_to_use = list(cols_to_use.intersection(data_source_2.raw_columns_to_use()))
+                        if 'Race and Ethnicity' in cols_to_use:
+                            cols_to_use.remove('Race and Ethnicity')
+                        numeric_cols = []
+                        for str_col, col_info in data_source_1.numeric_cols.items():
+                            cols_to_use.remove(str_col)
+                            num_col = col_info['raw column']
+                            cols_to_use.append(num_col)
+                            numeric_cols.append(num_col)
+                        jsd_dict[(index1, idx2)][category] = calc_famd_ks2_at_date(
+                            data_source_1.raw_data,
+                            data_source_2.raw_data,
+                            cols_to_use,
+                            numeric_cols,
                             calc_date,
                         )
 

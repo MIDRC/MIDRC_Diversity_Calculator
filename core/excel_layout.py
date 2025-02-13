@@ -66,6 +66,10 @@ class DataSource:
     def raw_columns_to_use(self):
         return self._columns
 
+    @property
+    def numeric_cols(self):
+        return self._numeric_cols
+
     def load_plugin(self, plugin_path):
         """
         Dynamically loads a preprocessing plugin from the given path.
