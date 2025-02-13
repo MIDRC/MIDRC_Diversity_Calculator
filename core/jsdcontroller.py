@@ -446,8 +446,12 @@ def calculate_jsd(df1, df2, cols_to_use, calc_date):
     df1_row = df1.date.searchsorted(calc_date, side='right') - 1
     df2_row = df2.date.searchsorted(calc_date, side='right') - 1
 
+    # Create a temporary dataframe with missing columns filled with zeros
+    df2_temp = df2.reindex(columns=cols_to_use, fill_value=0)
+
+    # Extract data without modifying df2
     df1_data = df1[cols_to_use].iloc[df1_row].values.astype(float)
-    df2_data = df2[cols_to_use].iloc[df2_row].values.astype(float)
+    df2_data = df2_temp.iloc[df2_row].values.astype(float)
 
     return distance.jensenshannon(df1_data, df2_data, base=2.0)
 

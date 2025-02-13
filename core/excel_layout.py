@@ -12,8 +12,10 @@
 #      See the License for the specific language governing permissions and
 #      limitations under the License.
 #
+import importlib.util
 import io
 import math
+import os
 import re
 import warnings
 
@@ -22,31 +24,16 @@ import pandas as pd
 
 class DataSource:
     """
-    Class representing a data source.
-
-    Attributes:
-        name (str): The name of the data source.
-        sheets (dict): A dictionary containing the sheets of the data source.
-        datatype (str): The type of the data source.
-        filename (str): The filename of the data source.
-        data_source (dict): The data source object.
-        custom_age_ranges (dict, optional): A dictionary containing custom age ranges.
-
-    Methods:
-        __init__(self, data_source, custom_age_ranges=None): Initializes a new instance of the DataSource class.
-        build_data_frames(self, filename: str): Builds dataframes.
-        create_sheets(self, file: pd.ExcelFile): Creates sheets from a given file.
+    Class representing a data source with optional plugin-based preprocessing and numeric column adjustments.
     """
+
     def __init__(self, data_source, custom_age_ranges=None):
         """
-        Initializes a new instance of the DataSource class.
+        Initializes the DataSource class.
 
         Args:
-            data_source (dict): The data source object.
-            custom_age_ranges (dict, optional): A dictionary containing custom age ranges.
-
-        Returns:
-            None
+            data_source (dict): The data source configuration.
+            custom_age_ranges (dict, optional): A dictionary of custom age ranges.
         """
         self.name = data_source['name']
         self.sheets = {}
@@ -54,8 +41,18 @@ class DataSource:
         self.filename = data_source['filename']
         self.data_source = data_source
         self.custom_age_ranges = custom_age_ranges
+        self.numeric_cols = data_source.get('numeric_cols', {})  # Extract numeric columns from config
         self.columns = data_source.get('columns', [])
         self.raw_data = None
+
+        # Load preprocessing plugin if specified
+        self.preprocessor = None
+        if 'plugin' in data_source and data_source['plugin']:
+            plugin_name = data_source['plugin']
+            plugin_path = os.path.join("plugins", f"{plugin_name}.py")
+            self.preprocessor = self.load_plugin(plugin_path)
+
+        # Load data
         if self.datatype == 'file' and self.filename:
             if self.filename.endswith(('.csv', '.tsv')):
                 self.build_data_frames_from_csv(self.filename)
@@ -64,12 +61,105 @@ class DataSource:
         if self.datatype == 'content' and 'content' in data_source:
             self.build_data_frames_from_content(data_source['content'])
 
+    def load_plugin(self, plugin_path):
+        """
+        Dynamically loads a preprocessing plugin from the given path.
+
+        Args:
+            plugin_path (str): Path to the plugin Python file.
+
+        Returns:
+            A reference to the plugin's preprocess_data function if found, else None.
+        """
+        if not os.path.exists(plugin_path):
+            print(f"Plugin file {plugin_path} not found.")
+            return None
+
+        module_name = os.path.basename(plugin_path).replace(".py", "")
+        spec = importlib.util.spec_from_file_location(module_name, plugin_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        if hasattr(module, "preprocess_data"):
+            return module.preprocess_data
+        else:
+            print(f"Plugin {module_name} does not define a 'preprocess_data' function.")
+            return None
+
+    def apply_numeric_column_adjustments(self, df: pd.DataFrame):
+        """
+        Applies numeric column adjustments to a DataFrame.
+
+        - Converts numeric columns to "N-N" format.
+        - If bins and labels are provided, applies binning instead.
+
+        Args:
+            df (pd.DataFrame): The input DataFrame.
+            bins (list, optional): The bin edges for categorization.
+            labels (list, optional): The labels corresponding to the bins.
+
+        Returns:
+            pd.DataFrame: The DataFrame with numeric column adjustments.
+        """
+        for str_col, col_dict in self.numeric_cols.items():
+            num_col = col_dict['raw column'] if 'raw column' in col_dict else num_col
+            bins = col_dict['bins'] if 'bins' in col_dict else None
+            labels = col_dict['labels'] if 'labels' in col_dict else None
+
+            if bins is not None and labels is None:
+                labels = []
+                for i in range(len(bins) - 1):
+                    if isinstance(bins[i], int) and isinstance(bins[i + 1], int):
+                        if i < len(bins) - 2:
+                            # Adjust the upper limit for integer values
+                            labels.append(f"{bins[i]}-{bins[i + 1] - 1}")
+                        else:
+                            # Last bin with '>=' format
+                            labels.append(f">={bins[i]}")
+                    else:
+                        # Use raw values for non-integer bins
+                        labels.append(f"{bins[i]}-{bins[i + 1]}")
+                # print("Generated labels:", labels)  # Uncomment to see the generated labels
+
+            if num_col in df.columns:
+                if bins and labels:
+                    # Apply binning if bins and labels are provided
+                    df[str_col] = pd.cut(df[num_col], bins=bins, labels=labels, right=False)
+                else:
+                    # Default "N-N" format conversion
+                    df[str_col] = df[num_col].apply(lambda x: f'{int(x)}-{int(x)}' if pd.notna(x) else x)
+
+        return df
+
+    def build_data_frames_from_csv(self, filename: str):
+        """
+        Loads and preprocesses a CSV or TSV file.
+
+        Args:
+            filename (str): The file path.
+
+        Returns:
+            None
+        """
+        delimiter = ',' if filename.endswith('.csv') else '\t'
+        df = pd.read_csv(filename, delimiter=delimiter)
+
+        # Apply preprocessing if a plugin is available
+        if self.preprocessor:
+            df = self.preprocessor(df)
+
+        # Apply numeric column adjustments
+        df = self.apply_numeric_column_adjustments(df)
+
+        self.raw_data = df
+        self.create_sheets_from_df(df)
+
     def build_data_frames_from_file(self, filename: str):
         """
-        Builds dataframes.
+        Loads an Excel file.
 
-        Parameters:
-            filename (str): The filename of the Excel file.
+        Args:
+            filename (str): The file path.
 
         Returns:
             None
@@ -79,17 +169,12 @@ class DataSource:
         if file is not None:
             self.create_sheets(file)
 
-    def build_data_frames_from_csv(self, filename: str):
-        delimiter = ',' if filename.endswith('.csv') else '\t'
-        self.raw_data = pd.read_csv(filename, delimiter=delimiter)
-        self.create_sheets_from_df(self.raw_data)
-
     def build_data_frames_from_content(self, content: io.BytesIO):
         """
-        Builds dataframes from content.
+        Loads data from an in-memory content stream.
 
-        Parameters:
-            content (dict): The content binary data.
+        Args:
+            content (io.BytesIO): Binary Excel file data.
 
         Returns:
             None
@@ -112,12 +197,32 @@ class DataSource:
             self.sheets[s] = DataSheet(s, self.data_source, self.custom_age_ranges, is_excel=True, file=file)
 
     def create_sheets_from_df(self, df: pd.DataFrame):
+        """
+        Creates data sheets from a DataFrame.
+
+        Args:
+            df (pd.DataFrame): The processed DataFrame.
+
+        Returns:
+            None
+        """
         for col in self.columns:
             if col in df.columns:
                 df_cumsum = self.calculate_cumulative_sums(df, col)
-                self.sheets[col] = DataSheet(col, self.data_source, self.custom_age_ranges, is_excel=False, df=df_cumsum)
+                self.sheets[col] = DataSheet(col, self.data_source, self.custom_age_ranges, is_excel=False,
+                                             df=df_cumsum)
 
     def calculate_cumulative_sums(self, df: pd.DataFrame, col: str):
+        """
+        Calculates cumulative sums for a given column.
+
+        Args:
+            df (pd.DataFrame): The input DataFrame.
+            col (str): The column to calculate cumulative sums for.
+
+        Returns:
+            pd.DataFrame: A DataFrame with cumulative sums.
+        """
         unique_dates = sorted(df['date'].unique())
         unique_values = df[col].unique()
         df_cumsum = pd.DataFrame({'date': unique_dates})
@@ -126,6 +231,7 @@ class DataSource:
             df_cumsum[value] = [((df['date'] <= date) & (df[col] == value)).sum() for date in unique_dates]
 
         return df_cumsum
+
 
 class DataSheet:
     """
