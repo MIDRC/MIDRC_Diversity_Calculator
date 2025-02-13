@@ -43,8 +43,9 @@ def calc_jsd_by_features(df_list: list[pd.DataFrame], cols_to_use: list[str]) ->
     - dictionary of JSD values for each dataset combination
     """
     dataset_column = '_dataset_'  # Temporary column name to store dataset information
+    labels = [f'Dataset {i}' for i in range(len(df_list))]  # Dataset labels
     combined_df = pd.concat(
-        [df.assign(**{dataset_column: i}) for i, df in enumerate(df_list)],
+        [df.assign(**{dataset_column: label}) for label, df in zip(labels, df_list)],
         ignore_index=True
     )
 
@@ -56,12 +57,11 @@ def calc_jsd_by_features(df_list: list[pd.DataFrame], cols_to_use: list[str]) ->
     pivot_table.columns = pivot_table.columns.astype(str)
 
     # Create a dictionary to hold counts for each dataset
-    dataset_names = range(len(df_list))
-    counts_dict = {dataset: pivot_table[dataset].values if dataset in pivot_table else np.zeros(len(pivot_table)) for dataset in dataset_names}
+    counts_dict = {dataset: pivot_table[dataset].values if dataset in pivot_table else np.zeros(len(pivot_table)) for dataset in labels}
 
-    return calc_jsd_from_counts_dict(counts_dict, dataset_names)
+    return calc_jsd_from_counts_dict(counts_dict, labels)
 
-def calc_jsd_by_features(df1: pd.DataFrame, df2: pd.DataFrame, cols_to_use: list[str]) -> dict[str, float]:
+def calc_jsd_by_features_2df(df1: pd.DataFrame, df2: pd.DataFrame, cols_to_use: list[str]) -> float:
     """
     Calculate Jensen-Shannon Distance (JSD) based on features between two datasets.
 
@@ -75,4 +75,22 @@ def calc_jsd_by_features(df1: pd.DataFrame, df2: pd.DataFrame, cols_to_use: list
     """
     jsd_dict = calc_jsd_by_features([df1, df2], cols_to_use)
 
-    return jsd_dict['0 vs 1']
+    return jsd_dict['Dataset 0 vs Dataset 1']
+
+def calc_aggregate_jsd_at_date(df1: pd.DataFrame, df2: pd.DataFrame, cols_to_use: list[str], date) -> float:
+    """
+    Calculate Jensen-Shannon Distance (JSD) based on features between two datasets at a specific date.
+
+    Parameters:
+    - df1: pandas DataFrame containing the first dataset
+    - df2: pandas DataFrame containing the second dataset
+    - cols_to_use: list of columns to use for the JSD calculation
+    - date: date at which to calculate the JSD
+
+    Returns:
+    - dictionary of JSD values for each feature
+    """
+    df1_at_date = df1[df1['date'] <= date]
+    df2_at_date = df2[df2['date'] <= date]
+
+    return calc_jsd_by_features_2df(df1_at_date, df2_at_date, cols_to_use)

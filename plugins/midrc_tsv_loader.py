@@ -13,7 +13,7 @@ def extract_earliest_date(submitter_id_series):
             return None
         # Convert to datetime and find the earliest
         date_objs = [datetime.strptime(date, "%Y%m%d") for date in dates]
-        return min(date_objs).strftime("%Y-%m-%d")
+        return min(date_objs)
 
     return submitter_id_series.apply(get_earliest_date)
 

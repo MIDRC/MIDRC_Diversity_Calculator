@@ -63,6 +63,9 @@ class DataSource:
         if self.datatype == 'content' and 'content' in data_source:
             self.build_data_frames_from_content(data_source['content'])
 
+    def raw_columns_to_use(self):
+        return self._columns
+
     def load_plugin(self, plugin_path):
         """
         Dynamically loads a preprocessing plugin from the given path.
@@ -317,7 +320,6 @@ class DataSheet:
         elif len(matches) == 1:
             self._df.rename(columns={matches[0]: 'Not Reported'}, inplace=True)
             self._columns['Not Reported'] = self._columns.pop(matches[0])
-            print('Set self.data_columns to ', self.data_columns)
 
 
     def create_custom_age_columns(self, age_ranges: list[tuple]):

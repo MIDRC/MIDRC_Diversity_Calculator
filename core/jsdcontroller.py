@@ -21,6 +21,7 @@ import pandas as pd
 from PySide6.QtCore import QObject, Signal
 from scipy.spatial import distance
 
+from core.aggregate_jsd_calc import calc_aggregate_jsd_at_date
 from core.datetimetools import pandas_date_to_qdate
 from core.jsdmodel import JSDTableModel
 from gui.jsdview_base import JsdViewBase
@@ -247,6 +248,11 @@ class JSDController(QObject):
         if not category:
             return
 
+        def build_date_list(df1, df2):
+            first_date = max(min(df1.date.values), min(df2.date.values))
+            date_list = sorted(set(np.concatenate((df1.date.values, df2.date.values))))
+            return remove_elements_less_than_from_sorted_list(date_list, first_date)
+
         model_input_data = []
         column_infos = []
 
@@ -255,29 +261,40 @@ class JSDController(QObject):
             file2 = cbox2['source_id']
             data_source_1 = self.jsd_model.data_sources[file1]
             data_source_2 = self.jsd_model.data_sources[file2]
-            if not all(category in ds.sheets for ds in (data_source_1, data_source_2)):
-                continue
 
-            df1 = data_source_1.sheets[category].df
-            df2 = data_source_2.sheets[category].df
-            cols_to_use = self.get_cols_to_use_for_jsd_calc(file1, category)
+            input_data = None
 
-            first_date = max(df1.date.values[0], df2.date.values[0])
-            date_list = sorted(set(np.concatenate((df1.date.values, df2.date.values))))
-            date_list = remove_elements_less_than_from_sorted_list(date_list, first_date)
+            if all(category in ds.sheets for ds in (data_source_1, data_source_2)):
+                df1 = data_source_1.sheets[category].df
+                df2 = data_source_2.sheets[category].df
+                date_list = build_date_list(df1, df2)
+                cols_to_use = self.get_cols_to_use_for_jsd_calc(file1, category)
 
-            input_data = [float(calculate_jsd(df1, df2, cols_to_use, calc_date)) for calc_date in date_list]
+                input_data = [float(calculate_jsd(df1, df2, cols_to_use, calc_date)) for calc_date in date_list]
 
-            model_input_data.append([pandas_date_to_qdate(calc_date) for calc_date in date_list])
-            model_input_data.append(input_data)
+            elif category == 'Aggregate':
+                raw_df1 = data_source_1.raw_data
+                raw_df2 = data_source_2.raw_data
+                date_list = build_date_list(raw_df1, raw_df2)
+                cols_to_use = set(data_source_1.raw_columns_to_use())
+                cols_to_use = list(cols_to_use.intersection(data_source_2.raw_columns_to_use()))
+                if 'Race and Ethnicity' in cols_to_use:
+                    cols_to_use.remove('Race and Ethnicity')
 
-            column_infos.append({
-                'category': category,
-                'index1': i,
-                'file1': file1,
-                'index2': j,
-                'file2': file2,
-            })
+                input_data = [float(calc_aggregate_jsd_at_date(raw_df1, raw_df2, cols_to_use, calc_date)) for calc_date in date_list]
+
+            if input_data is not None:
+                model_input_data.append([pandas_date_to_qdate(calc_date) for calc_date in date_list])
+                model_input_data.append(input_data)
+
+                column_infos.append({
+                    'category': category,
+                    'index1': i,
+                    'file1': file1,
+                    'index2': j,
+                    'file2': file2,
+                })
+
 
         self.jsd_model.update_input_data(model_input_data, column_infos)
 
