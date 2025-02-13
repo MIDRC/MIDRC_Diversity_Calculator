@@ -54,8 +54,13 @@ class DataSource:
         self.filename = data_source['filename']
         self.data_source = data_source
         self.custom_age_ranges = custom_age_ranges
+        self.columns = data_source.get('columns', [])
+        self.raw_data = None
         if self.datatype == 'file' and self.filename:
-            self.build_data_frames_from_file(self.filename)
+            if self.filename.endswith(('.csv', '.tsv')):
+                self.build_data_frames_from_csv(self.filename)
+            else:
+                self.build_data_frames_from_file(self.filename)
         if self.datatype == 'content' and 'content' in data_source:
             self.build_data_frames_from_content(data_source['content'])
 
@@ -70,8 +75,14 @@ class DataSource:
             None
         """
         file = pd.ExcelFile(filename)
+        self.raw_data = None
         if file is not None:
             self.create_sheets(file)
+
+    def build_data_frames_from_csv(self, filename: str):
+        delimiter = ',' if filename.endswith('.csv') else '\t'
+        self.raw_data = pd.read_csv(filename, delimiter=delimiter)
+        self.create_sheets_from_df(self.raw_data)
 
     def build_data_frames_from_content(self, content: io.BytesIO):
         """
@@ -100,6 +111,21 @@ class DataSource:
         for s in file.sheet_names:
             self.sheets[s] = DataSheet(s, self.data_source, self.custom_age_ranges, is_excel=True, file=file)
 
+    def create_sheets_from_df(self, df: pd.DataFrame):
+        for col in self.columns:
+            if col in df.columns:
+                df_cumsum = self.calculate_cumulative_sums(df, col)
+                self.sheets[col] = DataSheet(col, self.data_source, self.custom_age_ranges, is_excel=False, df=df_cumsum)
+
+    def calculate_cumulative_sums(self, df: pd.DataFrame, col: str):
+        unique_dates = sorted(df['date'].unique())
+        unique_values = df[col].unique()
+        df_cumsum = pd.DataFrame({'date': unique_dates})
+
+        for value in unique_values:
+            df_cumsum[value] = [((df['date'] <= date) & (df[col] == value)).sum() for date in unique_dates]
+
+        return df_cumsum
 
 class DataSheet:
     """
@@ -116,7 +142,7 @@ class DataSheet:
         create_custom_age_columns(self, age_ranges): Scans the column headers in the age category to build consistent
                                                      age columns.
     """
-    def __init__(self, sheet_name, data_source, custom_age_ranges, is_excel=False, file: pd.ExcelFile = None):
+    def __init__(self, sheet_name, data_source, custom_age_ranges, is_excel=False, file: pd.ExcelFile = None, df: pd.DataFrame = None):
         """
         Initialize the DataSheet object.
 
@@ -134,24 +160,23 @@ class DataSheet:
         self.data_columns = []
 
         if is_excel and file is not None:
-            self._load_excel_data(file, sheet_name, data_source)
+            self._df = file.parse(sheet_name=sheet_name, usecols=lambda x: '(%)' not in str(x), engine='openpyxl')
+        elif df is not None:
+            self._df = df
+        self._load_data_from_df(data_source)
 
         if custom_age_ranges and self.name in custom_age_ranges:
             self.create_custom_age_columns(custom_age_ranges[self.name])
 
-    def _load_excel_data(self, file: pd.ExcelFile, sheet_name: str, data_source: dict):
+    def _load_data_from_df(self, data_source: dict):
         """
-        Load and process data from an Excel file.
-
+        Load and process data from a DataFrame in self._df
         Args:
-            file (pd.ExcelFile): The Excel file to read the sheet from.
-            sheet_name (str): The name of the sheet to parse.
             data_source (dict): The data source object containing additional settings.
 
         Returns:
             None
         """
-        self._df = file.parse(sheet_name=sheet_name, usecols=lambda x: '(%)' not in str(x), engine='openpyxl')
         self._df.columns = self._df.columns.astype(str)
         self._process_date_column(data_source)
         self._process_columns(data_source)

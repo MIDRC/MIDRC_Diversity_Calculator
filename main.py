@@ -37,7 +37,11 @@ class SplashScreen(QSplashScreen):
     SPLASH_HEIGHT = 600
     FONT_FAMILY = 'Arial'
     FONT_SIZE = 36
-    SPLASH_SCREEN_MESSAGE = 'MIDRC-REACT Representativeness Exploration and Comparison Tool\n' \
+    SPLASH_SCREEN_MESSAGE = 'MIDRC-REACT\n' \
+                            '\n' \
+                            'Representativeness Exploration\n' \
+                            'and Comparison Tool\n' \
+                            '\n' \
                             '\n' \
                             'Loading Excel files, please wait...'
     BACKGROUND_COLOR = QColor(Qt.white)
