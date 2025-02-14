@@ -65,3 +65,11 @@ def bin_dataframe_column(df_to_bin, column_name, cut_column_name='CUT', bins=Non
                       f"         These will be placed in a new '{new_text}' category.")
 
         return df_out
+
+def combine_datasets_from_list(df_list: list[pd.DataFrame], dataset_column = '_dataset_'):
+    labels = [f'Dataset {i}' for i in range(len(df_list))]  # Dataset labels
+    combined_df = pd.concat(
+        [df.assign(**{dataset_column: label}) for label, df in zip(labels, df_list)],
+        ignore_index=True
+    )
+    return combined_df

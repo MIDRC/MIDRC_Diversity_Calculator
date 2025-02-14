@@ -457,6 +457,9 @@ class JsdWindow(QMainWindow, JsdViewBase):
             filename = self.dataselectiongroupbox.file_comboboxes[index].currentData()
             area_chart.setTitle(f'{filename} {category} distribution over time')
 
+            if category.endswith(' (ks2)'):
+                category = category[:-6]
+
             if category not in sheets:
                 continue
 

@@ -3,6 +3,8 @@ import pandas as pd
 from scipy.spatial import distance
 import itertools
 
+from core.data_preprocessing import combine_datasets_from_list
+
 
 def calc_jsd_from_counts_dict(counts_dict, dataset_names):
     output_dict = {}
@@ -43,11 +45,7 @@ def calc_jsd_by_features(df_list: list[pd.DataFrame], cols_to_use: list[str]) ->
     - dictionary of JSD values for each dataset combination
     """
     dataset_column = '_dataset_'  # Temporary column name to store dataset information
-    labels = [f'Dataset {i}' for i in range(len(df_list))]  # Dataset labels
-    combined_df = pd.concat(
-        [df.assign(**{dataset_column: label}) for label, df in zip(labels, df_list)],
-        ignore_index=True
-    )
+    combined_df = combine_datasets_from_list(df_list, dataset_column)
 
     # Pivot table to get counts for each combination
     pivot_table = combined_df.pivot_table(index=cols_to_use, columns=dataset_column, aggfunc='size', fill_value=0)
@@ -55,6 +53,8 @@ def calc_jsd_by_features(df_list: list[pd.DataFrame], cols_to_use: list[str]) ->
 
     # Convert dataset columns to string in case they are integers
     pivot_table.columns = pivot_table.columns.astype(str)
+
+    labels = combined_df[dataset_column].unique()
 
     # Create a dictionary to hold counts for each dataset
     counts_dict = {dataset: pivot_table[dataset].values if dataset in pivot_table else np.zeros(len(pivot_table)) for dataset in labels}

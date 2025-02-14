@@ -201,6 +201,19 @@ class DataSource:
         for col in self._columns:
             if col in df.columns:
                 df_cumsum = self.calculate_cumulative_sums(df, col)
+                if col in self._numeric_cols:
+                    labels = self._numeric_cols[col].get('labels', None)
+                    if labels:
+                        # The first column (e.g., date) remains at index 0.
+                        date_column = df_cumsum.columns[0]
+                        # Keep only labels that are present in the DataFrame.
+                        labels_in_df = [col for col in labels if col in df_cumsum.columns]
+                        # The remaining columns are those not in labels_in_df and not the date column.
+                        remaining_cols = [col for col in df_cumsum.columns if
+                                          col not in labels_in_df and col != date_column]
+                        # Build the new column order.
+                        new_order = [date_column] + labels_in_df + remaining_cols
+                        df_cumsum = df_cumsum[new_order]
                 self.sheets[col] = DataSheet(col, self.data_source, self.custom_age_ranges, is_excel=False,
                                              df=df_cumsum)
 

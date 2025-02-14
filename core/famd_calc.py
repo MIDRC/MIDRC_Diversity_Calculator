@@ -5,6 +5,7 @@ import tabulate
 import warnings
 
 from core.numeric_distances import scale_feature, calc_distances_via_df
+from core.data_preprocessing import combine_datasets_from_list
 
 
 def preprocess_data_for_famd(raw_df, features, numeric_features, scaling_method='standard'):
@@ -143,31 +144,18 @@ def calc_famd_distances(df, cols_to_use, numeric_cols, dataset_column='_dataset_
 def calc_famd_ks2_at_date(df1, df2, cols_to_use, numeric_cols, calc_date):
     df1_at_date = df1[df1['date'] <= calc_date]
     df2_at_date = df2[df2['date'] <= calc_date]
-    df_list = [df1_at_date, df2_at_date]
 
     dataset_column = '_dataset_'
-    labels = [f'Dataset {i}' for i in range(len(df_list))]  # Dataset labels
-    combined_df = pd.concat(
-        [df.assign(**{dataset_column: label}) for label, df in zip(labels, df_list)],
-        ignore_index=True
-    )
+    combined_df = combine_datasets_from_list([df1_at_date, df2_at_date], dataset_column=dataset_column)
 
     distance_metrics = ['ks2']
     distance_dict = calc_famd_distances(combined_df, cols_to_use, numeric_cols, dataset_column, distance_metrics=distance_metrics)
-    print('KS2 distance at date:', calc_date)
-    print(distance_dict['ks2'])
     return distance_dict['ks2']['Dataset 0 vs Dataset 1']
 
 
 def calc_famd_ks2_at_dates(df1, df2, cols_to_use, numeric_cols, calc_date_list):
-    df_list = [df1, df2]
-
     dataset_column = '_dataset_'
-    labels = [f'Dataset {i}' for i in range(len(df_list))]  # Dataset labels
-    combined_df = pd.concat(
-        [df.assign(**{dataset_column: label}) for label, df in zip(labels, df_list)],
-        ignore_index=True
-    )
+    combined_df = combine_datasets_from_list([df1, df2], dataset_column=dataset_column)
 
     famd_df = calc_famd_df(combined_df, cols_to_use, numeric_cols)
 

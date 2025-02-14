@@ -24,6 +24,8 @@ from scipy.spatial import distance
 from core.aggregate_jsd_calc import calc_aggregate_jsd_at_date
 from core.datetimetools import pandas_date_to_qdate
 from core.famd_calc import calc_famd_ks2_at_date, calc_famd_ks2_at_dates
+from core.data_preprocessing import combine_datasets_from_list
+from core.numeric_distances import calc_ks2_samp_by_feature
 from core.jsdmodel import JSDTableModel
 from gui.jsdview_base import JsdViewBase
 
@@ -200,6 +202,9 @@ class JSDController(QObject):
         if self._raw_data_available:
             category_list.append('Aggregate')
             category_list.append('FAMD')
+            for category in category_list:
+                if category in self.jsd_model.data_sources[file_infos[0]['source_id']].numeric_cols:
+                    category_list.append(f'{category} (ks2)')
 
         dataselectiongroupbox.update_category_list(category_list, category_index)
 
@@ -299,7 +304,6 @@ class JSDController(QObject):
                     num_col = col_info['raw column']
                     cols_to_use.append(num_col)
                     numeric_cols.append(num_col)
-                print('numeric_cols: ', numeric_cols)
                 input_data = calc_famd_ks2_at_dates(
                     data_source_1.raw_data,
                     data_source_2.raw_data,
@@ -307,6 +311,16 @@ class JSDController(QObject):
                     numeric_cols,
                     date_list,
                 )
+            elif category.endswith(' (ks2)'):
+                raw_df1 = data_source_1.raw_data
+                raw_df2 = data_source_2.raw_data
+                combined_df = combine_datasets_from_list([raw_df1, raw_df2])
+                date_list = build_date_list(raw_df1, raw_df2)
+                str_col = category[:-6]
+                num_col = data_source_1.numeric_cols[str_col]['raw column']
+
+                input_data = [float(calc_ks2_samp_by_feature(combined_df[combined_df['date'] <= date], num_col)['Dataset 0 vs Dataset 1']) for date
+                              in date_list]
 
             if input_data is not None:
                 model_input_data.append([pandas_date_to_qdate(calc_date) for calc_date in date_list])
@@ -514,6 +528,16 @@ class JSDController(QObject):
                             numeric_cols,
                             calc_date,
                         )
+                    elif category.endswith(' (ks2)'):
+                        raw_df1 = data_source_1.raw_data
+                        raw_df2 = data_source_2.raw_data
+                        combined_df = combine_datasets_from_list([raw_df1, raw_df2])
+                        str_col = category[:-6]
+                        num_col = data_source_1.numeric_cols[str_col]['raw column']
+                        jsd_dict[(index1, idx2)][category] = calc_ks2_samp_by_feature(
+                            combined_df[combined_df['date'] <= calc_date],
+                            num_col
+                        )['Dataset 0 vs Dataset 1']
 
         return jsd_dict
 
