@@ -17,14 +17,15 @@ from functools import partial
 import io
 import math
 from typing import Iterable
+import yaml
 
 from PySide6.QtCharts import (QAreaSeries, QCategoryAxis, QChart, QDateTimeAxis, QLineSeries, QPieSeries, QPolarChart,
                               QValueAxis)
 from PySide6.QtCore import (QDate, QDateTime, QEvent, QFileInfo, QObject, QPointF, QRect, Qt, QTime, Signal)
 from PySide6.QtGui import QAction, QGuiApplication, QKeySequence, QPainter
-from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QDockWidget, QFileDialog, QFormLayout,
-                               QHBoxLayout, QHeaderView, QLabel, QLayout, QLineEdit, QMainWindow, QMenu,
-                               QMenuBar, QScrollArea, QSpinBox, QSplitter, QTableView, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QDockWidget, QFileDialog, QFormLayout, QHBoxLayout,
+                               QHeaderView, QLabel, QLayout, QLineEdit, QMainWindow, QMenu, QMenuBar, QMessageBox,
+                               QScrollArea, QSpinBox, QSplitter, QTableView, QTextEdit, QVBoxLayout, QWidget)
 
 from gui.pyside6.dataselectiongroupbox import JsdDataSelectionGroupBox
 from core.datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate
@@ -143,6 +144,11 @@ class JsdWindow(QMainWindow, JsdViewBase):
         open_excel_file_action: QAction = QAction("Open Excel File...", self)
         open_excel_file_action.triggered.connect(self.open_excel_file_dialog)
         file_menu.addAction(open_excel_file_action)
+
+        # Create the 'Open File From YAML' action
+        open_yaml_file_action: QAction = QAction("Open File From YAML...", self)
+        open_yaml_file_action.triggered.connect(self.open_yaml_input_dialog)
+        file_menu.addAction(open_yaml_file_action)
 
         # Add the 'Settings' menu
         settings_menu: QMenu = menu_bar.addMenu("Settings")
@@ -658,6 +664,59 @@ class JsdWindow(QMainWindow, JsdViewBase):
                             'remove column name text': file_options_dialog.remove_column_text_line_edit.text()}
         self.add_data_source.emit(data_source_dict)
         self._dataselectiongroupbox.add_file_to_comboboxes(data_source_dict['description'], data_source_dict['name'])
+
+    def open_yaml_input_dialog(self):
+        """
+        Open a dialog with a text area to paste YAML content and add it as a data source.
+
+        This method opens a dialog containing a text area for the user to paste YAML formatted content. Once the user
+        confirms, the YAML content is parsed to build a data source dictionary. The dictionary is then emitted using the
+        add_data_source signal and the file description and name are added to the file_comboboxes in the dataselectiongroupbox.
+
+        Parameters:
+            None
+
+        Returns:
+            None
+
+        Raises:
+            None (An error message is displayed if the YAML content cannot be parsed.)
+        """
+        # Create the dialog
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Paste YAML Content")
+
+        # Set up the layout and widgets
+        layout = QVBoxLayout(dialog)
+        label = QLabel("Paste YAML content below:")
+        layout.addWidget(label)
+
+        text_edit = QTextEdit()
+        layout.addWidget(text_edit)
+
+        # Create OK/Cancel buttons using a QDialogButtonBox
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        layout.addWidget(button_box)
+
+        # Connect the buttons to the dialog's accept and reject slots
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+
+        # Execute the dialog and check if the user pressed OK
+        if dialog.exec() == QDialog.Accepted:
+            yaml_content = text_edit.toPlainText()
+            try:
+                data_source_dict = yaml.safe_load(yaml_content)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to parse YAML content: {e}")
+                return
+
+            # Emit the signal with the new data source and update the UI components
+            self.add_data_source.emit(data_source_dict)
+            self._dataselectiongroupbox.add_file_to_comboboxes(
+                data_source_dict.get('description', ''),
+                data_source_dict.get('name', '')
+            )
 
     def adjust_number_of_files_to_compare(self):
         """

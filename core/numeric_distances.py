@@ -239,6 +239,6 @@ def calc_distances_via_df(famd_df, feature_column, dataset_column: str='_dataset
             if metric not in calculated_metrics:
                 logging.warning(f'Metric {metric} was not calculated. Please check your input.')
                 if distance_metric_functions[metric.split('(')[0]]['scaling'] is False:
-                    logging.warning(f'Metric {metric.split('(')[0]} is not affected by scaling.')
+                    logging.warning(f"Metric {metric.split('(')[0]} is not affected by scaling.")
 
     return output
