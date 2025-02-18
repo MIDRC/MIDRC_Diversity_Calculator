@@ -1,0 +1,19 @@
+name: Zip Code 3
+description: Zip Code 3 TSV File
+data type: file
+filename: data/midrc_data_download-2025-01-29_2.tsv
+columns:
+  - Age at Index
+  - Ethnicity
+  - Race
+  - Sex
+  - COVID-19 Positive
+  - Race and Ethnicity
+numeric_cols:
+  Age at Index:
+    raw column: age_at_index
+    # bins: [ 0, 17, 50, 65, 1000 ]
+    # labels: ['0-17', '18-49', '50-64', '65+']
+    bins: [ 0, 5, 12, 16, 18, 30, 40, 50, 65, 75, 85, 1000 ]
+    labels: ['0-4', '5-11', '12-15', '16-17', '18-29', '30-39', '40-49', '50-64', '65-74', '75-84', '85+']
+plugin: midrc_tsv_loader
