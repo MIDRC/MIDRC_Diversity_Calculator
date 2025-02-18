@@ -12,24 +12,26 @@
 #      See the License for the specific language governing permissions and
 #      limitations under the License.
 #
+
 import csv
 from functools import partial
 import io
 import math
 from typing import Iterable
+import yaml
 
 from PySide6.QtCharts import (QAreaSeries, QCategoryAxis, QChart, QDateTimeAxis, QLineSeries, QPieSeries, QPolarChart,
                               QValueAxis)
 from PySide6.QtCore import (QDate, QDateTime, QEvent, QFileInfo, QObject, QPointF, QRect, Qt, QTime, Signal)
 from PySide6.QtGui import QAction, QGuiApplication, QKeySequence, QPainter
-from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QDockWidget, QFileDialog, QFormLayout,
-                               QHBoxLayout, QHeaderView, QLabel, QLayout, QLineEdit, QMainWindow, QMenu,
-                               QMenuBar, QScrollArea, QSpinBox, QSplitter, QTableView, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QDockWidget, QFileDialog, QFormLayout, QHBoxLayout,
+                               QHeaderView, QLabel, QLayout, QLineEdit, QMainWindow, QMenu, QMenuBar, QMessageBox,
+                               QScrollArea, QSpinBox, QSplitter, QTableView, QTextEdit, QVBoxLayout, QWidget)
 
-from dataselectiongroupbox import JsdDataSelectionGroupBox
-from datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate
-from grabbablewidget import GrabbableChartView
-from jsdview_base import JsdViewBase
+from gui.pyside6.dataselectiongroupbox import JsdDataSelectionGroupBox
+from core.datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate
+from gui.pyside6.grabbablewidget import GrabbableChartView
+from gui.jsdview_base import JsdViewBase
 
 
 class JsdWindow(QMainWindow, JsdViewBase):
@@ -143,6 +145,11 @@ class JsdWindow(QMainWindow, JsdViewBase):
         open_excel_file_action: QAction = QAction("Open Excel File...", self)
         open_excel_file_action.triggered.connect(self.open_excel_file_dialog)
         file_menu.addAction(open_excel_file_action)
+
+        # Create the 'Open File From YAML' action
+        open_yaml_file_action: QAction = QAction("Open File From YAML...", self)
+        open_yaml_file_action.triggered.connect(self.open_yaml_input_dialog)
+        file_menu.addAction(open_yaml_file_action)
 
         # Add the 'Settings' menu
         settings_menu: QMenu = menu_bar.addMenu("Settings")
@@ -291,8 +298,8 @@ class JsdWindow(QMainWindow, JsdViewBase):
         clear_layout(self.pie_chart_layout)
 
         # Retrieve categories and timepoint
-        categories = [self.dataselectiongroupbox.category_combobox.itemText(i)
-                      for i in range(self.dataselectiongroupbox.category_combobox.count())]
+        categorybox = self.dataselectiongroupbox.category_combobox
+        categories = list(map(categorybox.itemText, range(categorybox.count())))
         timepoint = -1
 
         file_comboboxes = self.dataselectiongroupbox.file_comboboxes
@@ -306,6 +313,9 @@ class JsdWindow(QMainWindow, JsdViewBase):
             row_layout.addWidget(labels.pop(0))
 
             for category in categories:
+                if category not in sheets:
+                    continue
+
                 df = sheets[category].df
                 cols_to_use = sheets[category].data_columns
 
@@ -454,6 +464,12 @@ class JsdWindow(QMainWindow, JsdViewBase):
             filename = self.dataselectiongroupbox.file_comboboxes[index].currentData()
             area_chart.setTitle(f'{filename} {category} distribution over time')
 
+            if category.endswith(' (ks2)'):
+                category = category[:-6]
+
+            if category not in sheets:
+                continue
+
             # Extract data from the sheet
             df = sheets[category].df
             cols_to_use = sheets[category].data_columns
@@ -484,13 +500,14 @@ class JsdWindow(QMainWindow, JsdViewBase):
             None
         """
         # Calculate cumulative percentages
-        total_counts = df[cols_to_use].sum(axis=1)
-        cumulative_percents = 100.0 * df[cols_to_use].cumsum(axis=1).div(total_counts, axis=0)
+        df_cols = df[cols_to_use]
+        total_counts = df_cols.sum(axis=1)
+        cumulative_percents = 100.0 * df_cols.cumsum(axis=1).div(total_counts, axis=0)
 
         # Create series for the area chart
         lower_series = None
         for col in cols_to_use:
-            if df[col].iloc[-1] == 0:  # Skip columns with no data
+            if df_cols[col].iloc[-1] == 0:  # Skip columns with no data
                 continue
 
             # Generate data points for the series
@@ -648,6 +665,59 @@ class JsdWindow(QMainWindow, JsdViewBase):
                             'remove column name text': file_options_dialog.remove_column_text_line_edit.text()}
         self.add_data_source.emit(data_source_dict)
         self._dataselectiongroupbox.add_file_to_comboboxes(data_source_dict['description'], data_source_dict['name'])
+
+    def open_yaml_input_dialog(self):
+        """
+        Open a dialog with a text area to paste YAML content and add it as a data source.
+
+        This method opens a dialog containing a text area for the user to paste YAML formatted content. Once the user
+        confirms, the YAML content is parsed to build a data source dictionary. The dictionary is then emitted using the
+        add_data_source signal and the file description and name are added to the file_comboboxes in the dataselectiongroupbox.
+
+        Parameters:
+            None
+
+        Returns:
+            None
+
+        Raises:
+            None (An error message is displayed if the YAML content cannot be parsed.)
+        """
+        # Create the dialog
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Paste YAML Content")
+
+        # Set up the layout and widgets
+        layout = QVBoxLayout(dialog)
+        label = QLabel("Paste YAML content below:")
+        layout.addWidget(label)
+
+        text_edit = QTextEdit()
+        layout.addWidget(text_edit)
+
+        # Create OK/Cancel buttons using a QDialogButtonBox
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        layout.addWidget(button_box)
+
+        # Connect the buttons to the dialog's accept and reject slots
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+
+        # Execute the dialog and check if the user pressed OK
+        if dialog.exec() == QDialog.Accepted:
+            yaml_content = text_edit.toPlainText()
+            try:
+                data_source_dict = yaml.safe_load(yaml_content)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to parse YAML content: {e}")
+                return
+
+            # Emit the signal with the new data source and update the UI components
+            self.add_data_source.emit(data_source_dict)
+            self._dataselectiongroupbox.add_file_to_comboboxes(
+                data_source_dict.get('description', ''),
+                data_source_dict.get('name', '')
+            )
 
     def adjust_number_of_files_to_compare(self):
         """

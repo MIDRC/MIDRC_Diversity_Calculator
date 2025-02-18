@@ -42,7 +42,7 @@ def pandas_date_to_qdate(pandas_date):
     if isinstance(pandas_date, np.datetime64):
         return numpy_datetime64_to_qdate(pandas_date)
     # else:
-    raise ValueError("Input must be a Pandas Timestamp or datetime object")
+    raise ValueError("Input must be a Pandas Timestamp or datetime object. Object is of type: ", type(pandas_date))
 
 
 def numpy_datetime64_to_qdate(numpy_datetime):

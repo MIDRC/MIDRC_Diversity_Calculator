@@ -23,6 +23,42 @@ data sources:
     filename: data/MIDRC Open A1 and R1 COVIDpos only - cumulative by batch.xlsx
     remove column name text: [(CUSUM)]
 
+  - name: Zip Code 1
+    description: Zip Code 1 Excel File
+    data type: file
+    filename: data/midrc_data_download-2025-01-29_0.tsv
+    columns:
+      - Age at Index
+      - Ethnicity
+      - Race
+      - Sex
+      - Covid19 Positive
+      - Race and Ethnicity
+    numeric_cols:
+      Age at Index:
+        raw column: age_at_index
+        bins: [ 0, 17, 50, 65, 1000 ]
+        labels: ['0-17', "18-49", '50-64', '65+']
+    plugin: midrc_tsv_loader
+
+  - name: Zip Code 2
+    description: Zip Code 2 Excel File
+    data type: file
+    filename: data/midrc_data_download-2025-01-29_1.tsv
+    columns:
+      - Age at Index
+      - Ethnicity
+      - Race
+      - Sex
+      - Covid19 Positive
+      - Race and Ethnicity
+    numeric_cols:
+      Age at Index:
+        raw column: age_at_index
+        bins: [ 0, 17, 50, 65, 1000 ]
+        labels: ['0-17', "18-49", '50-64', '65+']
+    plugin: midrc_tsv_loader
+
 # TODO: The following should be moved into QSettings for modifications within the GUI
 # For custom age columns, please use .inf as the maximum age in the final age group
 custom age ranges:

@@ -25,10 +25,10 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QSplashScreen
 
-from jsdconfig import JSDConfig
-from jsdcontroller import JSDController
-from jsdmodel import JSDTableModel
-from jsdview import JsdWindow
+from core.jsdconfig import JSDConfig
+from core.jsdcontroller import JSDController
+from core.jsdmodel import JSDTableModel
+from gui.pyside6.jsdview import JsdWindow
 
 
 class SplashScreen(QSplashScreen):
@@ -43,7 +43,11 @@ class SplashScreen(QSplashScreen):
     SPLASH_HEIGHT = 600
     FONT_FAMILY = 'Arial'
     FONT_SIZE = 36
-    SPLASH_SCREEN_MESSAGE = 'MIDRC-REACT Representativeness Exploration and Comparison Tool\n' \
+    SPLASH_SCREEN_MESSAGE = 'MIDRC-REACT\n' \
+                            '\n' \
+                            'Representativeness Exploration\n' \
+                            'and Comparison Tool\n' \
+                            '\n' \
                             '\n' \
                             'Loading Excel files, please wait...'
     BACKGROUND_COLOR = QColor(Qt.white)

@@ -3,12 +3,12 @@ data sources:
   - name: Test 1
     description: Test Excel File 1
     data type: file
-    filename: test_file_1.xlsx
+    filename: data/test_file_1.xlsx
 
   - name: Test 2
     description: Test Excel File 2
     data type: file
-    filename: test_file_2.xlsx
+    filename: data/test_file_2.xlsx
 
 # TODO: The following should be moved into QSettings for modifications within the GUI
 # For custom age columns, please use .inf as the maximum age in the final age group
