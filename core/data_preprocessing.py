@@ -70,18 +70,29 @@ def bin_dataframe_column(df_to_bin, column_name, cut_column_name='CUT', bins=Non
             df_out.loc[df_out[cut_column_name].isna() & (df_out[column_name] >= bins[-1]), cut_column_name] = high_text
             df_out.loc[df_out[cut_column_name].isna(), cut_column_name] = new_text
             if (df_out[cut_column_name] == low_text).sum() > 0:
-                print(f"         {(df_out[cut_column_name] == low_text).sum()} values are below the minimum bin value.\n" 
+                print(f"         {(df_out[cut_column_name] == low_text).sum()} values are below the min bin value.\n"
                       f"         These will be placed in a new '{low_text}' category.")
             if (df_out[cut_column_name] == high_text).sum() > 0:
-                print(f"         {(df_out[cut_column_name] == high_text).sum()} values are above the maximum bin value.\n" 
+                print(f"         {(df_out[cut_column_name] == high_text).sum()} values are above the max bin value.\n"
                       f"         These will be placed in a new '{high_text}' category.")
             if (df_out[cut_column_name] == new_text).sum() > 0:
-                print(f"         {(df_out[cut_column_name] == new_text).sum()} values are outside the specified bins.\n" 
+                print(f"         {(df_out[cut_column_name] == new_text).sum()} values are outside the specified bins.\n"
                       f"         These will be placed in a new '{new_text}' category.")
 
         return df_out
+    return df_to_bin
 
 def combine_datasets_from_list(df_list: list[pd.DataFrame], dataset_column = '_dataset_'):
+    """
+    Combines a list of dataframes into a single dataframe with a new column for the dataset name.
+
+    Args:
+        df_list (list[pd.DataFrame]): A list of dataframes to be combined.
+        dataset_column (str, optional): The name of the column to be used for the dataset name. Defaults to '_dataset_'.
+
+    Returns:
+        pd.DataFrame: A combined dataframe with a new column for the dataset name.
+    """
     labels = [f'Dataset {i}' for i in range(len(df_list))]  # Dataset labels
     combined_df = pd.concat(
         [df.assign(**{dataset_column: label}) for label, df in zip(labels, df_list)],

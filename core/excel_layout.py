@@ -12,6 +12,9 @@
 #      See the License for the specific language governing permissions and
 #      limitations under the License.
 #
+"""
+This module contains classes and functions for building and processing Excel and CSV files.
+"""
 import importlib.util
 import io
 import math
@@ -64,10 +67,22 @@ class DataSource:
             self.build_data_frames_from_content(data_source['content'])
 
     def raw_columns_to_use(self):
+        """
+        Returns a list of the raw columns to use for the analysis.
+
+        Returns:
+            list: A list of the raw columns to use for the analysis.
+        """
         return self._columns
 
     @property
     def numeric_cols(self):
+        """
+        Returns a dictionary of numeric columns to use for the analysis.
+
+        Returns:
+            dict: A dictionary of numeric columns to use for the analysis.
+        """
         return self._numeric_cols
 
     def load_plugin(self, plugin_path):
@@ -91,9 +106,9 @@ class DataSource:
 
         if hasattr(module, "preprocess_data"):
             return module.preprocess_data
-        else:
-            print(f"Plugin {module_name} does not define a 'preprocess_data' function.")
-            return None
+        # else:
+        print(f"Plugin {module_name} does not define a 'preprocess_data' function.")
+        return None
 
     def apply_numeric_column_adjustments(self, df: pd.DataFrame):
         """
@@ -253,7 +268,8 @@ class DataSheet:
         create_custom_age_columns(self, age_ranges): Scans the column headers in the age category to build consistent
                                                      age columns.
     """
-    def __init__(self, sheet_name, data_source, custom_age_ranges, is_excel=False, file: pd.ExcelFile = None, df: pd.DataFrame = None):
+    def __init__(self, sheet_name, data_source, custom_age_ranges, is_excel=False, file: pd.ExcelFile = None,
+                 df: pd.DataFrame = None):
         """
         Initialize the DataSheet object.
 
@@ -334,7 +350,7 @@ class DataSheet:
 
         if len(matches) > 1:
             raise ValueError(f"Expected one match for 'Not Reported', found multiple: {matches}")
-        elif len(matches) == 1:
+        if len(matches) == 1:
             self._df.rename(columns={matches[0]: 'Not Reported'}, inplace=True)
             self._columns['Not Reported'] = self._columns.pop(matches[0])
 
@@ -379,9 +395,9 @@ class DataSheet:
                 return False
             if len(nums) == 1:
                 return math.isinf(age_range[1])
-            else:
-                upper = int(nums[1])
-                return not (age_range[1] < upper)
+            # else:
+            upper = int(nums[1])
+            return not age_range[1] < upper
 
         # Create custom age columns.
         for age_range in age_ranges:

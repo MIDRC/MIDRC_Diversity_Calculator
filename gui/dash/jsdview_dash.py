@@ -13,8 +13,6 @@
 #      limitations under the License.
 #
 
-import os
-
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
@@ -30,6 +28,12 @@ from gui.jsdview_base import JsdViewBase
 from gui.dash.dataselectiongroupbox import DataSelectionGroupBox
 
 class JSDViewDash(JsdViewBase):
+    """
+    Class: JSDViewDash
+    This class represents a Dash view for JSD. It provides functionality for creating a Dash app and handling file
+    uploads. The class has methods for setting up the layout, updating the category combo box, and initializing the
+    widget.
+    """
     def __init__(self, jsd_model, config):
         super().__init__()
         self.jsd_model = jsd_model
@@ -45,6 +49,9 @@ class JSDViewDash(JsdViewBase):
         #     print("✅ Successfully connected excel_file_uploaded signal to handle_excel_file_uploaded")
 
     def setup_layout(self):
+        """
+        Sets up the layout of the Dash app.
+        """
         self.app.layout = html.Div([
             self.data_selection_group_box.display(),
             dcc.Graph(id='timeline-chart'),
@@ -66,9 +73,24 @@ class JSDViewDash(JsdViewBase):
             return self.update_area_chart(selected_category)
 
     def get_categories(self):
+        """
+        Get the categories from the controller.
+
+        Returns:
+            list: A list of categories.
+        """
         return self.controller.get_categories()
 
     def update_timeline_chart(self, category):
+        """
+        Updates the timeline chart with the specified category.
+
+        Args:
+            category (str): The category to update the chart with.
+
+        Returns:
+            bool: True if the chart was updated, False if there was no data to update.
+        """
         plot_data = self.controller.get_timeline_data(category)
 
         if plot_data is None or plot_data.empty:
@@ -92,13 +114,22 @@ class JSDViewDash(JsdViewBase):
             title=f"JSD Timeline Chart - {category}",
             xaxis_title="Date",
             yaxis_title="JSD Value",
-            yaxis=dict(range=[0.0, 1.0]),
+            yaxis={'range': [0.0, 1.0]},
             height=600
         )
 
         return fig
 
     def update_area_chart(self, category):
+        """
+        Updates the area chart with the specified category.
+
+        Args:
+            category (str): The category to update the chart with.
+
+        Returns:
+            bool: True if the chart was updated, False if there was no data to update.
+        """
         data_sources = [ds for ds in self.jsd_model.data_sources.values() if category in ds.sheets]
 
         if not data_sources:
@@ -131,7 +162,7 @@ class JSDViewDash(JsdViewBase):
             fig = go.Figure()
 
             # Plotting area chart using cumulative percentages
-            lower_values = np.zeros(len(df))
+            # lower_values = np.zeros(len(df))
 
             for col in cols_to_use:
                 if df[col].iloc[-1] == 0:  # Skip columns with no data
@@ -147,7 +178,7 @@ class JSDViewDash(JsdViewBase):
                         fill='tonexty',
                         name=col,
                         mode='lines',
-                        line=dict(width=0.5),
+                        line={'width': 0.5},
                         opacity=0.5,
                         hoverinfo='none'  # Prevent default cumulative percentage from being shown
                     )
@@ -161,7 +192,7 @@ class JSDViewDash(JsdViewBase):
                         text=individual_percents[col],
                         name=col,
                         mode='lines',
-                        line=dict(width=0.5, color='rgba(0,0,0,0)'),  # Invisible line
+                        line={'width': 0.5, 'color': 'rgba(0,0,0,0)'},  # Invisible line
                         hovertemplate='%{text:.2f}%',
                         showlegend=False  # Hide these hover traces from the legend
                     )
@@ -174,7 +205,7 @@ class JSDViewDash(JsdViewBase):
                 yaxis_title="Percentage (%)",
                 height=400,
                 showlegend=True,
-                xaxis=dict(range=[global_min_date, global_max_date])  # Set the x-axis range for consistency
+                xaxis={'range': [global_min_date, global_max_date]}  # Set the x-axis range for consistency
             )
 
             # Append the figure as a dcc.Graph component
@@ -189,12 +220,21 @@ class JSDViewDash(JsdViewBase):
         return rows
 
     def handle_excel_file_uploaded(self, data_source_dict):
+        """
+        Handles the file upload.
+
+        Args:
+            data_source_dict (dict): The data source dictionary.
+        """
         print(f"handle_excel_file_uploaded() triggered with file: {data_source_dict['name']}")  # Debugging print
         self.open_excel_file(data_source_dict)
         print("Excel file loaded, try to update layout")
         self.data_selection_group_box.update_filebox_layout(self.data_selection_group_box.num_fileboxes)
 
     def run(self):
+        """
+        Runs the Dash app.
+        """
         self.app.run_server(debug=True)
         # Remove threading if we want to use Qt Signals and Slots
         # self.app.run_server(debug=False, threaded=False)

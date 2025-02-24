@@ -13,15 +13,28 @@
 #      limitations under the License.
 #
 
+"""
+This module contains functions for calculating Jensen-Shannon Distance (JSD) between datasets.
+"""
+
+import itertools
 import numpy as np
 import pandas as pd
 from scipy.spatial import distance
-import itertools
 
 from core.data_preprocessing import combine_datasets_from_list
 
 
 def calc_jsd_from_counts_dict(counts_dict, dataset_names):
+    """
+    Calculates the Jensen-Shannon Distance (JSD) between each pair of datasets in a dictionary.
+    Args:
+        counts_dict:
+        dataset_names:
+
+    Returns:
+
+    """
     output_dict = {}
 
     # Compare each dataset combination
@@ -35,7 +48,7 @@ def calc_jsd_from_counts_dict(counts_dict, dataset_names):
 
     # Compare each dataset to all other datasets combined
     if len(dataset_names) > 2:
-        total_counts = sum([np.array(counts_dict[dataset]) for dataset in dataset_names])
+        total_counts = sum(np.array(counts_dict[dataset]) for dataset in dataset_names)
 
         for dataset in dataset_names:
             count1 = counts_dict[dataset]
@@ -46,6 +59,7 @@ def calc_jsd_from_counts_dict(counts_dict, dataset_names):
             output_dict[f"{dataset} vs All Other Datasets"] = jsd
 
     return output_dict
+
 
 def calc_jsd_by_features(df_list: list[pd.DataFrame], cols_to_use: list[str]) -> dict[str, float]:
     """
@@ -72,9 +86,11 @@ def calc_jsd_by_features(df_list: list[pd.DataFrame], cols_to_use: list[str]) ->
     labels = combined_df[dataset_column].unique()
 
     # Create a dictionary to hold counts for each dataset
-    counts_dict = {dataset: pivot_table[dataset].values if dataset in pivot_table else np.zeros(len(pivot_table)) for dataset in labels}
+    counts_dict = {dataset: pivot_table[dataset].values if dataset in pivot_table else np.zeros(len(pivot_table)) for
+                   dataset in labels}
 
     return calc_jsd_from_counts_dict(counts_dict, labels)
+
 
 def calc_jsd_by_features_2df(df1: pd.DataFrame, df2: pd.DataFrame, cols_to_use: list[str]) -> float:
     """
@@ -92,7 +108,8 @@ def calc_jsd_by_features_2df(df1: pd.DataFrame, df2: pd.DataFrame, cols_to_use: 
 
     return jsd_dict['Dataset 0 vs Dataset 1']
 
-def calc_aggregate_jsd_at_date(df1: pd.DataFrame, df2: pd.DataFrame, cols_to_use: list[str], date) -> float:
+
+def calc_aggregate_jsd_at_date(df1: pd.DataFrame, df2: pd.DataFrame, cols_to_use: list[str], date: object) -> float:
     """
     Calculate Jensen-Shannon Distance (JSD) based on features between two datasets at a specific date.
 

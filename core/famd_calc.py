@@ -13,11 +13,11 @@
 #      limitations under the License.
 #
 
+import warnings
 import prince
 import numpy as np
 import pandas as pd
-import tabulate
-import warnings
+from tabulate import tabulate
 
 from core.numeric_distances import scale_feature, calc_distances_via_df
 from core.data_preprocessing import combine_datasets_from_list
@@ -89,20 +89,21 @@ def adjust_bin_widths(bins, hist, multiple=2):
 
     return np.array(new_bins), np.array(new_hist)
 
-def calc_famd_df(raw_df, cols_to_use, numeric_cols, dataset_column='_dataset_', bin_width=0.01, print_outliers=False, famd_column='famd_x_coordinates'):
+def calc_famd_df(raw_df, cols_to_use, numeric_cols, dataset_column='_dataset_', print_outliers=False,
+                 famd_column='famd_x_coordinates'):
     """
     Calculate the FAMD coordinates for the input DataFrame and return a new DataFrame with the coordinates added.
     Args:
-        raw_df:
-        cols_to_use:
-        numeric_cols:
-        dataset_column:
-        bin_width:
-        print_outliers:
-        famd_column:
+        raw_df (DataFrame): The raw data to be preprocessed.
+        cols_to_use (list): List of columns to use for the calculation.
+        numeric_cols (list): List of numeric columns to use for the calculation.
+        dataset_column (str, optional): The name of the column to be used for the dataset name. Defaults to '_dataset_'.
+        print_outliers (bool, optional): Whether to print outliers. Defaults to False.
+        famd_column (str, optional): The name of the column to be used for the FAMD coordinates.
+                                     Defaults to 'famd_x_coordinates'.
 
     Returns:
-
+        DataFrame: A DataFrame with the FAMD coordinates added.
     """
     c_df = preprocess_data_for_famd(raw_df, cols_to_use, numeric_cols)
     _, coordinates = fit_famd(c_df)
@@ -125,7 +126,8 @@ def calc_famd_df(raw_df, cols_to_use, numeric_cols, dataset_column='_dataset_', 
 
     return c_df
 
-def calc_famd_distances(df, cols_to_use, numeric_cols, dataset_column='_dataset_', distance_metrics=('all'), jsd_scaled_bin_width=0.01, print_outliers=False):
+def calc_famd_distances(df, cols_to_use, numeric_cols, dataset_column='_dataset_', distance_metrics=('all'),
+                        jsd_scaled_bin_width=0.01, print_outliers=False):
     """
     Calculate various distance metrics based on FAMD coordinates calculated from the input DataFrame using the feature
     columns specified in the SamplingData object.
@@ -157,6 +159,18 @@ def calc_famd_distances(df, cols_to_use, numeric_cols, dataset_column='_dataset_
                                  )
 
 def calc_famd_ks2_at_date(df1, df2, cols_to_use, numeric_cols, calc_date):
+    """
+    Calculate the KS2 distance between two datasets at a specific date.
+    Args:
+        df1:
+        df2:
+        cols_to_use:
+        numeric_cols:
+        calc_date:
+
+    Returns:
+
+    """
     df1_at_date = df1[df1['date'] <= calc_date]
     df2_at_date = df2[df2['date'] <= calc_date]
 
@@ -164,11 +178,24 @@ def calc_famd_ks2_at_date(df1, df2, cols_to_use, numeric_cols, calc_date):
     combined_df = combine_datasets_from_list([df1_at_date, df2_at_date], dataset_column=dataset_column)
 
     distance_metrics = ['ks2']
-    distance_dict = calc_famd_distances(combined_df, cols_to_use, numeric_cols, dataset_column, distance_metrics=distance_metrics)
+    distance_dict = calc_famd_distances(combined_df, cols_to_use, numeric_cols, dataset_column,
+                                        distance_metrics=distance_metrics)
     return distance_dict['ks2']['Dataset 0 vs Dataset 1']
 
 
 def calc_famd_ks2_at_dates(df1, df2, cols_to_use, numeric_cols, calc_date_list):
+    """
+    Calculate the KS2 distance between two datasets at multiple dates.
+    Args:
+        df1:
+        df2:
+        cols_to_use:
+        numeric_cols:
+        calc_date_list:
+
+    Returns:
+
+    """
     dataset_column = '_dataset_'
     combined_df = combine_datasets_from_list([df1, df2], dataset_column=dataset_column)
 

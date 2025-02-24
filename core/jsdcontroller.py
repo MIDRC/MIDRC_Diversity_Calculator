@@ -288,7 +288,8 @@ class JSDController(QObject):
                 if 'Race and Ethnicity' in cols_to_use:
                     cols_to_use.remove('Race and Ethnicity')
 
-                input_data = [float(calc_aggregate_jsd_at_date(raw_df1, raw_df2, cols_to_use, calc_date)) for calc_date in date_list]
+                input_data = [float(calc_aggregate_jsd_at_date(raw_df1, raw_df2, cols_to_use, calc_date))
+                              for calc_date in date_list]
 
             elif category == 'FAMD':
                 raw_df1 = data_source_1.raw_data
@@ -319,8 +320,8 @@ class JSDController(QObject):
                 str_col = category[:-6]
                 num_col = data_source_1.numeric_cols[str_col]['raw column']
 
-                input_data = [float(calc_ks2_samp_by_feature(combined_df[combined_df['date'] <= date], num_col)['Dataset 0 vs Dataset 1']) for date
-                              in date_list]
+                input_data = [float(calc_ks2_samp_by_feature(combined_df[combined_df['date'] <= date],
+                                                             num_col)['Dataset 0 vs Dataset 1']) for date in date_list]
 
             if input_data is not None:
                 model_input_data.append([pandas_date_to_qdate(calc_date) for calc_date in date_list])
@@ -362,7 +363,8 @@ class JSDController(QObject):
 
             cols_to_use = self.get_cols_to_use_for_jsd_calc(ds1.name, category)
             df['value'] = df['date'].apply(
-                lambda calc_date: calculate_jsd(
+                lambda calc_date, ds1, ds2, category, cols_to_use=cols_to_use:
+                calculate_jsd(
                     df1=ds1.sheets[category].df,
                     df2=ds2.sheets[category].df,
                     cols_to_use=cols_to_use,
@@ -389,8 +391,8 @@ class JSDController(QObject):
         spider_plot_date = None
         sheet_dict = {}
         file_infos = self.jsd_view.dataselectiongroupbox.get_file_infos()
-        for i in range(len(file_infos)):
-            if file_infos[i]['checked']:
+        for i, file_info in enumerate(file_infos):
+            if file_info['checked']:
                 sheet_dict[i] = self.get_file_sheets_from_index(i)
 
         spider_plot_values = self.get_spider_plot_values(spider_plot_date)
@@ -414,8 +416,8 @@ class JSDController(QObject):
         """
         sheet_dict = {}
         file_infos = self.jsd_view.dataselectiongroupbox.get_file_infos()
-        for i in range(len(file_infos)):
-            if file_infos[i]['checked']:
+        for i, file_info in enumerate(file_infos):
+            if file_info['checked']:
                 sheet_dict[i] = self.get_file_sheets_from_index(i)
 
         try:

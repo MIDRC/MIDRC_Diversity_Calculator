@@ -28,10 +28,10 @@ from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QDockWidget, QFileDial
                                QHeaderView, QLabel, QLayout, QLineEdit, QMainWindow, QMenu, QMenuBar, QMessageBox,
                                QScrollArea, QSpinBox, QSplitter, QTableView, QTextEdit, QVBoxLayout, QWidget)
 
-from gui.pyside6.dataselectiongroupbox import JsdDataSelectionGroupBox
 from core.datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate
-from gui.pyside6.grabbablewidget import GrabbableChartView
 from gui.jsdview_base import JsdViewBase
+from gui.pyside6.dataselectiongroupbox import JsdDataSelectionGroupBox
+from gui.pyside6.grabbablewidget import GrabbableChartView
 
 
 class JsdWindow(QMainWindow, JsdViewBase):
@@ -672,7 +672,8 @@ class JsdWindow(QMainWindow, JsdViewBase):
 
         This method opens a dialog containing a text area for the user to paste YAML formatted content. Once the user
         confirms, the YAML content is parsed to build a data source dictionary. The dictionary is then emitted using the
-        add_data_source signal and the file description and name are added to the file_comboboxes in the dataselectiongroupbox.
+        add_data_source signal and the file description and name are added to the file_comboboxes in the
+        dataselectiongroupbox.
 
         Parameters:
             None
