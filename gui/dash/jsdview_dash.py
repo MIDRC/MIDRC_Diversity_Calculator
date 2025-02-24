@@ -60,14 +60,14 @@ class JSDViewDash(JsdViewBase):
 
         @self.app.callback(
             Output('timeline-chart', 'figure'),
-            Input(self.data_selection_group_box.category_combobox.id, 'value')
+            Input(self.data_selection_group_box.category_combobox.id, 'value')  # pylint: disable=no-member
         )
         def update_timeline_chart(selected_category):
             return self.update_timeline_chart(selected_category)
 
         @self.app.callback(
             Output('area-chart-container', 'children'),
-            Input(self.data_selection_group_box.category_combobox.id, 'value')
+            Input(self.data_selection_group_box.category_combobox.id, 'value')  # pylint: disable=no-member
         )
         def update_area_chart(selected_category):
             return self.update_area_chart(selected_category)
