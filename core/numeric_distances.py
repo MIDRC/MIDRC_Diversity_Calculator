@@ -13,13 +13,13 @@
 #      limitations under the License.
 #
 
+import itertools
+import logging
+from types import SimpleNamespace
+
+import numpy as np
 from scipy.stats import ks_2samp, wasserstein_distance
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
-from types import SimpleNamespace
-import itertools
-import numpy as np
-import pandas as pd
-import logging
 
 from core.cucconi import cucconi_test
 from core.aggregate_jsd_calc import calc_jsd_from_counts_dict
@@ -64,6 +64,20 @@ def calc_numerical_metric_by_feature(df, feature: str, dataset_column: str, metr
     return metric_dict
 
 def calc_cucconi_by_feature(df, feature: str, dataset_column: str='_dataset_', scaling: str=None):
+    """
+    Calculate the Cucconi test for a specific feature.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the data.
+        feature (str): The name of the feature to calculate the metric for.
+        dataset_column (str, optional): The name of the column containing the dataset information.
+                                        Defaults to '_dataset_'.
+        scaling (str, optional): The scaling method to use for the feature. Defaults to None.
+                                 (e.g., 'standard', 'minmax', 'maxabs', or 'robust')
+
+    Returns:
+        dict: A dictionary containing the metric results for each dataset combination.
+    """
     if scaling is not None:
         logging.warning('Cucconi test is not affected by scaling. Ignoring scaling method.')
     calc_df = df  # if scaling is None else scale_feature(df, feature, method=scaling)
@@ -72,12 +86,40 @@ def calc_cucconi_by_feature(df, feature: str, dataset_column: str='_dataset_', s
     return calc_numerical_metric_by_feature(calc_df, feature, dataset_column, cucconi_2samp_test)
 
 def calc_ks2_samp_by_feature(df, feature: str, dataset_column: str='_dataset_', scaling: str=None):
+    """
+    Calculate the Kolmogorov-Smirnov test for a specific feature.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the data.
+        feature (str): The name of the feature to calculate the metric for.
+        dataset_column (str, optional): The name of the column containing the dataset information.
+                                        Defaults to '_dataset_'.
+        scaling (str, optional): The scaling method to use for the feature. Defaults to None.
+                                (e.g., 'standard', 'minmax', 'maxabs', or 'robust')
+
+    Returns:
+        dict: A dictionary containing the metric results for each dataset combination.
+    """
     if scaling is not None:
         logging.warning('Kolmogorov-Smirnov test is not affected by scaling. Ignoring scaling method.')
     calc_df = df # if scaling is None else scale_feature(df, feature, method=scaling)
     return calc_numerical_metric_by_feature(calc_df, feature, dataset_column, ks_2samp)
 
 def calc_wasserstein_by_feature(df, feature: str, dataset_column: str='_dataset_', scaling: str=None):
+    """
+    Calculate the Wasserstein distance for a specific feature.
+
+    Args:
+        df (pd.DataFrame): The DataFrame containing the data.
+        feature (str): The name of the feature to calculate the metric for.
+        dataset_column (str, optional): The name of the column containing the dataset information.
+                                        Defaults to '_dataset_'.
+        scaling (str, optional): The scaling method to use for the feature. Defaults to None.
+                                (e.g., 'standard', 'minmax', 'maxabs', or 'robust')
+
+    Returns:
+        dict: A dictionary containing the metric results for each dataset combination.
+    """
     # We need to define a function that returns a SimpleNamespace with a 'statistic' attribute
     def w_d_calc(values1, values2):
         return SimpleNamespace(statistic=wasserstein_distance(values1, values2))
@@ -92,6 +134,12 @@ _scale_values_supported_methods_dict = {
     }
 
 def get_supported_scaling_methods():
+    """
+    Get a list of supported scaling methods.
+
+    Returns:
+        list: A list of supported scaling methods.
+    """
     return [*itertools.chain(*_scale_values_supported_methods_dict.values())]
 
 def scale_values(values, method: str='standard'):
@@ -158,7 +206,8 @@ def generate_histogram(df, dataset_column, dataset_name, feature_column, bin_wid
     - hist: Array of histogram values.
     - bins: Array of bin edges.
 
-    Enhance readability by generating a histogram for a specific dataset based on the provided x-coordinates and bin width.
+    Enhance readability by generating a histogram for a specific dataset based on the provided x-coordinates and bin
+    width.
     """
     x_coordinates = df[feature_column].to_numpy()
     d = df.loc[df[dataset_column] == dataset_name, feature_column].to_numpy()
@@ -190,7 +239,8 @@ def build_histogram_dict(df, dataset_column, datasets, feature_column, bin_width
 
     return hist_dict
 
-def calc_distances_via_df(famd_df, feature_column, dataset_column: str='_dataset_', *, distance_metrics=('all'), jsd_scaled_bin_width=0.01):
+def calc_distances_via_df(famd_df, feature_column, dataset_column: str='_dataset_', *,
+                          distance_metrics: tuple[str]=('all'), jsd_scaled_bin_width=0.01):
     """
     Calculate various distance metrics based on histogram data.
 
@@ -221,10 +271,14 @@ def calc_distances_via_df(famd_df, feature_column, dataset_column: str='_dataset
 
     # Mapping of distance metrics to their respective functions
     distance_metric_functions = {
-        'jsd': {'func': lambda scaling=None: calc_jsd_from_counts_dict(build_histogram_dict(famd_df, dataset_column, famd_df[dataset_column].unique(),
-                                     feature_column, bin_width=jsd_scaled_bin_width, scaling_method=scaling), famd_df[dataset_column].unique()),
+        'jsd': {'func': lambda scaling=None: calc_jsd_from_counts_dict(
+                                 build_histogram_dict(famd_df, dataset_column, famd_df[dataset_column].unique(),
+                                                      feature_column, bin_width=jsd_scaled_bin_width,
+                                                      scaling_method=scaling),
+                                 famd_df[dataset_column].unique()),
                 'scaling': True},
-        'wass': {'func': lambda scaling=None: calc_wasserstein_by_feature(famd_df, feature_column, dataset_column, scaling=scaling),
+        'wass': {'func': lambda scaling=None: calc_wasserstein_by_feature(famd_df, feature_column, dataset_column,
+                                                                          scaling=scaling),
                  'scaling': True},
         'ks2': {'func': lambda: calc_ks2_samp_by_feature(famd_df, feature_column, dataset_column),
                 'scaling': False},
@@ -252,8 +306,8 @@ def calc_distances_via_df(famd_df, feature_column, dataset_column: str='_dataset
         calculated_metrics = list(output.keys())
         for metric in distance_metrics:
             if metric not in calculated_metrics:
-                logging.warning(f'Metric {metric} was not calculated. Please check your input.')
+                logging.warning("Metric %s was not calculated. Please check your input.", metric)
                 if distance_metric_functions[metric.split('(')[0]]['scaling'] is False:
-                    logging.warning(f"Metric {metric.split('(')[0]} is not affected by scaling.")
+                    logging.warning("Metric %s is not affected by scaling.", metric.split('(')[0])
 
     return output

@@ -13,9 +13,13 @@
 #      limitations under the License.
 #
 
+"""
+This module contains functions for processing TSV files downloaded from the data.MIDRC.org website.
+"""
+
+from datetime import datetime
 import re
 import pandas as pd
-from datetime import datetime
 
 def extract_earliest_date(submitter_id_series):
     """Extracts the earliest date from datasets.submitter_id column."""

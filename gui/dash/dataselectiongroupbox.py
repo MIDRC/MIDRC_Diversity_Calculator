@@ -16,11 +16,35 @@
 import base64
 import io
 
-from dash import Dash, dcc, html, callback_context
+from dash import Dash, dcc, html
 from dash.dependencies import Input, Output, State
 from gui.jsdview_base import GroupBoxData
+from gui.dash.jsdview_dash import JSDViewDash
 
 class DataSelectionGroupBox(GroupBoxData):
+    """
+    Class: DataSelectionGroupBox
+    This class represents a group box widget for data selection. It provides functionality for creating labels and
+    combo boxes for data files and a category combo box. The class has methods for setting up the layout,
+    updating the category combo box, and initializing the widget.
+    Attributes:
+        _file_comboboxes (list): A list of file comboboxes.
+        _category_combobox (dcc.Dropdown): A category combo box.
+        _num_fileboxes_combobox (dcc.Dropdown): A number of fileboxes combo box.
+        _file_upload (dcc.Upload): A file upload component.
+        _layout (html.Div): The layout of the group box.
+        _jsd_model (JSDTableModel): The JSDTableModel object.
+        _num_fileboxes (int): The number of file boxes.
+        _raw_data_available (bool): A flag indicating whether raw data is available.
+    Methods:
+        __init__(self, jsd_model, app: Dash): Initializes the DataSelectionGroupBox object.
+        on_num_fileboxes_changed(self, value, previous_value=None): Handles the number of file boxes changing.
+        update_filebox_layout(self, num_fileboxes): Updates the filebox layout based on the number of file boxes.
+        update_file_comboboxes(self): Updates the file comboboxes based on the data sources.
+        on_category_changed(self, value, previous_value=None): Handles the category changing.
+        on_file_selection_changed(self, value=None, previous_value=None): Handles the file selection changing.
+        display(self): Returns the layout of the group box.
+    """
 
     def __init__(self, jsd_model, app: Dash):
         super().__init__()
@@ -130,6 +154,16 @@ class DataSelectionGroupBox(GroupBoxData):
             self.on_file_selection_changed()
 
     def on_num_fileboxes_changed(self, value, previous_value=None):
+        """
+        Handles the number of file boxes changing.
+
+        Args:
+            value (int): The new number of file boxes.
+            previous_value (int, optional): The previous number of file boxes. Defaults to None.
+
+        Returns:
+            int: The new number of file boxes.
+        """
         if value is None:
             return previous_value
         self.change_number_of_fileboxes(value)
@@ -159,7 +193,9 @@ class DataSelectionGroupBox(GroupBoxData):
         return filebox_dropdowns
 
     def update_file_comboboxes(self):
-        # Update file comboboxes based on data sources
+        """
+        Update the file comboboxes based on the data sources.
+        """
         data_sources = self.jsd_model.data_sources
         for combobox in self._file_comboboxes:
             combobox.options = [{'label': ds_key, 'value': ds_key} for ds_key in data_sources.keys()]
@@ -168,13 +204,31 @@ class DataSelectionGroupBox(GroupBoxData):
 
     @property
     def file_comboboxes(self):
+        """
+        Get the file comboboxes.
+
+        Returns:
+            list: A list of file comboboxes.
+        """
         return self._file_comboboxes
 
     @property
     def category_combobox(self):
+        """
+        Get the category combobox.
+
+        Returns:
+            dcc.Dropdown: The category combobox.
+        """
         return self._category_combobox
 
     def change_number_of_fileboxes(self, num_fileboxes):
+        """
+        Change the number of file boxes.
+
+        Args:
+            num_fileboxes (int): The new number of file boxes.
+        """
         self.num_fileboxes = num_fileboxes
 
         # Add file comboboxes if num_fileboxes is greater than the current number
@@ -184,10 +238,20 @@ class DataSelectionGroupBox(GroupBoxData):
         # Remove file comboboxes if num_fileboxes is less than the current number
         elif self.num_fileboxes < len(self.file_comboboxes):
             # Remove excess comboboxes from the layout and list
-            excess_comboboxes = len(self.file_comboboxes) - self.num_fileboxes
+            # excess_comboboxes = len(self.file_comboboxes) - self.num_fileboxes
             self.on_file_selection_changed()
 
     def _on_file_upload(self, contents, filename):
+        """
+        Handles the file upload.
+
+        Args:
+            contents (str): The contents of the file.
+            filename (str): The name of the file.
+
+        Returns:
+            html.Div: A div containing the file name.
+        """
         if contents is not None:
             content_type, content_string = contents.split(',')
             decoded = base64.b64decode(content_string)
@@ -197,18 +261,20 @@ class DataSelectionGroupBox(GroupBoxData):
                 'name': filename,
                 'content': file_content,
                 'data type': 'content',
+                'content type': content_type,
             }
 
             print("⚠️ Manually calling handle_excel_file_uploaded")
-            from gui.dash.jsdview_dash import JSDViewDash
             JSDViewDash.handle_excel_file_uploaded(self.app, data_source_dict)  # Call manually
 
             return html.Div([
-                'File uploaded: {}'.format(filename)
+                f'File uploaded: {filename}'
             ])
 
     def update_category_combobox(self):
-        # Update category combobox based on selected data sources
+        """
+        Update the category combobox based on the selected data sources.
+        """
         previous_value = self.get_category_info()['current_text']
 
         file_infos = self.get_file_infos()
@@ -228,12 +294,32 @@ class DataSelectionGroupBox(GroupBoxData):
         self._category_combobox.disabled = False
 
     def on_category_changed(self, value, previous_value=None):
+        """
+        Handles the category changing.
+
+        Args:
+            value (str): The new category.
+            previous_value (str, optional): The previous category. Defaults to None.
+
+        Returns:
+            str: The new category.
+        """
         if value is None:
             return previous_value
         self.update_category_text(value)
         return value
 
     def on_file_selection_changed(self, value=None, previous_value=None):
+        """
+        Handles the file selection changing.
+
+        Args:
+            value (str, optional): The new file selection. Defaults to None.
+            previous_value (str, optional): The previous file selection. Defaults to None.
+
+        Returns:
+            str: The new file selection.
+        """
         data_sources = self.jsd_model.data_sources
         file_infos = []
 
@@ -258,4 +344,10 @@ class DataSelectionGroupBox(GroupBoxData):
         return value
 
     def display(self):
+        """
+        Returns the layout of the group box.
+
+        Returns:
+            html.Div: The layout of the group box.
+        """
         return self.layout

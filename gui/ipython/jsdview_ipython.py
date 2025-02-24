@@ -23,15 +23,29 @@ from IPython.display import display
 import plotly.express as px
 import plotly.graph_objects as go
 
-from gui.jsdview_base import JsdViewBase
 from core.jsdmodel import JSDTableModel
+from gui.jsdview_base import JsdViewBase
 from gui.ipython.dataselectiongroupbox import DataSelectionGroupBox
 
 
 class JsdViewIPython(JsdViewBase):
+    """Class: JsdViewIPython
+
+    This class represents a Jupyter Notebook view for JSD. It provides functionality for creating a Jupyter Notebook
+    app and handling file uploads. The class has methods for setting up the layout, updating the category combo box,
+    and initializing the widget.
+    """
     jsd_timeline_plot_update = Signal(JSDTableModel)
 
     def __init__(self, jsd_model):
+        """
+        Initialize the JsdViewIPython.
+
+        This method sets up the data selection group box, the JSD timeline plot, and the area chart.
+
+        Args:
+            jsd_model (JSDTableModel): The JSDTableModel object.
+        """
         super().__init__()
         self.update_view_on_controller_initialization = False
 
@@ -45,13 +59,15 @@ class JsdViewIPython(JsdViewBase):
         self._dataselectiongroupbox.excel_file_uploaded.connect(self.open_excel_file)
 
     def open_excel_file(self, data_source_dict):
+        """Open an Excel file and add it as a data source."""
         super().open_excel_file(data_source_dict)
         self.add_data_source.emit(data_source_dict)
 
     def update_jsd_timeline_plot(self, jsd_model):
+        """Update the JSD timeline plot."""
         if self.plot_method == 'interactive_plotly':
             return self.update_jsd_timeline_plot_interactive_plotly(jsd_model)
-        elif self.plot_method == 'interactive_matlib':
+        if self.plot_method == 'interactive_matlib':
             return self.update_jsd_timeline_plot_interactive(jsd_model)
         # Initialize plot_data to None for proper handling of the first iteration
         plot_data = None
@@ -112,6 +128,7 @@ class JsdViewIPython(JsdViewBase):
             plt.close()
 
     def update_jsd_timeline_plot_interactive(self, jsd_model):
+        """Update the JSD timeline plot using interactive plotting."""
         print("Plotting interactive timeline chart using Matplotlib with ipympl...")
 
         # Initialize plot_data to None for proper handling of the first iteration
@@ -182,6 +199,7 @@ class JsdViewIPython(JsdViewBase):
         print("Interactive plotting complete.")
 
     def update_jsd_timeline_plot_interactive_plotly(self, jsd_model):
+        """Update the JSD timeline plot using interactive plotting with Plotly."""
         # Initialize plot_data to None for proper handling of the first iteration
         plot_data = None
         plot_title_suffix = ""
@@ -251,6 +269,13 @@ class JsdViewIPython(JsdViewBase):
             display(vbox)
 
     def update_area_chart(self, sheet_dict):
+        """
+        Update the area chart. This method is called when the area chart is clicked.
+
+        Args:
+            sheet_dict (dict): A dictionary of index keys and sheets.
+
+        """
         if self.plot_method == 'interactive_plotly':
             return self.update_area_chart_interactive_plotly(sheet_dict)
 
@@ -299,7 +324,8 @@ class JsdViewIPython(JsdViewBase):
             # Final plot settings for each subplot
             ax.set_xlabel('Date')
             ax.set_ylabel(f'{category} Distribution Over Time')
-            ax.set_title(f"{self.dataselectiongroupbox.file_infos[index]['source_id']} {category} Distribution Over Time")
+            source_id = self.dataselectiongroupbox.file_infos[index]['source_id']
+            ax.set_title(f"{source_id} {category} Distribution Over Time")
             ax.grid(True)
             ax.legend()
 
@@ -310,6 +336,7 @@ class JsdViewIPython(JsdViewBase):
             plt.close()
 
     def update_area_chart_interactive_plotly(self, sheet_dict):
+        """Update the area chart using interactive plotting with Plotly."""
         category = self.dataselectiongroupbox.get_category_info()['current_text']
 
         # Find the global minimum and maximum date
@@ -357,7 +384,7 @@ class JsdViewIPython(JsdViewBase):
                         fill='tonexty',
                         name=col,
                         mode='lines',
-                        line=dict(width=0.5),
+                        line={'width': 0.5},
                         opacity=0.5,
                         hoverinfo='none'  # Prevent default cumulative percentage from being shown
                     )
@@ -371,7 +398,7 @@ class JsdViewIPython(JsdViewBase):
                         text=individual_percents[col],
                         name=col,
                         mode='lines',
-                        line=dict(width=0.5, color='rgba(0,0,0,0)'),  # Invisible line
+                        line={'width': 0.5, 'color': 'rgba(0,0,0,0)'},  # Invisible line
                         hovertemplate='%{text:.2f}%',
                         showlegend=False  # Hide these hover traces from the legend
                     )
@@ -384,7 +411,7 @@ class JsdViewIPython(JsdViewBase):
                 yaxis_title="Percentage (%)",
                 height=400,
                 showlegend=True,
-                xaxis=dict(range=[global_min_date, global_max_date])  # Set the x-axis range for consistency
+                xaxis={range: [global_min_date, global_max_date]}  # Set the x-axis range for consistency
             )
 
             # Convert the Plotly figure into an interactive widget

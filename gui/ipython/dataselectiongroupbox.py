@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains classes and functions for creating a data selection group box.
+"""
+
 import io
 
 from PySide6.QtCore import Signal, QObject
@@ -22,11 +26,40 @@ from gui.jsdview_base import GroupBoxData
 
 # Define the data selection group box
 class DataSelectionGroupBox(QObject, GroupBoxData):
+    """
+    Class: DataSelectionGroupBox
+    This class represents a group box widget for data selection. It provides functionality for creating labels and
+    combo boxes for data files and a category combo box. The class has methods for setting up the layout,
+    updating the category combo box, and initializing the widget.
+    Attributes:
+        _file_comboboxes (list): A list of file comboboxes.
+        _category_combobox (widgets.Dropdown): A category combo box.
+        _num_fileboxes_combobox (widgets.Dropdown): A number of fileboxes combo box.
+        _file_upload (widgets.FileUpload): A file upload component.
+        _layout (widgets.VBox): The layout of the group box.
+        _jsd_model (JSDTableModel): The JSDTableModel object.
+        _num_fileboxes (int): The number of file boxes.
+        _raw_data_available (bool): A flag indicating whether raw data is available.
+    Methods:
+        __init__(self, jsd_model): Initializes the DataSelectionGroupBox object.
+        on_num_fileboxes_changed(self, change): Handles the number of file boxes changing.
+        update_filebox_layout(self, num_fileboxes): Updates the filebox layout based on the number of file boxes.
+        update_file_comboboxes(self): Updates the file comboboxes based on the data sources.
+        on_category_changed(self, change): Handles the category changing.
+        on_file_selection_changed(self, change=None): Handles the file selection changing.
+        display(self): Returns the layout of the group box.
+    """
     category_changed = Signal()
     file_selection_changed = Signal(str)
     excel_file_uploaded = Signal(object)  # Signal to emit the uploaded file content
 
     def __init__(self, jsd_model):
+        """
+        Initialize the DataSelectionGroupBox.
+
+        Args:
+            jsd_model (JSDTableModel): The JSDTableModel object.
+        """
         super().__init__()
         self.jsd_model = jsd_model
         self._file_comboboxes = []
@@ -63,15 +96,22 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
             combobox.observe(self.on_file_selection_changed, names='value')
 
     def _setup_layout(self):
+        """
+        Sets up the layout of the group box.
+        """
         spacer = widgets.Box(layout=widgets.Layout(flex='1 1 auto', width='auto'))
-        self.layout.children = [widgets.HBox([self._category_combobox, spacer, self._num_fileboxes_combobox, self._file_upload])]
+        self.layout.children = [widgets.HBox([self._category_combobox, spacer, self._num_fileboxes_combobox,
+                                              self._file_upload])]
 
     def _initialize_data_sources(self):
-        # Initialize file comboboxes based on data sources from JSDController
+        """
+        Initialize the file comboboxes based on the data sources.
+        """
         data_sources = self.jsd_model.data_sources
-        for index, data_source_key in enumerate(list(data_sources.keys())[len(self.file_comboboxes):self.num_fileboxes], start=len(self.file_comboboxes)):
+        for index, data_source_key in enumerate(list(data_sources.keys())[len(self.file_comboboxes):self.num_fileboxes],
+                                                start=len(self.file_comboboxes)):
             combobox = widgets.Dropdown(
-                options=list([ds_key for ds_key in data_sources.keys()]),
+                options=list(data_sources.keys()),
                 value=data_source_key,
                 description=f'Data Source {index + 1}:',
                 disabled=False,
@@ -91,10 +131,18 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
             self.on_file_selection_changed()
 
     def on_num_fileboxes_changed(self, change):
+        """
+        Handles the number of file boxes changing.
+
+        Args:
+            change (dict): The change dictionary.
+        """
         self.change_number_of_fileboxes(change['new'])
 
     def update_file_comboboxes(self):
-        # Update file comboboxes based on data sources
+        """
+        Update the file comboboxes based on the data sources.
+        """
         data_sources = self.jsd_model.data_sources
         for combobox in self._file_comboboxes:
             combobox.options = list(data_sources.keys())
@@ -103,9 +151,21 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
 
     @property
     def file_comboboxes(self):
+        """
+        Get the file comboboxes.
+
+        Returns:
+            list: A list of file comboboxes.
+        """
         return self._file_comboboxes
 
     def change_number_of_fileboxes(self, num_fileboxes):
+        """
+        Change the number of file boxes.
+
+        Args:
+            num_fileboxes (int): The new number of file boxes.
+        """
         self.num_fileboxes = num_fileboxes
 
         # Add file comboboxes if num_fileboxes is greater than the current number
@@ -122,6 +182,12 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
             self.on_file_selection_changed()
 
     def _on_file_upload(self, change):
+        """
+        Handles the file upload.
+
+        Args:
+            change (dict): The change dictionary.
+        """
         for filename, file_info in change['new'].items():
             content = file_info['content']
             file_content = io.BytesIO(content)
@@ -134,7 +200,9 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
             self.excel_file_uploaded.emit(data_source_dict)
 
     def update_category_combobox(self):
-        # Update category combobox based on selected data sources
+        """
+        Update the category combobox based on the selected data sources.
+        """
         previous_value = self.get_category_info()['current_text']
 
         file_infos = self.get_file_infos()
@@ -154,10 +222,22 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
         self._category_combobox.disabled = False
 
     def on_category_changed(self, change):
+        """
+        Handles the category changing.
+
+        Args:
+            change (dict): The change dictionary.
+        """
         self.update_category_text(change['new'])
         self.category_changed.emit()
 
     def on_file_selection_changed(self, change=None):
+        """
+        Handles the file selection changing.
+
+        Args:
+            change (dict, optional): The change dictionary. Defaults to None.
+        """
         data_sources = self.jsd_model.data_sources
         file_infos = []
         for index, file_combobox in enumerate(self.file_comboboxes):
@@ -173,4 +253,10 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
         self.file_selection_changed.emit(change)
 
     def display(self):
+        """
+        Returns the layout of the group box.
+
+        Returns:
+            widgets.VBox: The layout of the group box.
+        """
         return self.layout

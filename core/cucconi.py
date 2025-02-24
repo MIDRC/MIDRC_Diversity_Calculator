@@ -1,6 +1,10 @@
 # Pulled from https://github.com/GrzegorzMika/NonParStat/blob/master/nonparstat/Cucconi.py
 # Originally written by Grzegorz Mika (2020)
 
+"""
+This module contains functions for calculating the Cucconi test and distribution.
+"""
+
 from collections import namedtuple
 
 import numpy as np
@@ -13,6 +17,16 @@ CucconiMultisampleResult = namedtuple('CucconiMultisampleResult', ('statistic', 
 
 
 def _cucconi_test_statistic(a: npt.NDArray, b: npt.NDArray, ties: str = 'average') -> float:
+    """
+    Calculates the Cucconi test statistic for two arrays.
+    Args:
+        a:
+        b:
+        ties:
+
+    Returns:
+
+    """
     n1 = len(a)
     n2 = len(b)
     n = n1 + n2
@@ -21,17 +35,30 @@ def _cucconi_test_statistic(a: npt.NDArray, b: npt.NDArray, ties: str = 'average
     a_ranks = ranked[:n1]
 
     rho = 2 * (n ** 2 - 4) / ((2 * n + 1) * (8 * n + 11)) - 1
-    U = (6 * np.sum(np.square(a_ranks)) - n1 * (n + 1) * (2 * n + 1)) / np.sqrt(
+    _u = (6 * np.sum(np.square(a_ranks)) - n1 * (n + 1) * (2 * n + 1)) / np.sqrt(
         n1 * n2 * (n + 1) * (2 * n + 1) * (8 * n + 11) / 5)
-    V = (6 * np.sum(np.square(n + 1 - a_ranks)) - n1 * (n + 1) * (2 * n + 1)) / np.sqrt(
+    _v = (6 * np.sum(np.square(n + 1 - a_ranks)) - n1 * (n + 1) * (2 * n + 1)) / np.sqrt(
         n1 * n2 * (n + 1) * (2 * n + 1) * (8 * n + 11) / 5)
-    C = (U ** 2 + V ** 2 - 2 * rho * U * V) / 2 * (1 - rho ** 2)
+    _c = (_u ** 2 + _v ** 2 - 2 * rho * _u * _v) / 2 * (1 - rho ** 2)
 
-    return C
+    return _c
 
 
 def _cucconi_dist_permutation(a: npt.NDArray, b: npt.NDArray, replications: int = 1000,
                               ties: str = 'average', n_jobs: int = 1) -> npt.NDArray:
+    """
+    Calculates the Cucconi distribution using permutation.
+
+    Args:
+        a:
+        b:
+        replications:
+        ties:
+        n_jobs:
+
+    Returns:
+
+    """
     n1 = len(a)
     h0_data = np.concatenate([a, b])
 
@@ -47,6 +74,19 @@ def _cucconi_dist_permutation(a: npt.NDArray, b: npt.NDArray, replications: int 
 
 def _cucconi_dist_bootstrap(a: npt.NDArray, b: npt.NDArray, replications: int = 1000,
                             ties: str = 'average', n_jobs: int = 1) -> npt.NDArray:
+    """
+    Calculates the Cucconi distribution using bootstrapping.
+
+    Args:
+        a:
+        b:
+        replications:
+        ties:
+        n_jobs:
+
+    Returns:
+
+    """
     n1 = len(a)
     n2 = len(b)
     h0_data = np.concatenate([a, b])
@@ -117,6 +157,16 @@ def cucconi_test(a: npt.NDArray, b: npt.NDArray, method: str = 'bootstrap', repl
 
 
 def _cucconi_multisample_test_statistic(samples: list[npt.NDArray], ties: str = 'average') -> float:
+    """
+    Calculates the Cucconi multisample test statistic.
+
+    Args:
+        samples:
+        ties:
+
+    Returns:
+
+    """
     lengths = np.cumsum([0] + [s.shape[0] for s in samples])
     ranked_data = rankdata(np.concatenate(samples), method=ties)
     samples_ranks = [ranked_data[lengths[k]:lengths[k + 1]] for k, _ in enumerate(lengths[:-1])]
@@ -128,19 +178,31 @@ def _cucconi_multisample_test_statistic(samples: list[npt.NDArray], ties: str = 
     std_deviations = np.sqrt(n_i * (n - n_i) * (n + 1) * (2 * n + 1) * (8 * n + 11) / 180)
     correlation = -(30 * n + 14 * n ** 2 + 19) / ((8 * n + 11) * (2 * n + 1))
 
-    U = np.array(
+    _u = np.array(
         [(np.sum(sample ** 2) - expected_values[i]) / std_deviations[i] for i, sample in
          enumerate(samples_ranks)])
-    V = np.array(
+    _v = np.array(
         [(np.sum((n + 1 - sample) ** 2) - expected_values[i]) / std_deviations[i] for i, sample in
          enumerate(samples_ranks)])
-    MC = np.mean(U ** 2 + V ** 2 - 2 * U * V * correlation) / (2 - 2 * correlation ** 2)
+    _mc = np.mean(_u ** 2 + _v ** 2 - 2 * _u * _v * correlation) / (2 - 2 * correlation ** 2)
 
-    return MC
+    return _mc
 
 
 def _cucconi_multisample_dist_bootstrap(samples: list[npt.NDArray], replications: int = 1000,
                                         ties: str = 'average', n_jobs: int = 1) -> npt.NDArray:
+    """
+    Calculates the Cucconi multisample distribution using bootstrapping.
+
+    Args:
+        samples:
+        replications:
+        ties:
+        n_jobs:
+
+    Returns:
+
+    """
     lengths = [len(s) for s in samples]
     h0_data = np.concatenate(samples)
 
@@ -154,6 +216,18 @@ def _cucconi_multisample_dist_bootstrap(samples: list[npt.NDArray], replications
 
 def _cucconi_multisample_dist_permutation(samples: list[npt.NDArray], replications: int = 1000,
                                           ties: str = 'average', n_jobs: int = 1) -> npt.NDArray:
+    """
+    Calculates the Cucconi multisample distribution using permutation.
+
+    Args:
+        samples:
+        replications:
+        ties:
+        n_jobs:
+
+    Returns:
+
+    """
     lengths = lengths = np.cumsum([0] + [s.shape[0] for s in samples])
     h0_data = np.concatenate(samples)
 
