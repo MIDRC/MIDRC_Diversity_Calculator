@@ -121,7 +121,7 @@ class DataSource:
             pd.DataFrame: The DataFrame with numeric column adjustments.
         """
         for str_col, col_dict in self._numeric_cols.items():
-            num_col = col_dict['raw column'] if 'raw column' in col_dict else num_col
+            num_col = col_dict['raw column'] if 'raw column' in col_dict else str_col
             bins = col_dict['bins'] if 'bins' in col_dict else None
             labels = col_dict['labels'] if 'labels' in col_dict else None
 
