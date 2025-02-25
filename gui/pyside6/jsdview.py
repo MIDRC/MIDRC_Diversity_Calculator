@@ -18,20 +18,20 @@ from functools import partial
 import io
 import math
 from typing import Iterable
-import yaml
 
 from PySide6.QtCharts import (QAreaSeries, QCategoryAxis, QChart, QDateTimeAxis, QLineSeries, QPieSeries, QPolarChart,
                               QValueAxis)
-from PySide6.QtCore import (QDate, QDateTime, QEvent, QFileInfo, QObject, QPointF, QRect, Qt, QTime, Signal)
+from PySide6.QtCore import (QDate, QDateTime, QEvent, QObject, QPointF, QRect, Qt, QTime, Signal)
 from PySide6.QtGui import QAction, QGuiApplication, QKeySequence, QPainter
-from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QDockWidget, QFileDialog, QFormLayout, QHBoxLayout,
-                               QHeaderView, QLabel, QLayout, QLineEdit, QMainWindow, QMenu, QMenuBar, QMessageBox,
-                               QScrollArea, QSpinBox, QSplitter, QTableView, QTextEdit, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QDockWidget, QFormLayout, QHBoxLayout,
+                               QHeaderView, QLabel, QLayout, QMainWindow, QMenu, QMenuBar,
+                               QScrollArea, QSpinBox, QSplitter, QTableView, QVBoxLayout, QWidget)
 
 from core.datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate
 from gui.jsdview_base import JsdViewBase
 from gui.pyside6.dataselectiongroupbox import JsdDataSelectionGroupBox
 from gui.pyside6.grabbablewidget import GrabbableChartView
+from gui.pyside6.file_open_dialogs import open_excel_file_dialog, open_yaml_input_dialog, open_csv_tsv_file_dialog
 
 
 class JsdWindow(QMainWindow, JsdViewBase):
@@ -105,6 +105,11 @@ class JsdWindow(QMainWindow, JsdViewBase):
 
         self.setWindowTitle(JsdWindow.WINDOW_TITLE)
 
+    # Replace the methods with the imported functions
+    open_excel_file_dialog = open_excel_file_dialog
+    open_yaml_input_dialog = open_yaml_input_dialog
+    open_csv_tsv_file_dialog = open_csv_tsv_file_dialog
+
     def create_main_layout(self) -> QVBoxLayout:
         """
         Create the main layout for the application.
@@ -145,6 +150,11 @@ class JsdWindow(QMainWindow, JsdViewBase):
         open_excel_file_action: QAction = QAction("Open Excel File...", self)
         open_excel_file_action.triggered.connect(self.open_excel_file_dialog)
         file_menu.addAction(open_excel_file_action)
+
+        # Create the 'Open CSV/TSV File' action
+        open_csv_file_action: QAction = QAction("Open CSV/TSV File...", self)
+        open_csv_file_action.triggered.connect(self.open_csv_tsv_file_dialog)
+        file_menu.addAction(open_csv_file_action)
 
         # Create the 'Open File From YAML' action
         open_yaml_file_action: QAction = QAction("Open File From YAML...", self)
@@ -636,90 +646,6 @@ class JsdWindow(QMainWindow, JsdViewBase):
             self.jsd_timeline_chart.setAnimationOptions(QChart.NoAnimation)
         return True
 
-    def open_excel_file_dialog(self):
-        """
-        Open an Excel file and add it as a data source.
-
-        This method opens a file dialog to allow the user to select an Excel file. Once a file is selected, a dialog is
-        displayed to allow the user to enter additional information about the data source. The information includes
-        the name, description, data type, filename, and remove column name text. The data source dictionary is then
-        created using the entered information and emitted using the add_data_source signal. The file description and
-        name are also added to the file_comboboxes in the dataselectiongroupbox.
-
-        Parameters:
-        - None
-
-        Returns:
-        - None
-
-        Raises:
-        - None
-        """
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open Excel File", "", "Excel Files (*.xls *.xlsx)")
-        file_options_dialog = FileOptionsDialog(self, file_name)
-        file_options_dialog.exec()
-        data_source_dict = {'name': file_options_dialog.name_line_edit.text(),
-                            'description': file_options_dialog.description_line_edit.text(),
-                            'data type': 'file',
-                            'filename': file_name,
-                            'remove column name text': file_options_dialog.remove_column_text_line_edit.text()}
-        self.add_data_source.emit(data_source_dict)
-        self._dataselectiongroupbox.add_file_to_comboboxes(data_source_dict['description'], data_source_dict['name'])
-
-    def open_yaml_input_dialog(self):
-        """
-        Open a dialog with a text area to paste YAML content and add it as a data source.
-
-        This method opens a dialog containing a text area for the user to paste YAML formatted content. Once the user
-        confirms, the YAML content is parsed to build a data source dictionary. The dictionary is then emitted using the
-        add_data_source signal and the file description and name are added to the file_comboboxes in the
-        dataselectiongroupbox.
-
-        Parameters:
-            None
-
-        Returns:
-            None
-
-        Raises:
-            None (An error message is displayed if the YAML content cannot be parsed.)
-        """
-        # Create the dialog
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Paste YAML Content")
-
-        # Set up the layout and widgets
-        layout = QVBoxLayout(dialog)
-        label = QLabel("Paste YAML content below:")
-        layout.addWidget(label)
-
-        text_edit = QTextEdit()
-        layout.addWidget(text_edit)
-
-        # Create OK/Cancel buttons using a QDialogButtonBox
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        layout.addWidget(button_box)
-
-        # Connect the buttons to the dialog's accept and reject slots
-        button_box.accepted.connect(dialog.accept)
-        button_box.rejected.connect(dialog.reject)
-
-        # Execute the dialog and check if the user pressed OK
-        if dialog.exec() == QDialog.Accepted:
-            yaml_content = text_edit.toPlainText()
-            try:
-                data_source_dict = yaml.safe_load(yaml_content)
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to parse YAML content: {e}")
-                return
-
-            # Emit the signal with the new data source and update the UI components
-            self.add_data_source.emit(data_source_dict)
-            self._dataselectiongroupbox.add_file_to_comboboxes(
-                data_source_dict.get('description', ''),
-                data_source_dict.get('name', '')
-            )
-
     def adjust_number_of_files_to_compare(self):
         """
         Adjusts the number of files to compare in the JsdWindow.
@@ -845,57 +771,6 @@ def clear_layout(layout):
         layout.removeItem(child)
 
     return True
-
-
-class FileOptionsDialog (QDialog):
-    """
-    A dialog window for displaying and editing file options.
-
-    This class represents a dialog window that allows the user to view and modify various options related to a file.
-    It inherits from the QDialog class provided by the PySide6.QtWidgets module.
-
-    Methods:
-        __init__(self, parent, file_name: str): Initializes the FileOptionsDialog object.
-    """
-    def __init__(self, parent, file_name: str):
-        """
-        Initialize the JsdDataSelectionGroupBox.
-
-        This method sets up the data selection group box by creating labels and combo boxes for data files and a
-        category combo box.
-
-        Parameters:
-        parent: The parent widget of the dialog.
-        file_name: The name of the file for which the options are being displayed.
-
-        Returns:
-        None
-        """
-        super().__init__(parent)
-
-        self.setLayout(QVBoxLayout())
-
-        self.name_line_edit = QLineEdit()
-        self.description_line_edit = QLineEdit()
-        self.remove_column_text_line_edit = QLineEdit()
-
-        form_layout = QFormLayout()
-        form_layout.addRow("Name (Plot Titles)", self.name_line_edit)
-        form_layout.addRow("Description (Drop-Down Menu)", self.description_line_edit)
-        form_layout.addRow("Remove Column Text", self.remove_column_text_line_edit)
-
-        self.layout().addLayout(form_layout)
-
-        fi = QFileInfo(file_name)
-        self.setWindowTitle(fi.fileName())
-        self.name_line_edit.setText(fi.baseName())
-        self.description_line_edit.setText(fi.baseName())
-
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok)
-        button_box.accepted.connect(self.accept)
-        self.layout().addWidget(button_box)
-
-        self.resize(600, -1)
 
 
 class CopyableTableView(QTableView):
