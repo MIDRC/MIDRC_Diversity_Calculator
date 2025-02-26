@@ -17,7 +17,7 @@ import math
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QDialogButtonBox, QScrollArea, QWidget, QGridLayout, QCheckBox, QButtonGroup, QHBoxLayout,
-    QLabel, QSpinBox, QDoubleSpinBox, QComboBox
+     QDoubleSpinBox, QLineEdit
 )
 
 class NumericColumnSelectorDialog(QDialog):
@@ -51,10 +51,17 @@ class NumericColumnSelectorDialog(QDialog):
         self.setWindowTitle("Select Numeric Columns and Binning Parameters")
         self.layout = QVBoxLayout()
 
-        # Add a checkbox and min/max/step input for each column
+        # Add a checkbox, a textedit for string column name, and min/max/step inputs for each column
         self.column_settings = {}
         for column in columns:
             checkbox = QCheckBox(column)
+
+            # New QLineEdit for the target string column name
+            label_edit = QLineEdit()
+            label_edit.setPlaceholderText("Target String Column")
+            label_edit.setMinimumWidth(150)
+            label_edit.setVisible(False)  # Hidden by default
+
             min_input = QDoubleSpinBox()
             min_input.setPrefix("Min: ")
             min_input.setMaximum(1e6)
@@ -74,21 +81,26 @@ class NumericColumnSelectorDialog(QDialog):
             step_input.setVisible(False)  # Hidden by default
 
             # Connect the checkbox to show/hide the min, max, and step inputs
-            checkbox.toggled.connect(lambda checked, min_in=min_input, max_in=max_input, step_in=step_input: self.toggle_inputs(checked, min_in, max_in, step_in))
-
-            self.column_settings[column] = {
-                'checkbox': checkbox,
-                'min_input': min_input,
-                'max_input': max_input,
-                'step_input': step_input
-            }
+            checkbox.toggled.connect(
+                lambda checked, label_ed=label_edit, min_in=min_input, max_in=max_input, step_in=step_input:
+                self.toggle_inputs(checked, label_ed, min_in, max_in, step_in)
+            )
 
             row_layout = QHBoxLayout()
             row_layout.addWidget(checkbox)
+            row_layout.addWidget(label_edit)
             row_layout.addWidget(min_input)
             row_layout.addWidget(max_input)
             row_layout.addWidget(step_input)
             self.layout.addLayout(row_layout)
+
+            self.column_settings[column] = {
+                'checkbox': checkbox,
+                'label_edit': label_edit,
+                'min_input': min_input,
+                'max_input': max_input,
+                'step_input': step_input
+            }
 
         # Add OK and Cancel buttons
         self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -98,23 +110,32 @@ class NumericColumnSelectorDialog(QDialog):
 
         self.setLayout(self.layout)
 
-    def toggle_inputs(self, checked, min_input, max_input, step_input):
+    def toggle_inputs(self, checked, label_ed, min_input, max_input, step_input):
         """Toggle the visibility of the min, max, and step inputs based on the checkbox state."""
+        label_ed.setVisible(checked)
         min_input.setVisible(checked)
         max_input.setVisible(checked)
         step_input.setVisible(checked)
 
     def get_selected_columns_with_bins(self):
-        """Return a dictionary of selected columns with their bin settings."""
+        """
+        Return a dictionary of selected columns with their bin settings.
+        Returns:
+            dict: keys are the target string column names; values are tuples
+                  (raw column, bins, labels) where labels is None.
+        """
         selected_columns = {}
         for column, settings in self.column_settings.items():
             if settings['checkbox'].isChecked():
-                min_value = settings['min_input'].value()
-                max_value = settings['max_input'].value()
-                step_value = settings['step_input'].value()
-                if min_value < max_value and step_value > 0:
-                    bins = list(range(int(min_value), int(max_value) + 1, int(step_value)))
-                    selected_columns[column] = {'bins': bins}
+                # Use provided target name or default to the original column name
+                target_col = settings['label_edit'].text().strip() or column
+                min_val = settings['min_input'].value()
+                max_val = settings['max_input'].value()
+                step_val = settings['step_input'].value()
+                if min_val < max_val and step_val > 0:
+                    bins = list(range(int(min_val), int(max_val) + 1, int(step_val)))
+                    selected_columns[target_col] = (column, bins, None)
+        # print('selected_columns:\n', selected_columns)
         return selected_columns
 
 

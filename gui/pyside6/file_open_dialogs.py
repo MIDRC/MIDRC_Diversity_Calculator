@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QLabel, QTextEdit, QDialogButtonBox, QFileDialog,
+    QDialog, QVBoxLayout, QLabel, QTextEdit, QDialogButtonBox, QFileDialog, QSizePolicy,
     QMessageBox, QLineEdit, QFormLayout, QWidget, QComboBox, QHBoxLayout, QPushButton
 )
 from PySide6.QtCore import QFileInfo
@@ -93,6 +93,17 @@ class FileOptionsDialog(BaseFileOptionsDialog):
 
         self.resize(600, -1)
 
+
+def represent_list(dumper, data):
+    # Represent lists in flow style (inline with square brackets)
+    return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
+
+
+class FlowStyleListDumper(yaml.Dumper):
+    pass
+
+
+FlowStyleListDumper.add_representer(list, represent_list)
 
 # =============================================================================
 # CSV/TSV file options dialog with enhanced features
@@ -179,23 +190,30 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
         columns_layout = QHBoxLayout()
         self.columns_line_edit = QLineEdit()
         self.columns_line_edit.setReadOnly(True)
+        # Set the size policy to expanding horizontally
+        self.columns_line_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.select_columns_button = QDialogButtonBox()
         select_columns_btn = self.select_columns_button.addButton("Select Columns", QDialogButtonBox.ActionRole)
         select_columns_btn.clicked.connect(self.open_column_selector)
         columns_layout.addWidget(self.columns_line_edit)
         columns_layout.addWidget(self.select_columns_button)
+        # Set stretch so the line edit uses all available space
+        columns_layout.setStretchFactor(self.columns_line_edit, 1)
         rest_layout.addRow("Columns to Use:", columns_layout)
 
         # Numeric column selector row
         numeric_layout = QHBoxLayout()
-        self.numeric_cols_line_edit = QLineEdit()
-        self.numeric_cols_line_edit.setReadOnly(True)
+        self.numeric_cols_text_edit = QTextEdit()
+        # Set the size policy to expanding horizontally
+        self.numeric_cols_text_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.select_numeric_cols_button = QDialogButtonBox()
         select_numeric_btn = self.select_numeric_cols_button.addButton("Select Numeric Columns",
                                                                        QDialogButtonBox.ActionRole)
         select_numeric_btn.clicked.connect(self.open_numeric_column_selector)
-        numeric_layout.addWidget(self.numeric_cols_line_edit)
+        numeric_layout.addWidget(self.numeric_cols_text_edit)
         numeric_layout.addWidget(self.select_numeric_cols_button)
+        # Set stretch so the text edit uses all available space
+        numeric_layout.setStretchFactor(self.numeric_cols_text_edit, 1)
         rest_layout.addRow("Numeric Column Options:", numeric_layout)
 
         self.rest_widget.setLayout(rest_layout)
@@ -270,13 +288,23 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
         """
         Open a dialog for selecting numeric columns and binning parameters.
         """
-        if self.available_columns:
-            dialog = NumericColumnSelectorDialog(self.available_columns, self)
+        selected_cols = [col.strip() for col in self.columns_line_edit.text().split(',') if col.strip()]
+        if selected_cols:
+            dialog = NumericColumnSelectorDialog(selected_cols, self)
             if dialog.exec():
                 selected_numeric = dialog.get_selected_columns_with_bins()
-                self.numeric_cols_line_edit.setText(str(selected_numeric))
+                numeric_cols_dict = {}
+                for col_name, (raw_col, bins, labels) in selected_numeric.items():
+                    numeric_cols_dict[col_name] = {
+                        'raw column': raw_col,
+                        'bins': bins,
+                        'labels': labels if labels else None
+                    }
+                # Example usage with numeric_cols_dict
+                yaml_str = yaml.dump(numeric_cols_dict, Dumper=FlowStyleListDumper, default_flow_style=None)
+                self.numeric_cols_text_edit.setText(yaml_str)
         else:
-            QMessageBox.warning(self, "No Columns", "No available columns found after processing.")
+            QMessageBox.warning(self, "No Columns", "Select at least one column to process.")
 
     def get_data(self) -> Dict[str, Any]:
         """
@@ -285,11 +313,18 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
         Returns:
             Dict[str, Any]: A dictionary containing file metadata and user selections.
         """
+        # If the raw column appears in the columns list, replace it with the key (col_name)
+        selected_cols = [col.strip() for col in self.columns_line_edit.text().split(',') if col.strip()]
+        numeric_cols = yaml.safe_load(self.numeric_cols_text_edit.toPlainText())
+        for str_col, val in numeric_cols.items():
+            raw_col = val['raw column']
+            selected_cols = [str_col if col == raw_col else col for col in selected_cols]
+
         return {
             'name': self.name_line_edit.text(),
             'description': self.description_line_edit.text(),
-            'columns': [col.strip() for col in self.columns_line_edit.text().split(',') if col.strip()],
-            'numeric_cols': self.numeric_cols_line_edit.text(),
+            'columns': selected_cols,
+            'numeric_cols': numeric_cols,
             'plugin': self.plugin_combo.currentText().strip()
         }
 

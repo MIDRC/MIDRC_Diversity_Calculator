@@ -408,4 +408,4 @@ class DataSheet:
         # Warn if any eligible column was not used.
         for col in cols:
             if col not in cols_used:
-                warnings.warn(f"Column '{col}' not used!", stacklevel=2)
+                warnings.warn(f"{self.name}: Column '{col}' not used!", stacklevel=2)
