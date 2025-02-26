@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains functions for calculating Factor Analysis of Mixed Data (FAMD) and related distances.
+"""
+
 import warnings
 import prince
 import numpy as np

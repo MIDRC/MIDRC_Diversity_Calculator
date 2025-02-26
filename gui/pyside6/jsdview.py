@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains the JsdWindow class, which represents the main window of the MIDRC-REACT application.
+"""
+
 from __future__ import annotations
 import math
 from typing import Any, Dict, Iterable, List, Optional
@@ -24,7 +28,7 @@ from PySide6.QtCharts import (
 from PySide6.QtCore import (
     QDateTime, QPointF, QRect, Qt, QTime, Signal
 )
-from PySide6.QtGui import QAction, QGuiApplication, QKeySequence, QPainter
+from PySide6.QtGui import QAction, QPainter
 from PySide6.QtWidgets import (
     QDialog, QDialogButtonBox, QDockWidget, QFormLayout, QHBoxLayout, QHeaderView,
     QLabel, QLayout, QMainWindow, QMenu, QMenuBar, QScrollArea, QSpinBox, QSplitter,

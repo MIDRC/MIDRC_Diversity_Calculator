@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains the JSDController class, which manages the JSD view and model.
+"""
+
 from bisect import bisect_left
 
 import itertools

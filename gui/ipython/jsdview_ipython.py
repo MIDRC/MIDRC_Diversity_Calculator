@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains the JsdViewIPython class, which serves as a Jupyter Notebook view for JSD.
+"""
+
 from PySide6.QtCore import Signal, QDate
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -107,7 +111,7 @@ class JsdViewIPython(JsdViewBase):
         # Check if we have any data to plot
         if plot_data is None or plot_data.empty:
             print("No data available for plotting.")
-            return
+            return None
 
         # Plotting using Seaborn
         plt.figure(figsize=(10, 6))
@@ -126,6 +130,8 @@ class JsdViewIPython(JsdViewBase):
             self.output_timeline.clear_output(wait=True)
             plt.show()
             plt.close()
+
+        return None
 
     def update_jsd_timeline_plot_interactive(self, jsd_model):
         """Update the JSD timeline plot using interactive plotting."""
@@ -335,6 +341,8 @@ class JsdViewIPython(JsdViewBase):
             plt.show()
             plt.close()
 
+        return None
+
     def update_area_chart_interactive_plotly(self, sheet_dict):
         """Update the area chart using interactive plotting with Plotly."""
         category = self.dataselectiongroupbox.get_category_info()['current_text']
@@ -366,9 +374,6 @@ class JsdViewIPython(JsdViewBase):
 
             # Create a new Plotly figure for each dataset
             fig = go.Figure()
-
-            # Plotting area chart using cumulative percentages
-            lower_values = np.zeros(len(df))
 
             for col in cols_to_use:
                 if df[col].iloc[-1] == 0:  # Skip columns with no data

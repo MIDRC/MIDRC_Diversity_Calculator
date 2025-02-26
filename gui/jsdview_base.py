@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains the JsdViewBase class, which serves as a base class for JSD views.
+"""
+
 from dataclasses import dataclass
 
 from PySide6.QtCore import Signal, QObject

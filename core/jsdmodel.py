@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains the JSDTableModel class, which is a subclass of QAbstractTableModel.
+"""
+
 from typing import Any, Optional
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, Signal

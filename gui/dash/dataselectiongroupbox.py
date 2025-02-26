@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains the DataSelectionGroupBox class, which represents a group box widget for data selection.
+"""
+
 import base64
 import io
 
@@ -135,7 +139,8 @@ class DataSelectionGroupBox(GroupBoxData):
     def _initialize_data_sources(self):
         # Initialize file comboboxes based on data sources from JSDController
         data_sources = self.jsd_model.data_sources
-        for index, data_source_key in enumerate(list(data_sources.keys())[len(self.file_comboboxes):self.num_fileboxes], start=len(self.file_comboboxes)):
+        for index, data_source_key in enumerate(list(data_sources.keys())[len(self.file_comboboxes):self.num_fileboxes],
+                                                start=len(self.file_comboboxes)):
             combobox = dcc.Dropdown(
                 options=[{'label': ds_key, 'value': ds_key} for ds_key in data_sources.keys()],
                 value=data_source_key,
@@ -270,6 +275,9 @@ class DataSelectionGroupBox(GroupBoxData):
             return html.Div([
                 f'File uploaded: {filename}'
             ])
+        return html.Div([
+            'No file uploaded yet.'
+        ])
 
     def update_category_combobox(self):
         """

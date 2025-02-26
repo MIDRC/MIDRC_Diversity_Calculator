@@ -13,6 +13,12 @@
 #      limitations under the License.
 #
 
+"""
+This module contains a function to parse Excel files and return a pandas DataFrame.
+
+CURRENTLY UNUSED IN MIDRC-REACT PROJECT
+"""
+
 import pandas as pd
 
 

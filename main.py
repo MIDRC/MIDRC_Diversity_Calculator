@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains the main function to launch the MIDRC-REACT application.
+"""
+
 import sys
 
 from PySide6.QtCore import Qt
