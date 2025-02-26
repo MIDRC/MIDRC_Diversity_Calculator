@@ -92,7 +92,7 @@ Keyboard commands may be used to copy and paste the calculated JSD values (and d
 How to clone the project
 
 ```bash
-git clone https://github.com/MIDRC/MIDRC_Diversity_Calculator.git
+git clone https://github.com/MIDRC/MIDRC-REACT.git
 ```
  
 <h3>Installing Requirements</h3>
@@ -102,7 +102,7 @@ You may install project dependencies using pip.
 Using pip:
 
 ```bash
-cd MIDRC_Diversity_Calculator
+cd MIDRC-REACT
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
@@ -112,7 +112,7 @@ pip install -r requirements.txt
 How to start the project
 
 ```bash
-cd MIDRC_Diversity_Calculator
+cd MIDRC-REACT
 cp jsdconfig-example.yaml jsdconfig.yaml
 python main.py
 ```
@@ -143,7 +143,7 @@ Rui Sá,
 Berkman Sahiner,
 Zi Zhang,
 
-#### The MIDRC Bias and Diversity Working Group:
+#### The MIDRC AI Reliability Working Group:
 * Co-leads
   * Karen Drukker
   * Judy Wawira Gichoya
