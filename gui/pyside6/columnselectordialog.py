@@ -13,8 +13,11 @@
 #      limitations under the License.
 #
 
+import math
+
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QDialogButtonBox, QHBoxLayout, QCheckBox, QButtonGroup, QDoubleSpinBox
+    QDialog, QVBoxLayout, QDialogButtonBox, QScrollArea, QWidget, QGridLayout, QCheckBox, QButtonGroup, QHBoxLayout,
+    QLabel, QSpinBox, QDoubleSpinBox, QComboBox
 )
 
 class NumericColumnSelectorDialog(QDialog):
@@ -119,50 +122,61 @@ class ColumnSelectorDialog(QDialog):
     """
     Dialog window for displaying and editing column selections.
 
-    This class represents a dialog window that allows the user to select columns and set binning parameters.
-    It inherits from the QDialog class provided by the PySide6.QtWidgets module.
-
-    Attributes:
-        columns (list): A list of column names.
-        parent (QWidget): The parent widget of the dialog.
-        layout (QVBoxLayout): The layout of the dialog.
-        checkboxes (dict): A dictionary containing the checkbox widgets.
-        button_box (QDialogButtonBox): The button box containing the OK and Cancel buttons.
-
-    Methods:
-        __init__(self, columns, parent=None, exclusive=False): Initialize the ColumnSelectorDialog object.
-        get_selected_columns(self): Return a list of selected columns.
+    The checkboxes are displayed in a grid layout inside a scroll area to support
+    a large number of columns. If a column name is longer than max_length characters,
+    a shortened version is displayed with a tooltip showing the full column name.
     """
-    def __init__(self, columns, parent=None, exclusive=False):
+    def __init__(self, columns, parent=None, exclusive=False, max_length=25, rows_per_column=10):
         """
         Initialize the ColumnSelectorDialog object.
 
         Args:
             columns (list): A list of column names.
-            parent (QWidget, optional): The parent widget of the dialog. Defaults to None.
-            exclusive (bool, optional): Whether to use exclusive button group. Defaults to False.
+            parent (QWidget, optional): The parent widget. Defaults to None.
+            exclusive (bool, optional): Whether to use an exclusive button group. Defaults to False.
+            max_length (int, optional): Maximum characters to display before shortening the label.
+            rows_per_column (int, optional): Number of checkboxes per column.
         """
         super().__init__(parent)
         self.setWindowTitle("Select Features")
-        self.layout = QVBoxLayout()
+        layout = QVBoxLayout(self)
 
+        # Create a scroll area for the checkboxes
+        scroll_area = QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        scroll_content = QWidget()
+        grid_layout = QGridLayout(scroll_content)
+        scroll_area.setWidget(scroll_content)
+        layout.addWidget(scroll_area)
+
+        # Button group to optionally handle exclusive selection
         button_group = QButtonGroup(self)
         button_group.setExclusive(exclusive)
-        # Add a checkbox for each column
         self.checkboxes = {}
-        for column in columns:
-            checkbox = QCheckBox(column)
+
+        total_columns = len(columns)
+        # Calculate the dynamic number of columns
+        num_cols = math.ceil(total_columns / rows_per_column)
+
+        # Add checkboxes in a grid layout using rows per column
+        for idx, column in enumerate(columns):
+            display_text = column
+            if len(column) > max_length:
+                display_text = column[:max_length] + "..."
+            checkbox = QCheckBox(display_text)
+            if len(column) > max_length:
+                checkbox.setToolTip(column)
             self.checkboxes[column] = checkbox
-            self.layout.addWidget(checkbox)
+            row = idx % rows_per_column
+            col = idx // rows_per_column
+            grid_layout.addWidget(checkbox, row, col)
             button_group.addButton(checkbox)
 
         # Add OK and Cancel buttons
         self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
-        self.layout.addWidget(self.button_box)
-
-        self.setLayout(self.layout)
+        layout.addWidget(self.button_box)
 
     def get_selected_columns(self):
         """Return a list of selected columns."""

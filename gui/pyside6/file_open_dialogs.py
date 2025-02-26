@@ -97,36 +97,16 @@ class FileOptionsDialog(BaseFileOptionsDialog):
 # =============================================================================
 # CSV/TSV file options dialog with enhanced features
 # =============================================================================
-def get_csv_tsv_columns(file_name: str) -> List[str]:
-    """
-    Extract and return the header row (column names) from a CSV or TSV file.
-    """
-    delimiter = ',' if file_name.lower().endswith('.csv') else '\t'
-    try:
-        with open(file_name, newline='', encoding='utf-8') as f:
-            reader = csv.reader(f, delimiter=delimiter)
-            header = next(reader)
-            print("DEBUG: Header columns found:", header)
-            return header
-    except Exception as e:
-        print("DEBUG: Failed to read header from file:", e)
-        return []
-
 
 class CSVTSVOptionsDialog(BaseFileOptionsDialog):
     """
     Dialog for editing CSV/TSV file options with plugin processing.
 
-    The dialog is divided into two sections:
-      1. Plugin Processing Section (Top):
-         - Displays the file path and a plugin dropdown.
-         - A "Process Plugin" button loads (and processes) the file.
-         - While processing is pending, the main options section is disabled.
-      2. Main Options Section (Initially Disabled):
-         - Contains fields for Name, Description, and buttons for column and numeric column selectors.
-         - Becomes enabled after plugin processing completes.
+    The file path is displayed as a relative path if there are 2 or less ../ segments,
+    otherwise the full path is shown.
     """
-    def __init__(self, parent: Optional[QWidget], file_name: str, available_columns: Optional[List[str]] = None) -> None:
+    def __init__(self, parent: Optional[QWidget], file_name: str,
+                 available_columns: Optional[List[str]] = None) -> None:
         """
         Initialize the CSVTSVOptionsDialog.
         """
@@ -142,33 +122,50 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
         top_widget = QWidget()
         top_layout = QVBoxLayout()
         top_widget.setLayout(top_layout)
-        top_widget.setMinimumHeight(100)
+        # Removed the minimum height setting to remove extra space
+        # top_widget.setMinimumHeight(100)
 
-        # Row 1: File path display
+        # Row 1: File path display using a conditional relative or full path
         file_layout = QHBoxLayout()
         file_label = QLabel("File:")
-        self.file_path_line_edit = QLineEdit(file_name)
+        relative_path = os.path.relpath(file_name)
+        if relative_path.count('..') > 2:
+            display_path = file_name
+        else:
+            display_path = relative_path
+        self.file_path_line_edit = QLineEdit(display_path)
         self.file_path_line_edit.setReadOnly(True)
         file_layout.addWidget(file_label)
         file_layout.addWidget(self.file_path_line_edit)
         top_layout.addLayout(file_layout)
 
-        # Row 2: Plugin dropdown and Process Plugin button
+        form_layout = QFormLayout()
+        self.name_line_edit = QLineEdit()
+        self.description_line_edit = QLineEdit()
+        form_layout.addRow("Name (Plot Titles):", self.name_line_edit)
+        form_layout.addRow("Description (Drop-Down Menu):", self.description_line_edit)
+        top_layout.addLayout(form_layout)
+
+        # Step 2: Plugin dropdown and Process Plugin button
         plugin_layout = QHBoxLayout()
-        plugin_label = QLabel("Plugin (optional):")
+        plugin_label = QLabel("Plugin:")
+        # Use (None) instead of a blank selection
         self.plugin_combo = QComboBox()
-        self.plugin_combo.addItem("")  # empty option
+        self.plugin_combo.addItem("(None)")
         plugin_folder = "plugins"
         if os.path.isdir(plugin_folder):
             for file in os.listdir(plugin_folder):
                 if file.endswith(".py"):
                     plugin_name = file[:-3]
                     self.plugin_combo.addItem(plugin_name)
-        process_button = QPushButton("Process Plugin")
-        process_button.clicked.connect(self.process_plugin)
+        self.process_button = QPushButton("Process Plugin")
+        self.process_button.clicked.connect(self.process_plugin)
         plugin_layout.addWidget(plugin_label)
         plugin_layout.addWidget(self.plugin_combo)
-        plugin_layout.addWidget(process_button)
+        plugin_layout.addWidget(self.process_button)
+        # Add status label for notifications below the button
+        self.plugin_status_label = QLabel("")
+        plugin_layout.addWidget(self.plugin_status_label)
         top_layout.addLayout(plugin_layout)
 
         main_layout.addWidget(top_widget)
@@ -177,11 +174,6 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
         self.rest_widget = QWidget()
         self.rest_widget.setMinimumHeight(200)
         rest_layout = QFormLayout()
-
-        self.name_line_edit = QLineEdit()
-        self.description_line_edit = QLineEdit()
-        rest_layout.addRow("Name (Plot Titles):", self.name_line_edit)
-        rest_layout.addRow("Description (Drop-Down Menu):", self.description_line_edit)
 
         # Column selector row
         columns_layout = QHBoxLayout()
@@ -199,7 +191,8 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
         self.numeric_cols_line_edit = QLineEdit()
         self.numeric_cols_line_edit.setReadOnly(True)
         self.select_numeric_cols_button = QDialogButtonBox()
-        select_numeric_btn = self.select_numeric_cols_button.addButton("Select Numeric Columns", QDialogButtonBox.ActionRole)
+        select_numeric_btn = self.select_numeric_cols_button.addButton("Select Numeric Columns",
+                                                                       QDialogButtonBox.ActionRole)
         select_numeric_btn.clicked.connect(self.open_numeric_column_selector)
         numeric_layout.addWidget(self.numeric_cols_line_edit)
         numeric_layout.addWidget(self.select_numeric_cols_button)
@@ -224,40 +217,41 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
     def process_plugin(self) -> None:
         """
         Process the file with the selected plugin (if any) and update available columns.
-
-        Loads the CSV/TSV file using the correct delimiter. If a plugin is selected,
-        it is loaded and its preprocess_data(df) function is applied.
-        After processing, available columns are updated and the main options section is enabled.
+        The plugin selection controls are locked after processing.
+        Instead of popups, text is displayed in the plugin status label.
         """
         selected_plugin = self.plugin_combo.currentText().strip()
-        delimiter = ',' if self.file_name.lower().endswith('.csv') else '\t'
-        try:
-            df = pd.read_csv(self.file_name, delimiter=delimiter)
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to load file: {str(e)}")
-            return
-
-        if selected_plugin:
+        if selected_plugin == "(None)":
+            self.plugin_status_label.setText("plugin bypassed")
+        else:
+            delimiter = ',' if self.file_name.lower().endswith('.csv') else '\t'
+            try:
+                df = pd.read_csv(self.file_name, delimiter=delimiter)
+            except Exception as e:
+                self.plugin_status_label.setText(f"Processing failed: {str(e)}")
+                return
             plugin_path = os.path.join("plugins", f"{selected_plugin}.py")
             if not os.path.exists(plugin_path):
-                QMessageBox.critical(self, "Error", f"Plugin file {plugin_path} not found.")
+                self.plugin_status_label.setText("Plugin file not found.")
                 return
             spec = importlib.util.spec_from_file_location(selected_plugin, plugin_path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             if not hasattr(module, "preprocess_data"):
-                QMessageBox.critical(self, "Error", f"Plugin {selected_plugin} does not define preprocess_data.")
+                self.plugin_status_label.setText("Plugin does not define preprocess_data.")
                 return
             preprocess_data = module.preprocess_data
             try:
                 df = preprocess_data(df)
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Plugin processing failed: {str(e)}")
+                self.plugin_status_label.setText(f"Plugin processing failed: {str(e)}")
                 return
-
-        self.processed_df = df
-        self.available_columns = list(df.columns)
-        QMessageBox.information(self, "Success", "File processed successfully.")
+            self.processed_df = df
+            self.available_columns = list(df.columns)
+            self.plugin_status_label.setText("plugin processed successfully")
+        # Disable plugin selection controls
+        self.plugin_combo.setEnabled(False)
+        self.process_button.setEnabled(False)
         self.rest_widget.setEnabled(True)
 
     def open_column_selector(self) -> None:
