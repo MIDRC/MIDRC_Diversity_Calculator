@@ -106,8 +106,9 @@ class JsdViewIPython(JsdViewBase):
                     # Concatenate subsequent series
                     plot_data = pd.concat([plot_data, temp_data], ignore_index=True)
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0718
                 print(f"An error occurred while processing column info {column_info}: {e}")
+                return None
 
         # Check if we have any data to plot
         if plot_data is None or plot_data.empty:
@@ -170,8 +171,9 @@ class JsdViewIPython(JsdViewBase):
                     # Concatenate subsequent series
                     plot_data = pd.concat([plot_data, temp_data], ignore_index=True)
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0718
                 print(f"An error occurred while processing column info {column_info}: {e}")
+                return
 
         # Check if we have any data to plot
         if plot_data is None or plot_data.empty:
@@ -183,7 +185,7 @@ class JsdViewIPython(JsdViewBase):
             self.output_timeline.clear_output(wait=True)
 
             # Use the widget backend for interactive plotting
-            fig, ax = plt.subplots(figsize=(10, 6))
+            _fig, ax = plt.subplots(figsize=(10, 6))
 
             # Plotting using Seaborn
             sns.lineplot(data=plot_data, x='date', y='value', hue='label', marker='o', ax=ax)
@@ -244,8 +246,9 @@ class JsdViewIPython(JsdViewBase):
                     # Concatenate subsequent series
                     plot_data = pd.concat([plot_data, temp_data], ignore_index=True)
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0718
                 print(f"An error occurred while processing column info {column_info}: {e}")
+                return
 
         # Check if we have any data to plot
         if plot_data is None or plot_data.empty:
@@ -289,7 +292,7 @@ class JsdViewIPython(JsdViewBase):
         category = self.dataselectiongroupbox.get_category_info()['current_text']
 
         # Set up the figure with multiple subplots
-        fig, axes = plt.subplots(len(category), 1, figsize=(10, 6 * len(category)), sharex=True)
+        _fig, axes = plt.subplots(len(category), 1, figsize=(10, 6 * len(category)), sharex=True)
 
         if len(category) == 1:
             axes = [axes]  # Ensure axes is always iterable

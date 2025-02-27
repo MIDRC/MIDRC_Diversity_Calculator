@@ -48,6 +48,24 @@ def pandas_date_to_qdate(pandas_date):
     # else:
     raise ValueError("Input must be a Pandas Timestamp or datetime object. Object is of type: ", type(pandas_date))
 
+def get_date_parts(date_val):
+    """
+    Extracts the year, month, and day from a date value.
+
+    Parameters:
+        date_val: A date value (could be a string, datetime, or other formats).
+
+    Returns:
+        tuple: A tuple containing the year, month, and day.
+
+    """
+    # If date_val is a numpy.datetime64 or an element from a numpy array,
+    # convert it to a pandas.Timestamp to access .year, .month, .day.
+    timestamp = pd.to_datetime(date_val)
+    year = timestamp.year
+    month = timestamp.month
+    day = timestamp.day
+    return year, month, day
 
 def numpy_datetime64_to_qdate(numpy_datetime):
     """
@@ -68,8 +86,6 @@ def numpy_datetime64_to_qdate(numpy_datetime):
     python_datetime = np.datetime64(numpy_datetime).astype('M8[D]').astype('O')
 
     # Extract year, month, and day from Python datetime
-    year = python_datetime.year
-    month = python_datetime.month
-    day = python_datetime.day
+    year, month, day = get_date_parts(python_datetime)
 
     return QDate(year, month, day)

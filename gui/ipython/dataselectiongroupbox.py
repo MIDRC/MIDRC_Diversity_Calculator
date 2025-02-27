@@ -23,6 +23,8 @@ from PySide6.QtCore import Signal, QObject
 import ipywidgets as widgets
 
 from gui.common.jsdview_base import GroupBoxData
+from gui.common.utils import create_file_info, get_common_categories, create_data_source_dict
+
 
 # Define the data selection group box
 class DataSelectionGroupBox(QObject, GroupBoxData):
@@ -191,12 +193,7 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
         for filename, file_info in change['new'].items():
             content = file_info['content']
             file_content = io.BytesIO(content)
-            data_source_dict = {
-                'description': filename,
-                'name': filename,
-                'content': file_content,
-                'data type': 'content',
-            }
+            data_source_dict = create_data_source_dict(filename, file_content)
             self.excel_file_uploaded.emit(data_source_dict)
 
     def update_category_combobox(self):
@@ -206,12 +203,10 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
         previous_value = self.get_category_info()['current_text']
 
         file_infos = self.get_file_infos()
-        cbox0 = file_infos[0]
-        common_categories = self.jsd_model.data_sources[cbox0['source_id']].sheets.keys()
 
-        for cbox2 in file_infos[1:]:
-            categorylist2 = self.jsd_model.data_sources[cbox2['source_id']].sheets.keys()
-            common_categories = [value for value in common_categories if value in categorylist2]
+        # Use the helper to retrieve common categories.
+        common_categories = get_common_categories(file_infos, self.jsd_model)
+
         self._category_combobox.options = common_categories
         if previous_value not in common_categories:
             self.update_category_list(common_categories, 0)
@@ -242,12 +237,7 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
         file_infos = []
         for index, file_combobox in enumerate(self.file_comboboxes):
             data_source_dict = data_sources[file_combobox.value].data_source
-            file_infos.append({
-                'description': data_source_dict['description'],
-                'source_id': data_source_dict['name'],
-                'index': index,
-                'checked': True,
-            })
+            file_infos.append(create_file_info(data_source_dict, index))
         self._file_infos = file_infos
         self.update_category_combobox()
         self.file_selection_changed.emit(change)

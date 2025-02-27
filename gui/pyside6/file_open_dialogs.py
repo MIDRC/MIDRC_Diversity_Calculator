@@ -351,7 +351,7 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
             except FileNotFoundError as fnfe:
                 self.plugin_status_label.setText(f"File not found: {fnfe}")
                 return
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0718
                 self.plugin_status_label.setText(f"Processing failed: {e}")
                 return
             plugin_path = os.path.join("plugins", f"{selected_plugin}.py")
@@ -367,7 +367,7 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
             preprocess_data = module.preprocess_data
             try:
                 df = preprocess_data(df)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0718
                 self.plugin_status_label.setText(f"Plugin processing failed: {str(e)}")
                 return
             self.processed_df = df
