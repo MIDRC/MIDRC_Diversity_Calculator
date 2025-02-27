@@ -20,6 +20,7 @@ This module contains a function to create a stacked area chart using Plotly.
 import pandas as pd
 import plotly.graph_objects as go
 
+
 def create_stacked_area_figure(df, cols_to_use, cumulative_percents, individual_percents):
     """
     Create a stacked area chart by adding two traces per column:
@@ -52,7 +53,7 @@ def create_stacked_area_figure(df, cols_to_use, cumulative_percents, individual_
                 mode='lines',
                 line={'width': 0.5},
                 opacity=0.5,
-                hoverinfo='none'
+                hoverinfo='none',
             )
         )
 
@@ -66,7 +67,7 @@ def create_stacked_area_figure(df, cols_to_use, cumulative_percents, individual_
                 mode='lines',
                 line={'width': 0.5, 'color': 'rgba(0,0,0,0)'},
                 hovertemplate='%{text:.2f}%',
-                showlegend=False
+                showlegend=False,
             )
         )
 
@@ -74,9 +75,10 @@ def create_stacked_area_figure(df, cols_to_use, cumulative_percents, individual_
     fig.update_layout(
         title='Stacked Area Chart',
         xaxis_title='Date',
-        yaxis_title='Percentage'
+        yaxis_title='Percentage',
     )
     return fig
+
 
 def prepare_area_chart_data(df, cols_to_use, global_max_date):
     """

@@ -18,13 +18,14 @@ This module contains functions for calculating Factor Analysis of Mixed Data (FA
 """
 
 import warnings
-import prince
+
 import numpy as np
 import pandas as pd
+import prince
 from tabulate import tabulate
 
-from core.numeric_distances import scale_feature, calc_distances_via_df
 from core.data_preprocessing import combine_datasets_from_list
+from core.numeric_distances import calc_distances_via_df, scale_feature
 
 
 def preprocess_data_for_famd(raw_df, features, numeric_features, scaling_method='standard'):
@@ -40,7 +41,7 @@ def preprocess_data_for_famd(raw_df, features, numeric_features, scaling_method=
     df (DataFrame): Concatenated DataFrame with preprocessed data and 'dataset' column.
     """
     c_data = raw_df.loc[:, features]
-    c_data = c_data.dropna(axis=0, how='any') # I don't think this is necessary
+    c_data = c_data.dropna(axis=0, how='any')  # I don't think this is necessary
     for numeric_feature in numeric_features:
         c_data[numeric_feature] = c_data[numeric_feature].astype(float)
         c_data = scale_feature(c_data, numeric_feature, method=scaling_method)
@@ -71,6 +72,7 @@ def fit_famd(data):
 
     return famd, coordinates
 
+
 def adjust_bin_widths(bins, hist, multiple=2):
     """
     Adjust the width of bins by merging a specified number of adjacent bins.
@@ -92,6 +94,7 @@ def adjust_bin_widths(bins, hist, multiple=2):
     ]
 
     return np.array(new_bins), np.array(new_hist)
+
 
 def calc_famd_df(raw_df, cols_to_use, numeric_cols, dataset_column='_dataset_', print_outliers=False,
                  famd_column='famd_x_coordinates'):
@@ -130,6 +133,7 @@ def calc_famd_df(raw_df, cols_to_use, numeric_cols, dataset_column='_dataset_', 
 
     return c_df
 
+
 def calc_famd_distances(df, cols_to_use, numeric_cols, dataset_column='_dataset_', distance_metrics=('all'),
                         jsd_scaled_bin_width=0.01, print_outliers=False):
     """
@@ -161,6 +165,7 @@ def calc_famd_distances(df, cols_to_use, numeric_cols, dataset_column='_dataset_
                                  distance_metrics=distance_metrics,
                                  jsd_scaled_bin_width=jsd_scaled_bin_width,
                                  )
+
 
 def calc_famd_ks2_at_date(df1, df2, cols_to_use, numeric_cols, calc_date):
     """

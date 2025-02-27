@@ -17,15 +17,15 @@
 This module contains the JsdViewIPython class, which serves as a Jupyter Notebook view for JSD.
 """
 
-from PySide6.QtCore import Signal, QDate
-import matplotlib.pyplot as plt
-import seaborn as sns
+from IPython.display import display
 import ipywidgets as widgets
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from IPython.display import display
 import plotly.express as px
 import plotly.graph_objects as go
+from PySide6.QtCore import QDate, Signal
+import seaborn as sns
 
 from core.jsdmodel import JSDTableModel
 from gui.common.jsdview_base import JsdViewBase
@@ -93,7 +93,7 @@ class JsdViewIPython(JsdViewBase):
                 temp_data = pd.DataFrame({
                     'date': pd.to_datetime(date_column, format='%Y-%m-%d', errors='coerce'),
                     'value': value_column,
-                    'label': f"{column_info['file1']} vs {column_info['file2']} {column_info['category']} JSD"
+                    'label': f"{column_info['file1']} vs {column_info['file2']} {column_info['category']} JSD",
                 })
 
                 # Filter out rows with invalid date values (if any date failed to convert)
@@ -158,7 +158,7 @@ class JsdViewIPython(JsdViewBase):
                 temp_data = pd.DataFrame({
                     'date': pd.to_datetime(date_column, format='%Y-%m-%d', errors='coerce'),
                     'value': value_column,
-                    'label': f"{column_info['file1']} vs {column_info['file2']} {column_info['category']} JSD"
+                    'label': f"{column_info['file1']} vs {column_info['file2']} {column_info['category']} JSD",
                 })
 
                 # Filter out rows with invalid date values (if any date failed to convert)
@@ -229,7 +229,7 @@ class JsdViewIPython(JsdViewBase):
                 temp_data = pd.DataFrame({
                     'date': pd.to_datetime(date_column, format='%Y-%m-%d', errors='coerce'),
                     'value': value_column,
-                    'label': f"{column_info['file1']} vs {column_info['file2']}"
+                    'label': f"{column_info['file1']} vs {column_info['file2']}",
                 })
 
                 # Set the plot title suffix to include category (same for all series)
@@ -371,7 +371,7 @@ class JsdViewIPython(JsdViewBase):
                 yaxis_title="Percentage (%)",
                 height=400,
                 showlegend=True,
-                xaxis={range: [global_min_date, global_max_date]}  # Set the x-axis range for consistency
+                xaxis={range: [global_min_date, global_max_date]},  # Set the x-axis range for consistency
             )
 
             # Convert the Plotly figure into an interactive widget

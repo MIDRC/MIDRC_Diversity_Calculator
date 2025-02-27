@@ -21,7 +21,7 @@ import csv
 import io
 from typing import List
 
-from PySide6.QtCore import QEvent, QObject, Qt, QDate
+from PySide6.QtCore import QDate, QEvent, QObject, Qt
 from PySide6.QtGui import QGuiApplication, QKeySequence
 from PySide6.QtWidgets import QTableView
 

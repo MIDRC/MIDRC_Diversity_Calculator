@@ -19,11 +19,11 @@ This module contains classes and functions for creating a data selection group b
 
 import io
 
-from PySide6.QtCore import Signal, QObject
 import ipywidgets as widgets
+from PySide6.QtCore import QObject, Signal
 
 from gui.common.jsdview_base import GroupBoxData
-from gui.common.utils import create_file_info, get_common_categories, create_data_source_dict
+from gui.common.utils import create_data_source_dict, create_file_info, get_common_categories
 
 
 # Define the data selection group box
@@ -76,7 +76,7 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
             value=2,
             description='Number of Fileboxes:',
             disabled=False,
-            style = {'description_width': 'initial'},
+            style={'description_width': 'initial'},
         )
         self._file_upload = widgets.FileUpload(
             accept='.xlsx',
@@ -118,7 +118,7 @@ class DataSelectionGroupBox(QObject, GroupBoxData):
                 description=f'Data Source {index + 1}:',
                 disabled=False,
                 layout=widgets.Layout(width='300px'),
-                style = {'description_width': 'initial'}
+                style={'description_width': 'initial'},
             )
             self.file_comboboxes.append(combobox)
             self.layout.children += (combobox,)

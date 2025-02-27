@@ -48,6 +48,7 @@ def pandas_date_to_qdate(pandas_date):
     # else:
     raise ValueError("Input must be a Pandas Timestamp or datetime object. Object is of type: ", type(pandas_date))
 
+
 def get_date_parts(date_val):
     """
     Extracts the year, month, and day from a date value.
@@ -66,6 +67,7 @@ def get_date_parts(date_val):
     month = timestamp.month
     day = timestamp.day
     return year, month, day
+
 
 def numpy_datetime64_to_qdate(numpy_datetime):
     """

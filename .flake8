@@ -1,7 +1,13 @@
 [flake8]
 max-line-length = 120
 # extend-ignore = I201
-application-import-names = jsdcontroller,jsdmodel,jsdview,jsdconfig,datetimetools,excel_layout,grabbablewidget,
-                           dataselectiongroupbox
+application-import-names = core.jsdcontroller,core.jsdmodel,core.jsdconfig,core.datetimetools,core.excel_layout,
+                           gui.pyside6.grabbablewidget,gui.pyside6.dataselectiongroupbox,midrc_tsv_loader,
+                           core.data_preprocessing,gui.pyside6.jsdview,core.numeric_distances,gui.common.jsdview_base,
+                           core.aggregate_jsd_calc,core.famd_calc,gui.pyside6.columnselectordialog,
+                           gui.pyside6.file_open_dialogs,gui.common.file_upload,core.cucconi,
+                           gui.pyside6.copyabletableview,gui.common.plot_utils,gui.common.utils,
+                           gui.ipython.dataselectiongroupbox,gui.dash.dataselectiongroupbox
+
 import-order-style = google
 max-complexity = 10

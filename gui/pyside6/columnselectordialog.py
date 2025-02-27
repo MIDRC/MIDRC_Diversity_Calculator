@@ -18,9 +18,10 @@ This module contains the ColumnSelectorDialog and NumericColumnSelectorDialog cl
 """
 
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QDialogButtonBox, QScrollArea, QWidget, QGridLayout, QCheckBox, QButtonGroup, QHBoxLayout,
-     QDoubleSpinBox, QLineEdit
+    QButtonGroup, QCheckBox, QDialog, QDialogButtonBox, QDoubleSpinBox, QGridLayout, QHBoxLayout, QLineEdit,
+    QScrollArea, QVBoxLayout, QWidget,
 )
+
 
 class NumericColumnSelectorDialog(QDialog):
     """
@@ -102,7 +103,7 @@ class NumericColumnSelectorDialog(QDialog):
                 'label_edit': label_edit,
                 'min_input': min_input,
                 'max_input': max_input,
-                'step_input': step_input
+                'step_input': step_input,
             }
 
         # Add OK and Cancel buttons

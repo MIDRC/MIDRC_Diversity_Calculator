@@ -22,9 +22,10 @@ import io
 
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output, State
-from gui.common.jsdview_base import GroupBoxData
+
 from gui.common.file_upload import process_file_upload
-from gui.common.utils import create_file_info, get_common_categories, create_data_source_dict
+from gui.common.jsdview_base import GroupBoxData
+from gui.common.utils import create_data_source_dict, create_file_info, get_common_categories
 
 
 class DataSelectionGroupBox(GroupBoxData):
@@ -82,9 +83,9 @@ class DataSelectionGroupBox(GroupBoxData):
                 'borderStyle': 'dashed',
                 'borderRadius': '5px',
                 'textAlign': 'center',
-                'margin': '10px'
+                'margin': '10px',
             },
-            multiple=False
+            multiple=False,
         )
         self.layout = html.Div()
         self._setup_layout()
@@ -96,14 +97,14 @@ class DataSelectionGroupBox(GroupBoxData):
         self.app.callback(
             Output(self._category_combobox, 'value'),
             [Input(self._category_combobox, 'value')],
-            [State(self._category_combobox, 'value')]
+            [State(self._category_combobox, 'value')],
         )(self.on_category_changed)
 
         # Callback for num_fileboxes dropdown
         self.app.callback(
             Output(self._num_fileboxes_combobox, 'value'),
             [Input(self._num_fileboxes_combobox, 'value')],
-            [State(self._num_fileboxes_combobox, 'value')]
+            [State(self._num_fileboxes_combobox, 'value')],
         )(self.on_num_fileboxes_changed)
 
         # Callback for file selection dropdowns
@@ -111,20 +112,20 @@ class DataSelectionGroupBox(GroupBoxData):
             self.app.callback(
                 Output(combobox, 'value'),
                 [Input(combobox, 'value')],
-                [State(combobox, 'value')]
+                [State(combobox, 'value')],
             )(self.on_file_selection_changed)
 
         # Callback for file upload
         self.app.callback(
             Output('output-data-upload', 'children'),
             [Input('upload-data', 'contents')],
-            [State('upload-data', 'filename')]
+            [State('upload-data', 'filename')],
         )(self._on_file_upload)
 
         # Callback to update filebox layout dynamically
         self.app.callback(
             Output('filebox-container', 'children'),
-            Input(self._num_fileboxes_combobox, 'value')
+            Input(self._num_fileboxes_combobox, 'value'),
         )(self.update_filebox_layout)
 
     def _setup_layout(self):
@@ -134,7 +135,7 @@ class DataSelectionGroupBox(GroupBoxData):
                 self._num_fileboxes_combobox,
                 self._file_upload,
                 html.Div(id='output-data-upload'),
-                html.Div(id='filebox-container')  # This will hold the fileboxes dynamically
+                html.Div(id='filebox-container'),  # This will hold the fileboxes dynamically
             ])
         ]
 

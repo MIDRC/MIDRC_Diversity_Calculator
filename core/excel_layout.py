@@ -353,7 +353,6 @@ class DataSheet:
             self._df.rename(columns={matches[0]: 'Not Reported'}, inplace=True)
             self._columns['Not Reported'] = self._columns.pop(matches[0])
 
-
     def create_custom_age_columns(self, age_ranges: list[tuple]):
         """
         Creates custom age columns by summing values from columns that match each age range.

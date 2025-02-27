@@ -18,6 +18,7 @@ This module contains functions for calculating Jensen-Shannon Distance (JSD) bet
 """
 
 import itertools
+
 import numpy as np
 import pandas as pd
 from scipy.spatial import distance

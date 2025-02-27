@@ -20,6 +20,7 @@ This module contains functions for data preprocessing and combining datasets.
 import numpy as np
 import pandas as pd
 
+
 def bin_dataframe_column(df_to_bin, column_name, cut_column_name='CUT', bins=None, labels=None, *, right=False):
     """
     Cuts the age column into bins and adds a column with the bin labels.
@@ -60,7 +61,7 @@ def bin_dataframe_column(df_to_bin, column_name, cut_column_name='CUT', bins=Non
                 df_to_bin[column_name],
                 bins=bins,
                 labels=labels,
-                right=right  # Use right=False for left-inclusive intervals
+                right=right,  # Use right=False for left-inclusive intervals
             ).astype('string')
         })
 
@@ -86,7 +87,8 @@ def bin_dataframe_column(df_to_bin, column_name, cut_column_name='CUT', bins=Non
         return df_out
     return df_to_bin
 
-def combine_datasets_from_list(df_list: list[pd.DataFrame], dataset_column = '_dataset_'):
+
+def combine_datasets_from_list(df_list: list[pd.DataFrame], dataset_column='_dataset_'):
     """
     Combines a list of dataframes into a single dataframe with a new column for the dataset name.
 
@@ -100,6 +102,6 @@ def combine_datasets_from_list(df_list: list[pd.DataFrame], dataset_column = '_d
     labels = [f'Dataset {i}' for i in range(len(df_list))]  # Dataset labels
     combined_df = pd.concat(
         [df.assign(**{dataset_column: label}) for label, df in zip(labels, df_list)],
-        ignore_index=True
+        ignore_index=True,
     )
     return combined_df

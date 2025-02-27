@@ -19,8 +19,9 @@ This module contains the JsdViewBase class, which serves as a base class for JSD
 
 from dataclasses import dataclass
 
-from PySide6.QtCore import Signal, QObject
+from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QMainWindow
+
 
 @dataclass
 class GroupBoxData:

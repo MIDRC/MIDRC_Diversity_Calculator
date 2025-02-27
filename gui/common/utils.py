@@ -36,6 +36,7 @@ def create_file_info(data_source, index):
         'checked': True,
     }
 
+
 def get_common_categories(file_infos, jsd_model):
     """
     Extract common categories from file information.
@@ -60,6 +61,7 @@ def get_common_categories(file_infos, jsd_model):
         common_categories = [value for value in common_categories if value in categorylist]
 
     return common_categories
+
 
 def create_data_source_dict(filename, file_content, data_type='content', content_type=None):
     """
