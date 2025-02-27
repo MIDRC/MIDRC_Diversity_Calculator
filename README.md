@@ -114,9 +114,8 @@ You may install project dependencies using pip.
 Using pip:
 
 ```bash
-cd MIDRC-REACT
 python -m pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r MIDRC-REACT/requirements.txt
 ```
 
 <h3>Starting</h3>
@@ -124,10 +123,11 @@ pip install -r requirements.txt
 How to start the project
 
 ```bash
-cd MIDRC-REACT
-cp jsdconfig-example.yaml jsdconfig.yaml
-python main.py
+cp MIDRC-REACT/jsdconfig-example.yaml MIDRC-REACT/jsdconfig.yaml
+python MIDRC-REACT
 ```
+
+Note: if you are inside the MIDRC-REACT directory, you may run `python .` instead of `python MIDRC-REACT`.
  
 <h2 id="colab">🤝 Collaborators</h2>
 
