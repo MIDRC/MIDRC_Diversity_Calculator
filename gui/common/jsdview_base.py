@@ -180,7 +180,7 @@ class JsdViewBase(QObject):
         Args:
             sheet_dict (dict): A dictionary of index keys and sheets.
         """
-        pass
+        pass  # pylint: disable=unnecessary-pass
 
     def update_spider_chart(self, spider_plot_values_dict):
         """
@@ -190,7 +190,7 @@ class JsdViewBase(QObject):
             spider_plot_values_dict (dict): A dictionary of dictionaries where each dictionary contains
             the values for one series on the spider chart.
         """
-        pass
+        pass  # pylint: disable=unnecessary-pass
 
     def update_jsd_timeline_plot(self, jsd_model):
         """
@@ -199,13 +199,13 @@ class JsdViewBase(QObject):
         Args:
             jsd_model (JSDTableModel): The JSDTableModel object.
         """
-        pass
+        pass  # pylint: disable=unnecessary-pass
 
-    def update_area_chart(self, sheet_dict):
+    def update_area_chart(self, category):
         """
         Updates the area chart with new data.
 
         Args:
             sheet_dict (dict): A dictionary of index keys and sheets containing data for the chart.
         """
-        pass
+        pass  # pylint: disable=unnecessary-pass

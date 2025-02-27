@@ -433,12 +433,12 @@ class JsdWindow(QMainWindow, JsdViewBase):
         title: str = f"Comparison of {file1_data} and {file2_data} - JSD per category"
         self.spider_chart.setTitle(title)
 
-    def update_area_chart(self, sheet_dict: Dict[Any, Any]) -> bool:
+    def update_area_chart(self, category: Dict[Any, Any]) -> bool:
         """
         Update the area chart with new data from the provided sheets.
 
         Args:
-            sheet_dict (dict): A dictionary where each key maps to a sheet containing chart data.
+            category (dict): A dictionary where each key maps to a sheet containing chart data.
 
         Returns:
             bool: True if area charts were updated.
@@ -446,7 +446,7 @@ class JsdWindow(QMainWindow, JsdViewBase):
         category: str = self._dataselectiongroupbox.category_combobox.currentText()
         clear_layout(self.area_chart_widget.layout())
 
-        for index, sheets in sheet_dict.items():
+        for index, sheets in category.items():
             area_chart: QChart = QChart()
             filename: str = self.dataselectiongroupbox.file_comboboxes[index].currentData()
             area_chart.setTitle(f'{filename} {category} distribution over time')

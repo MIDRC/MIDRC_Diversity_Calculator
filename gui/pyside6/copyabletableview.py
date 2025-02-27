@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains a custom QTableView subclass that allows copying selected data to the clipboard.
+"""
+
 import csv
 import io
 from typing import List

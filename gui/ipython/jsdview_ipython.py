@@ -29,6 +29,7 @@ import plotly.graph_objects as go
 
 from core.jsdmodel import JSDTableModel
 from gui.common.jsdview_base import JsdViewBase
+from gui.common.plot_utils import create_stacked_area_figure, prepare_area_chart_data
 from gui.ipython.dataselectiongroupbox import DataSelectionGroupBox
 
 
@@ -274,43 +275,36 @@ class JsdViewIPython(JsdViewBase):
             self.output_timeline.clear_output(wait=True)
             display(vbox)
 
-    def update_area_chart(self, sheet_dict):
+    def update_area_chart(self, category):
         """
         Update the area chart. This method is called when the area chart is clicked.
 
         Args:
-            sheet_dict (dict): A dictionary of index keys and sheets.
+            category (dict): A dictionary of index keys and sheets.
 
         """
         if self.plot_method == 'interactive_plotly':
-            return self.update_area_chart_interactive_plotly(sheet_dict)
+            return self.update_area_chart_interactive_plotly(category)
 
         category = self.dataselectiongroupbox.get_category_info()['current_text']
 
         # Set up the figure with multiple subplots
-        fig, axes = plt.subplots(len(sheet_dict), 1, figsize=(10, 6 * len(sheet_dict)), sharex=True)
+        fig, axes = plt.subplots(len(category), 1, figsize=(10, 6 * len(category)), sharex=True)
 
-        if len(sheet_dict) == 1:
+        if len(category) == 1:
             axes = [axes]  # Ensure axes is always iterable
 
         # Find the global maximum date
-        global_max_date = max(sheets[category].df['date'].max() for sheets in sheet_dict.values())
+        global_max_date = max(sheets[category].df['date'].max() for sheets in category.values())
 
         # Loop through each sheet in the provided dictionary
-        for ax, (index, sheets) in zip(axes, sheet_dict.items()):
+        for ax, (index, sheets) in zip(axes, category.items()):
             # Extract dataframe and columns to use for plotting
             df = sheets[category].df
             cols_to_use = sheets[category].data_columns
 
             # Add a data point with the global maximum date if necessary
-            if df['date'].max() < global_max_date:
-                last_row = df.iloc[-1].copy()
-                last_row['date'] = global_max_date
-                df = pd.concat([df, pd.DataFrame([last_row])], ignore_index=True)
-
-            # Prepare cumulative percentages for area plot
-            total_counts = df[cols_to_use].sum(axis=1)
-            cumulative_percents = 100.0 * df[cols_to_use].cumsum(axis=1).div(total_counts, axis=0)
+            df, cumulative_percents = prepare_area_chart_data(df, cols_to_use, global_max_date)
 
             # Plotting area chart using cumulative percentages
             lower_values = np.zeros(len(df))
@@ -343,71 +337,29 @@ class JsdViewIPython(JsdViewBase):
 
         return None
 
-    def update_area_chart_interactive_plotly(self, sheet_dict):
+    def update_area_chart_interactive_plotly(self, category):
         """Update the area chart using interactive plotting with Plotly."""
         category = self.dataselectiongroupbox.get_category_info()['current_text']
 
         # Find the global minimum and maximum date
-        global_min_date = min(sheets[category].df['date'].min() for sheets in sheet_dict.values())
-        global_max_date = max(sheets[category].df['date'].max() for sheets in sheet_dict.values())
+        global_min_date = min(sheets[category].df['date'].min() for sheets in category.values())
+        global_max_date = max(sheets[category].df['date'].max() for sheets in category.values())
 
         # Create a list to hold each plotly figure as widgets
         fig_widgets = []
 
         # Loop through each sheet in the provided dictionary
-        for index, sheets in sheet_dict.items():
+        for index, sheets in category.items():
             # Extract dataframe and columns to use for plotting
             df = sheets[category].df
             cols_to_use = sheets[category].data_columns
 
             # Add a data point with the global maximum date if necessary
-            if df['date'].max() < global_max_date:
-                last_row = df.iloc[-1].copy()
-                last_row['date'] = global_max_date
-                df = pd.concat([df, pd.DataFrame([last_row])], ignore_index=True)
-
-            # Prepare cumulative percentages for area plot
-            total_counts = df[cols_to_use].sum(axis=1)
-            cumulative_percents = 100.0 * df[cols_to_use].cumsum(axis=1).div(total_counts, axis=0)
-            individual_percents = 100.0 * df[cols_to_use].div(total_counts,
-                                                              axis=0)  # Actual percentages for each column
+            df, cumulative_percents = prepare_area_chart_data(df, cols_to_use, global_max_date)
+            individual_percents = df[cols_to_use].div(df[cols_to_use].sum(axis=1), axis=0) * 100
 
             # Create a new Plotly figure for each dataset
-            fig = go.Figure()
-
-            for col in cols_to_use:
-                if df[col].iloc[-1] == 0:  # Skip columns with no data
-                    continue
-
-                upper_values = cumulative_percents[col]
-
-                # Add a trace for the stacked area effect
-                fig.add_trace(
-                    go.Scatter(
-                        x=df['date'],
-                        y=upper_values,
-                        fill='tonexty',
-                        name=col,
-                        mode='lines',
-                        line={'width': 0.5},
-                        opacity=0.5,
-                        hoverinfo='none'  # Prevent default cumulative percentage from being shown
-                    )
-                )
-
-                # Add a separate trace for hover information with actual column percentages
-                fig.add_trace(
-                    go.Scatter(
-                        x=df['date'],
-                        y=upper_values,
-                        text=individual_percents[col],
-                        name=col,
-                        mode='lines',
-                        line={'width': 0.5, 'color': 'rgba(0,0,0,0)'},  # Invisible line
-                        hovertemplate='%{text:.2f}%',
-                        showlegend=False  # Hide these hover traces from the legend
-                    )
-                )
+            fig = create_stacked_area_figure(df, cols_to_use, cumulative_percents, individual_percents)
 
             # Update the layout for each individual figure
             fig.update_layout(

@@ -109,9 +109,10 @@ def represent_list(dumper, data):
     return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
 
 
+# pylint: disable=too-many-ancestors
 class FlowStyleListDumper(yaml.Dumper):
     """ YAML dumper that represents lists in flow style. """
-    pass
+    pass  # pylint: disable=unnecessary-pass
 
 
 FlowStyleListDumper.add_representer(list, represent_list)
