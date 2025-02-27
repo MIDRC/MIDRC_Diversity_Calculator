@@ -7,9 +7,9 @@ This module contains functions for calculating the Cucconi test and distribution
 
 from collections import namedtuple
 
+from joblib import delayed, Parallel
 import numpy as np
 import numpy.typing as npt
-from joblib import Parallel, delayed
 from scipy.stats import rankdata
 
 CucconiResult = namedtuple('CucconiResult', ('statistic', 'pvalue'))

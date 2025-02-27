@@ -21,19 +21,18 @@ options dialogs. The dialogs support file-specific persistence via QSettings,
 plugin processing, and column selection.
 """
 
-import os
 import csv
 import importlib.util
+import os
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
-import yaml
-
-from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QLabel, QTextEdit, QDialogButtonBox, QFileDialog, QSizePolicy,
-    QMessageBox, QLineEdit, QFormLayout, QWidget, QComboBox, QHBoxLayout, QPushButton
-)
 from PySide6.QtCore import QFileInfo, QSettings
+from PySide6.QtWidgets import (
+    QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
+    QPushButton, QSizePolicy, QTextEdit, QVBoxLayout, QWidget,
+)
+import yaml
 
 from gui.pyside6.columnselectordialog import ColumnSelectorDialog, NumericColumnSelectorDialog
 
@@ -109,12 +108,14 @@ def represent_list(dumper, data):
     return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
 
 
+# pylint: disable=too-many-ancestors
 class FlowStyleListDumper(yaml.Dumper):
     """ YAML dumper that represents lists in flow style. """
-    pass
+    pass  # pylint: disable=unnecessary-pass
 
 
 FlowStyleListDumper.add_representer(list, represent_list)
+
 
 # pylint: disable=too-many-ancestors,too-many-instance-attributes,too-many-locals,too-many-statements
 class CSVTSVOptionsDialog(BaseFileOptionsDialog):
@@ -350,7 +351,7 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
             except FileNotFoundError as fnfe:
                 self.plugin_status_label.setText(f"File not found: {fnfe}")
                 return
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0718
                 self.plugin_status_label.setText(f"Processing failed: {e}")
                 return
             plugin_path = os.path.join("plugins", f"{selected_plugin}.py")
@@ -366,7 +367,7 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
             preprocess_data = module.preprocess_data
             try:
                 df = preprocess_data(df)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=W0718
                 self.plugin_status_label.setText(f"Plugin processing failed: {str(e)}")
                 return
             self.processed_df = df
@@ -384,7 +385,7 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
                         valid_numeric[key] = val
                 # Use FlowStyleListDumper to maintain inline lists
                 self.numeric_cols_text_edit.setText(
-                    yaml.dump(valid_numeric, Dumper=FlowStyleListDumper, default_flow_style=None)
+                    yaml.dump(valid_numeric, Dumper=FlowStyleListDumper, default_flow_style=None),
                 )
 
             self.plugin_status_label.setText("plugin processed successfully")
@@ -440,7 +441,7 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
                     numeric_cols_dict[col_name] = {
                         'raw column': raw_col,
                         'bins': bins,
-                        'labels': labels if labels else None
+                        'labels': labels if labels else None,
                     }
                 yaml_str = yaml.dump(numeric_cols_dict, Dumper=FlowStyleListDumper, default_flow_style=None)
                 self.numeric_cols_text_edit.setText(yaml_str)
@@ -465,7 +466,7 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
             "description": self.description_line_edit.text(),
             "columns": selected_cols,
             "numeric_cols": numeric_cols,
-            "plugin": self.plugin_combo.currentText().strip()
+            "plugin": self.plugin_combo.currentText().strip(),
         }
 
 
@@ -507,12 +508,12 @@ def open_excel_file_dialog(self: Any) -> None:
         'description': dialog.description_line_edit.text(),
         'data type': 'file',
         'filename': file_name,
-        'remove column name text': dialog.remove_column_text_line_edit.text()
+        'remove column name text': dialog.remove_column_text_line_edit.text(),
     }
     self.add_data_source.emit(data_source_dict)
     self.dataselectiongroupbox.add_file_to_comboboxes(
         data_source_dict['description'],
-        data_source_dict['name']
+        data_source_dict['name'],
     )
 
 
@@ -558,7 +559,7 @@ def open_yaml_input_dialog(self: Any) -> None:
         self.add_data_source.emit(data_source_dict)
         self.dataselectiongroupbox.add_file_to_comboboxes(
             data_source_dict.get("description", ""),
-            data_source_dict.get("name", "")
+            data_source_dict.get("name", ""),
         )
 
 
@@ -588,10 +589,10 @@ def open_csv_tsv_file_dialog(self: Any) -> None:
         'filename': file_name,
         'columns': data['columns'],
         'numeric_cols': data['numeric_cols'],  # Caller can later parse this as YAML if desired
-        'plugin': data['plugin']
+        'plugin': data['plugin'],
     }
     self.add_data_source.emit(data_source_dict)
     self.dataselectiongroupbox.add_file_to_comboboxes(
         data_source_dict.get('description', ''),
-        data_source_dict.get('name', '')
+        data_source_dict.get('name', ''),
     )

@@ -18,19 +18,19 @@ This module contains the JSDController class, which manages the JSD view and mod
 """
 
 from bisect import bisect_left
-
 import itertools
+
 import numpy as np
 import pandas as pd
 from PySide6.QtCore import QObject, Signal
 from scipy.spatial import distance
 
 from core.aggregate_jsd_calc import calc_aggregate_jsd_at_date
+from core.data_preprocessing import combine_datasets_from_list
 from core.datetimetools import pandas_date_to_qdate
 from core.famd_calc import calc_famd_ks2_at_date, calc_famd_ks2_at_dates
-from core.data_preprocessing import combine_datasets_from_list
-from core.numeric_distances import calc_ks2_samp_by_feature
 from core.jsdmodel import JSDTableModel
+from core.numeric_distances import calc_ks2_samp_by_feature
 from gui.common.jsdview_base import JsdViewBase
 
 
@@ -339,7 +339,6 @@ class JSDController(QObject):
                     'file2': file2,
                 })
 
-
         self.jsd_model.update_input_data(model_input_data, column_infos)
 
         self.update_category_plots()
@@ -372,7 +371,7 @@ class JSDController(QObject):
                     df1=ds1.sheets[category].df,
                     df2=ds2.sheets[category].df,
                     cols_to_use=cols_to_use,
-                    calc_date=calc_date
+                    calc_date=calc_date,
                 )
             )
             data_frames.append(df)
@@ -542,7 +541,7 @@ class JSDController(QObject):
                         num_col = data_source_1.numeric_cols[str_col]['raw column']
                         jsd_dict[(index1, idx2)][category] = calc_ks2_samp_by_feature(
                             combined_df[combined_df['date'] <= calc_date],
-                            num_col
+                            num_col,
                         )['Dataset 0 vs Dataset 1']
 
         return jsd_dict

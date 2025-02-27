@@ -20,11 +20,11 @@ This module contains the JSDConfig class, which loads and stores data from a YAM
 from dataclasses import dataclass, field
 import os
 
-from yaml import dump, load
+from yaml import load
 try:
-    from yaml import CLoader as Loader, CDumper as Dumper
+    from yaml import CLoader as Loader
 except ImportError:
-    from yaml import Loader, Dumper
+    from yaml import Loader
 
 
 @dataclass

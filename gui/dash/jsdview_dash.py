@@ -20,16 +20,17 @@ This module contains the JSDViewDash class, which represents a Dash view for JSD
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
-import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
 from core.jsdconfig import JSDConfig
-from core.jsdmodel import JSDTableModel
 from core.jsdcontroller import JSDController
-from gui.common.jsdview_base import JsdViewBase
+from core.jsdmodel import JSDTableModel
 from gui.common.file_upload import process_file_upload
+from gui.common.jsdview_base import JsdViewBase
+from gui.common.plot_utils import create_stacked_area_figure, prepare_area_chart_data
 from gui.dash.dataselectiongroupbox import DataSelectionGroupBox
+
 
 class JSDViewDash(JsdViewBase):
     """
@@ -59,19 +60,19 @@ class JSDViewDash(JsdViewBase):
         self.app.layout = html.Div([
             self.data_selection_group_box.display(),
             dcc.Graph(id='timeline-chart'),
-            html.Div(id='area-chart-container')
+            html.Div(id='area-chart-container'),
         ])
 
         @self.app.callback(
             Output('timeline-chart', 'figure'),
-            Input(self.data_selection_group_box.category_combobox.id, 'value')  # pylint: disable=no-member
+            Input(self.data_selection_group_box.category_combobox.id, 'value'),  # pylint: disable=no-member
         )
         def update_timeline_chart(selected_category):
             return self.update_timeline_chart(selected_category)
 
         @self.app.callback(
             Output('area-chart-container', 'children'),
-            Input(self.data_selection_group_box.category_combobox.id, 'value')  # pylint: disable=no-member
+            Input(self.data_selection_group_box.category_combobox.id, 'value'),  # pylint: disable=no-member
         )
         def update_area_chart(selected_category):
             return self.update_area_chart(selected_category)
@@ -101,8 +102,8 @@ class JSDViewDash(JsdViewBase):
             return px.line(title="No data available for plotting.")
 
         if 'label' not in plot_data.columns:
-            print("The 'label' column is missing in the plot data.")
-            return
+            # print("The 'label' column is missing in the plot data.")
+            return px.line(title="The 'label' column is missing in the plot data.")
 
         fig = go.Figure()
 
@@ -111,7 +112,7 @@ class JSDViewDash(JsdViewBase):
                 x=df['date'],
                 y=df['value'],
                 mode='lines',
-                name=label
+                name=label,
             ))
 
         fig.update_layout(
@@ -119,7 +120,7 @@ class JSDViewDash(JsdViewBase):
             xaxis_title="Date",
             yaxis_title="JSD Value",
             yaxis={'range': [0.0, 1.0]},
-            height=600
+            height=600,
         )
 
         return fig
@@ -152,55 +153,10 @@ class JSDViewDash(JsdViewBase):
             cols_to_use = data_source.sheets[category].data_columns
 
             # Add a data point with the global maximum date if necessary
-            if df['date'].max() < global_max_date:
-                last_row = df.iloc[-1].copy()
-                last_row['date'] = global_max_date
-                df = pd.concat([df, pd.DataFrame([last_row])], ignore_index=True)
+            df, cumulative_percents = prepare_area_chart_data(df, cols_to_use, global_max_date)
+            individual_percents = df[cols_to_use].div(df[cols_to_use].sum(axis=1), axis=0) * 100
 
-            # Prepare cumulative percentages for area plot
-            total_counts = df[cols_to_use].sum(axis=1)
-            cumulative_percents = 100.0 * df[cols_to_use].cumsum(axis=1).div(total_counts, axis=0)
-            individual_percents = 100.0 * df[cols_to_use].div(total_counts, axis=0)
-
-            # Create a new Plotly figure for each dataset
-            fig = go.Figure()
-
-            # Plotting area chart using cumulative percentages
-            # lower_values = np.zeros(len(df))
-
-            for col in cols_to_use:
-                if df[col].iloc[-1] == 0:  # Skip columns with no data
-                    continue
-
-                upper_values = cumulative_percents[col]
-
-                # Add a trace for the stacked area effect
-                fig.add_trace(
-                    go.Scatter(
-                        x=df['date'],
-                        y=upper_values,
-                        fill='tonexty',
-                        name=col,
-                        mode='lines',
-                        line={'width': 0.5},
-                        opacity=0.5,
-                        hoverinfo='none'  # Prevent default cumulative percentage from being shown
-                    )
-                )
-
-                # Add a separate trace for hover information with actual column percentages
-                fig.add_trace(
-                    go.Scatter(
-                        x=df['date'],
-                        y=upper_values,
-                        text=individual_percents[col],
-                        name=col,
-                        mode='lines',
-                        line={'width': 0.5, 'color': 'rgba(0,0,0,0)'},  # Invisible line
-                        hovertemplate='%{text:.2f}%',
-                        showlegend=False  # Hide these hover traces from the legend
-                    )
-                )
+            fig = create_stacked_area_figure(df, cols_to_use, cumulative_percents, individual_percents)
 
             # Update the layout for each individual figure
             fig.update_layout(
@@ -209,7 +165,7 @@ class JSDViewDash(JsdViewBase):
                 yaxis_title="Percentage (%)",
                 height=400,
                 showlegend=True,
-                xaxis={'range': [global_min_date, global_max_date]}  # Set the x-axis range for consistency
+                xaxis={'range': [global_min_date, global_max_date]},  # Set the x-axis range for consistency
             )
 
             # Append the figure as a dcc.Graph component
@@ -239,6 +195,7 @@ class JSDViewDash(JsdViewBase):
         self.app.run_server(debug=True)
         # Remove threading if we want to use Qt Signals and Slots
         # self.app.run_server(debug=False, threaded=False)
+
 
 # Example usage:
 my_config = JSDConfig()

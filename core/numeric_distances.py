@@ -23,10 +23,11 @@ from types import SimpleNamespace
 
 import numpy as np
 from scipy.stats import ks_2samp, wasserstein_distance
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
+from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler, RobustScaler, StandardScaler
 
-from core.cucconi import cucconi_test
 from core.aggregate_jsd_calc import calc_jsd_from_counts_dict
+from core.cucconi import cucconi_test
+
 
 def calc_numerical_metric_by_feature(df, feature: str, dataset_column: str, metric_function):
     """
@@ -67,7 +68,8 @@ def calc_numerical_metric_by_feature(df, feature: str, dataset_column: str, metr
 
     return metric_dict
 
-def calc_cucconi_by_feature(df, feature: str, dataset_column: str='_dataset_', scaling: str=None):
+
+def calc_cucconi_by_feature(df, feature: str, dataset_column: str = '_dataset_', scaling: str = None):
     """
     Calculate the Cucconi test for a specific feature.
 
@@ -85,11 +87,13 @@ def calc_cucconi_by_feature(df, feature: str, dataset_column: str='_dataset_', s
     if scaling is not None:
         logging.warning('Cucconi test is not affected by scaling. Ignoring scaling method.')
     calc_df = df  # if scaling is None else scale_feature(df, feature, method=scaling)
+
     def cucconi_2samp_test(values1, values2):
         return cucconi_test(values1, values2, method='permutation')
     return calc_numerical_metric_by_feature(calc_df, feature, dataset_column, cucconi_2samp_test)
 
-def calc_ks2_samp_by_feature(df, feature: str, dataset_column: str='_dataset_', scaling: str=None):
+
+def calc_ks2_samp_by_feature(df, feature: str, dataset_column: str = '_dataset_', scaling: str = None):
     """
     Calculate the Kolmogorov-Smirnov test for a specific feature.
 
@@ -106,10 +110,11 @@ def calc_ks2_samp_by_feature(df, feature: str, dataset_column: str='_dataset_', 
     """
     if scaling is not None:
         logging.warning('Kolmogorov-Smirnov test is not affected by scaling. Ignoring scaling method.')
-    calc_df = df # if scaling is None else scale_feature(df, feature, method=scaling)
+    calc_df = df  # if scaling is None else scale_feature(df, feature, method=scaling)
     return calc_numerical_metric_by_feature(calc_df, feature, dataset_column, ks_2samp)
 
-def calc_wasserstein_by_feature(df, feature: str, dataset_column: str='_dataset_', scaling: str=None):
+
+def calc_wasserstein_by_feature(df, feature: str, dataset_column: str = '_dataset_', scaling: str = None):
     """
     Calculate the Wasserstein distance for a specific feature.
 
@@ -130,12 +135,14 @@ def calc_wasserstein_by_feature(df, feature: str, dataset_column: str='_dataset_
     calc_df = df if scaling is None else scale_feature(df, feature, method=scaling)
     return calc_numerical_metric_by_feature(calc_df, feature, dataset_column, w_d_calc)
 
+
 _scale_values_supported_methods_dict = {
         'StandardScaler': ['std', 'standard', 'Standard', 'StandardScaler', 'norm', 'normal', 'Normal', 'Norm'],
         'MinMaxScaler': ['minmax', 'min-max', 'MinMax', 'MinMaxScaler'],
         'MaxAbsScaler': ['maxabs', 'max-abs', 'MaxAbs', 'MaxAbsScaler'],
         'RobustScaler': ['robust', 'rob', 'Robust', 'Rob', 'RobustScalar'],
     }
+
 
 def get_supported_scaling_methods():
     """
@@ -146,7 +153,8 @@ def get_supported_scaling_methods():
     """
     return [*itertools.chain(*_scale_values_supported_methods_dict.values())]
 
-def scale_values(values, method: str='standard'):
+
+def scale_values(values, method: str = 'standard'):
     """
     Normalize a feature to mean 0 and standard deviation 1.
 
@@ -175,7 +183,8 @@ def scale_values(values, method: str='standard'):
     values_scaled = scaler.fit_transform(values)
     return values_scaled
 
-def scale_feature(df, feature: str, method: str='standard'):
+
+def scale_feature(df, feature: str, method: str = 'standard'):
     """
     Normalize a feature to mean 0 and standard deviation 1.
 
@@ -219,6 +228,7 @@ def generate_histogram(df, dataset_column, dataset_name, feature_column, bin_wid
     hist, bins = np.histogram(d, bins=bins, density=True)
     return hist, bins
 
+
 def build_histogram_dict(df, dataset_column, datasets, feature_column, bin_width, scaling_method=None):
     """
     Build a dictionary of histogram data for a specific dataset.
@@ -243,8 +253,9 @@ def build_histogram_dict(df, dataset_column, datasets, feature_column, bin_width
 
     return hist_dict
 
-def calc_distances_via_df(famd_df, feature_column, dataset_column: str='_dataset_', *,
-                          distance_metrics: tuple[str]=('all'), jsd_scaled_bin_width=0.01):
+
+def calc_distances_via_df(famd_df, feature_column, dataset_column: str = '_dataset_', *,
+                          distance_metrics: tuple[str] = ('all'), jsd_scaled_bin_width=0.01):
     """
     Calculate various distance metrics based on histogram data.
 

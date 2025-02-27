@@ -331,7 +331,7 @@ class SaveWidgetAsImageDialog(QDialog):
         # Accept the event to allow the dialog to close
         event.accept()
 
-    def save_image(self, _ = None, *, ratio: int = 2):
+    def save_image(self, _=None, *, ratio: int = 2):
         """
         Save the image of the widget with a specified ratio.
 

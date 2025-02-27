@@ -18,31 +18,32 @@ This module contains the JsdWindow class, which represents the main window of th
 """
 
 from __future__ import annotations
+
 import math
 from typing import Any, Dict, Iterable, List, Optional
 
 from PySide6.QtCharts import (
     QAreaSeries, QCategoryAxis, QChart, QDateTimeAxis, QLineSeries, QPieSeries,
-    QPolarChart, QValueAxis
+    QPolarChart, QValueAxis,
 )
 from PySide6.QtCore import (
-    QDateTime, QPointF, QRect, Qt, QTime, Signal
+    QDateTime, QPointF, QRect, Qt, QTime, Signal,
 )
 from PySide6.QtGui import QAction, QPainter
 from PySide6.QtWidgets import (
     QDialog, QDialogButtonBox, QDockWidget, QFormLayout, QHBoxLayout, QHeaderView,
     QLabel, QLayout, QMainWindow, QMenu, QMenuBar, QScrollArea, QSpinBox, QSplitter,
-    QTableView, QVBoxLayout, QWidget
+    QTableView, QVBoxLayout, QWidget,
 )
 
 from core.datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate
 from gui.common.jsdview_base import JsdViewBase
-from gui.pyside6.dataselectiongroupbox import JsdDataSelectionGroupBox
-from gui.pyside6.grabbablewidget import GrabbableChartView
-from gui.pyside6.file_open_dialogs import (
-    open_excel_file_dialog, open_yaml_input_dialog, open_csv_tsv_file_dialog
-)
 from gui.pyside6.copyabletableview import CopyableTableView
+from gui.pyside6.dataselectiongroupbox import JsdDataSelectionGroupBox
+from gui.pyside6.file_open_dialogs import (
+    open_csv_tsv_file_dialog, open_excel_file_dialog, open_yaml_input_dialog,
+)
+from gui.pyside6.grabbablewidget import GrabbableChartView
 
 
 class JsdWindow(QMainWindow, JsdViewBase):
@@ -80,7 +81,7 @@ class JsdWindow(QMainWindow, JsdViewBase):
         self.table_view: CopyableTableView = CopyableTableView()
         self.addDockWidget(
             Qt.LeftDockWidgetArea,
-            self.create_table_dock_widget(self.table_view, JsdWindow.DOCK_TITLES['table_dock'])
+            self.create_table_dock_widget(self.table_view, JsdWindow.DOCK_TITLES['table_dock']),
         )
 
         # Set up the timeline chart and its view
@@ -97,7 +98,7 @@ class JsdWindow(QMainWindow, JsdViewBase):
         # Set up the pie chart dock
         self.pie_chart_layout: QVBoxLayout = QVBoxLayout()
         self.pie_chart_dock_widget: QDockWidget = self.create_pie_chart_dock_widget(
-            self.pie_chart_layout, JsdWindow.DOCK_TITLES['pie_chart_dock']
+            self.pie_chart_layout, JsdWindow.DOCK_TITLES['pie_chart_dock'],
         )
         self.addDockWidget(Qt.BottomDockWidgetArea, self.pie_chart_dock_widget)
 
@@ -107,7 +108,7 @@ class JsdWindow(QMainWindow, JsdViewBase):
         self.area_chart_widget.setLayout(QVBoxLayout())
         self.spider_chart_vbox: QSplitter = QSplitter(Qt.Vertical)
         self.spider_chart_dock_widget: QDockWidget = self.create_spider_chart_dock_widget(
-            self.spider_chart_vbox, JsdWindow.DOCK_TITLES['spider_chart_dock']
+            self.spider_chart_vbox, JsdWindow.DOCK_TITLES['spider_chart_dock'],
         )
         self.addDockWidget(Qt.RightDockWidgetArea, self.spider_chart_dock_widget)
 
@@ -272,7 +273,7 @@ class JsdWindow(QMainWindow, JsdViewBase):
             GrabbableChartView: The view that was added.
         """
         area_chart_view: GrabbableChartView = GrabbableChartView(
-            area_chart, save_file_prefix="MIDRC-REACT_area_chart"
+            area_chart, save_file_prefix="MIDRC-REACT_area_chart",
         )
         self.area_chart_widget.layout().addWidget(area_chart_view, stretch=1)
         return area_chart_view
@@ -285,7 +286,7 @@ class JsdWindow(QMainWindow, JsdViewBase):
             GrabbableChartView: The spider chart view that was added.
         """
         spider_chart_view: GrabbableChartView = GrabbableChartView(
-            self.spider_chart, save_file_prefix="MIDRC-REACT_spider_chart"
+            self.spider_chart, save_file_prefix="MIDRC-REACT_spider_chart",
         )
         self.spider_chart_vbox.addWidget(spider_chart_view)
         return spider_chart_view
@@ -411,7 +412,7 @@ class JsdWindow(QMainWindow, JsdViewBase):
                 series.append(360, series.points()[0].y())
             file_pair = [
                 self._dataselectiongroupbox.file_comboboxes[index_pair[0]].currentData(),
-                self._dataselectiongroupbox.file_comboboxes[index_pair[1]].currentData()
+                self._dataselectiongroupbox.file_comboboxes[index_pair[1]].currentData(),
             ]
             if len(spider_plot_values_dict) == 1:
                 self.update_spider_chart_title(file_pair[0], file_pair[1])
@@ -433,31 +434,31 @@ class JsdWindow(QMainWindow, JsdViewBase):
         title: str = f"Comparison of {file1_data} and {file2_data} - JSD per category"
         self.spider_chart.setTitle(title)
 
-    def update_area_chart(self, sheet_dict: Dict[Any, Any]) -> bool:
+    def update_area_chart(self, category: Dict[Any, Any]) -> bool:
         """
         Update the area chart with new data from the provided sheets.
 
         Args:
-            sheet_dict (dict): A dictionary where each key maps to a sheet containing chart data.
+            category (dict): A dictionary where each key maps to a sheet containing chart data.
 
         Returns:
             bool: True if area charts were updated.
         """
-        category: str = self._dataselectiongroupbox.category_combobox.currentText()
+        category_str: str = self._dataselectiongroupbox.category_combobox.currentText()
         clear_layout(self.area_chart_widget.layout())
 
-        for index, sheets in sheet_dict.items():
+        for index, sheets in category.items():
             area_chart: QChart = QChart()
             filename: str = self.dataselectiongroupbox.file_comboboxes[index].currentData()
-            area_chart.setTitle(f'{filename} {category} distribution over time')
+            area_chart.setTitle(f'{filename} {category_str} distribution over time')
 
-            if category.endswith(' (ks2)'):
-                category = category[:-6]
-            if category not in sheets:
+            if category_str.endswith(' (ks2)'):
+                category_str = category_str[:-6]
+            if category_str not in sheets:
                 continue
 
-            df = sheets[category].df
-            cols_to_use = sheets[category].data_columns
+            df = sheets[category_str].df
+            cols_to_use = sheets[category_str].data_columns
             dates: List[QDateTime] = [QDateTime(numpy_datetime64_to_qdate(date), QTime()) for date in df.date.values]
 
             JsdWindow._add_area_chart_series(area_chart, df, cols_to_use, dates)

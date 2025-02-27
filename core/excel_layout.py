@@ -127,14 +127,13 @@ class DataSource:
 
             if num_col in df.columns:
                 df = bin_dataframe_column(df, num_col, str_col, bins=bins, labels=labels)
-                '''
-                if bins:
-                    # Apply binning if bins are provided
-                    df = bin_dataframe_column(df, num_col, str_col, bins=bins, labels=labels)
-                else:
-                    # Default "N-N" format conversion
-                    df[str_col] = df[num_col].apply(lambda x: f'{int(x)}-{int(x)}' if pd.notna(x) else x)
-                '''
+                # The following code is kept for potential future use.
+                # if bins:
+                #     # Apply binning if bins are provided
+                #     df = bin_dataframe_column(df, num_col, str_col, bins=bins, labels=labels)
+                # else:
+                #     # Default "N-N" format conversion
+                #     df[str_col] = df[num_col].apply(lambda x: f'{int(x)}-{int(x)}' if pd.notna(x) else x)
 
         return df
 
@@ -353,7 +352,6 @@ class DataSheet:
         if len(matches) == 1:
             self._df.rename(columns={matches[0]: 'Not Reported'}, inplace=True)
             self._columns['Not Reported'] = self._columns.pop(matches[0])
-
 
     def create_custom_age_columns(self, age_ranges: list[tuple]):
         """

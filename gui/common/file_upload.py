@@ -13,6 +13,11 @@
 #      limitations under the License.
 #
 
+"""
+This module contains a function to process file uploads in a GUI application.
+"""
+
+
 def process_file_upload(view, data_source_dict):
     """
     Process a file upload by printing debug information,

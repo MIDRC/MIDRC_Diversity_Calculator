@@ -19,7 +19,9 @@ This module contains functions for processing TSV files downloaded from the data
 
 from datetime import datetime
 import re
+
 import pandas as pd
+
 
 def extract_earliest_date(submitter_id_series):
     """Extracts the earliest date from datasets.submitter_id column."""
@@ -35,6 +37,7 @@ def extract_earliest_date(submitter_id_series):
         return min(date_objs)
 
     return submitter_id_series.apply(get_earliest_date)
+
 
 def adjust_age(df):
     """Modifies the age_at_index column based on age_at_index_gt89."""
@@ -77,6 +80,7 @@ def combine_race_ethnicity(df):
     df['Race and Ethnicity'] = df.apply(classify, axis=1)
     return df
 
+
 def adjust_column_names(df):
     """Adjusts column names to be more readable."""
     df = df.rename(columns={
@@ -87,6 +91,7 @@ def adjust_column_names(df):
     })
     return df
 
+
 def process_dataframe(df):
     """Applies both transformations on a pandas DataFrame."""
     df['date'] = extract_earliest_date(df['datasets.submitter_id'])
@@ -95,20 +100,24 @@ def process_dataframe(df):
     df = adjust_column_names(df)
     return df
 
+
 def process_tsv_to_tsv(input_file, output_file):
     """Reads a TSV file, processes it, and writes back to a new TSV file."""
     df = pd.read_csv(input_file, sep='\t')
     df = process_dataframe(df)
     df.to_csv(output_file, sep='\t', index=False)
 
+
 def process_tsv_to_dataframe(input_file):
     """Reads a TSV file, processes it, and returns a pandas DataFrame."""
     df = pd.read_csv(input_file, sep='\t')
     return process_dataframe(df)
 
+
 def process_dataframe_to_dataframe(df):
     """Processes a pandas DataFrame and returns a modified DataFrame."""
     return process_dataframe(df)
+
 
 def preprocess_data(df):
     """Preprocesses a pandas DataFrame."""

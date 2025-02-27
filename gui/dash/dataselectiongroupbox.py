@@ -22,8 +22,10 @@ import io
 
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output, State
-from gui.common.jsdview_base import GroupBoxData
+
 from gui.common.file_upload import process_file_upload
+from gui.common.jsdview_base import GroupBoxData
+from gui.common.utils import create_data_source_dict, create_file_info, get_common_categories
 
 
 class DataSelectionGroupBox(GroupBoxData):
@@ -81,9 +83,9 @@ class DataSelectionGroupBox(GroupBoxData):
                 'borderStyle': 'dashed',
                 'borderRadius': '5px',
                 'textAlign': 'center',
-                'margin': '10px'
+                'margin': '10px',
             },
-            multiple=False
+            multiple=False,
         )
         self.layout = html.Div()
         self._setup_layout()
@@ -95,14 +97,14 @@ class DataSelectionGroupBox(GroupBoxData):
         self.app.callback(
             Output(self._category_combobox, 'value'),
             [Input(self._category_combobox, 'value')],
-            [State(self._category_combobox, 'value')]
+            [State(self._category_combobox, 'value')],
         )(self.on_category_changed)
 
         # Callback for num_fileboxes dropdown
         self.app.callback(
             Output(self._num_fileboxes_combobox, 'value'),
             [Input(self._num_fileboxes_combobox, 'value')],
-            [State(self._num_fileboxes_combobox, 'value')]
+            [State(self._num_fileboxes_combobox, 'value')],
         )(self.on_num_fileboxes_changed)
 
         # Callback for file selection dropdowns
@@ -110,20 +112,20 @@ class DataSelectionGroupBox(GroupBoxData):
             self.app.callback(
                 Output(combobox, 'value'),
                 [Input(combobox, 'value')],
-                [State(combobox, 'value')]
+                [State(combobox, 'value')],
             )(self.on_file_selection_changed)
 
         # Callback for file upload
         self.app.callback(
             Output('output-data-upload', 'children'),
             [Input('upload-data', 'contents')],
-            [State('upload-data', 'filename')]
+            [State('upload-data', 'filename')],
         )(self._on_file_upload)
 
         # Callback to update filebox layout dynamically
         self.app.callback(
             Output('filebox-container', 'children'),
-            Input(self._num_fileboxes_combobox, 'value')
+            Input(self._num_fileboxes_combobox, 'value'),
         )(self.update_filebox_layout)
 
     def _setup_layout(self):
@@ -133,7 +135,7 @@ class DataSelectionGroupBox(GroupBoxData):
                 self._num_fileboxes_combobox,
                 self._file_upload,
                 html.Div(id='output-data-upload'),
-                html.Div(id='filebox-container')  # This will hold the fileboxes dynamically
+                html.Div(id='filebox-container'),  # This will hold the fileboxes dynamically
             ])
         ]
 
@@ -262,13 +264,7 @@ class DataSelectionGroupBox(GroupBoxData):
             content_type, content_string = contents.split(',')
             decoded = base64.b64decode(content_string)
             file_content = io.BytesIO(decoded)
-            data_source_dict = {
-                'description': filename,
-                'name': filename,
-                'content': file_content,
-                'data type': 'content',
-                'content type': content_type,
-            }
+            data_source_dict = create_data_source_dict(filename, file_content, content_type=content_type)
 
             print("⚠️ Manually calling file upload handler")
             # Retrieve the JSDViewDash instance from the app configuration.
@@ -287,12 +283,9 @@ class DataSelectionGroupBox(GroupBoxData):
         previous_value = self.get_category_info()['current_text']
 
         file_infos = self.get_file_infos()
-        cbox0 = file_infos[0]
-        common_categories = self.jsd_model.data_sources[cbox0['source_id']].sheets.keys()
 
-        for cbox2 in file_infos[1:]:
-            categorylist2 = self.jsd_model.data_sources[cbox2['source_id']].sheets.keys()
-            common_categories = [value for value in common_categories if value in categorylist2]
+        # Use the helper to retrieve common categories.
+        common_categories = get_common_categories(file_infos, self.jsd_model)
         self._category_combobox.options = [{'label': cat, 'value': cat} for cat in common_categories]
         if previous_value not in common_categories:
             self.update_category_list(common_categories, 0)
@@ -337,12 +330,7 @@ class DataSelectionGroupBox(GroupBoxData):
                 continue  # Skip unselected dropdowns
 
             data_source_dict = data_sources[file_combobox.value].data_source
-            file_infos.append({
-                'description': data_source_dict['description'],
-                'source_id': data_source_dict['name'],
-                'index': index,
-                'checked': True,
-            })
+            file_infos.append(create_file_info(data_source_dict, index))
 
         self._file_infos = file_infos
         self.update_category_combobox()  # Ensure category dropdown is updated properly
