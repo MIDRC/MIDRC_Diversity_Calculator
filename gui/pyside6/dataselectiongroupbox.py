@@ -13,10 +13,15 @@
 #      limitations under the License.
 #
 
+"""
+This module contains the JsdDataSelectionGroupBox class, which is a custom widget for selecting data files and
+categories in a graphical user interface (GUI) using PySide6.
+"""
+
 from PySide6.QtCore import QSignalBlocker, Signal
 from PySide6.QtWidgets import QCheckBox, QComboBox, QFormLayout, QGroupBox, QHBoxLayout, QLabel
 
-from gui.jsdview_base import GroupBoxData
+from gui.common.jsdview_base import GroupBoxData
 
 
 class JsdDataSelectionGroupBox(QGroupBox, GroupBoxData):

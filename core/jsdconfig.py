@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains the JSDConfig class, which loads and stores data from a YAML file.
+"""
+
 from dataclasses import dataclass, field
 import os
 

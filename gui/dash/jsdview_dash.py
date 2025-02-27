@@ -13,18 +13,22 @@
 #      limitations under the License.
 #
 
+"""
+This module contains the JSDViewDash class, which represents a Dash view for JSD.
+"""
+
 import dash
 from dash import dcc, html
 from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import numpy as np
 
 from core.jsdconfig import JSDConfig
 from core.jsdmodel import JSDTableModel
 from core.jsdcontroller import JSDController
-from gui.jsdview_base import JsdViewBase
+from gui.common.jsdview_base import JsdViewBase
+from gui.common.file_upload import process_file_upload
 from gui.dash.dataselectiongroupbox import DataSelectionGroupBox
 
 class JSDViewDash(JsdViewBase):
@@ -226,10 +230,7 @@ class JSDViewDash(JsdViewBase):
         Args:
             data_source_dict (dict): The data source dictionary.
         """
-        print(f"handle_excel_file_uploaded() triggered with file: {data_source_dict['name']}")  # Debugging print
-        self.open_excel_file(data_source_dict)
-        print("Excel file loaded, try to update layout")
-        self.data_selection_group_box.update_filebox_layout(self.data_selection_group_box.num_fileboxes)
+        process_file_upload(self, data_source_dict)
 
     def run(self):
         """
@@ -240,16 +241,16 @@ class JSDViewDash(JsdViewBase):
         # self.app.run_server(debug=False, threaded=False)
 
 # Example usage:
-config = JSDConfig()
-data_source_list = config.data['data sources']
-jsd_model = JSDTableModel(data_source_list, config.data.get('custom age ranges', None))
-view = JSDViewDash(jsd_model, config)
+my_config = JSDConfig()
+my_data_source_list = my_config.data['data sources']
+my_jsd_model = JSDTableModel(my_data_source_list, my_config.data.get('custom age ranges', None))
+dash_view = JSDViewDash(my_jsd_model, my_config)
 
 # Load data sources
-for data_source in data_source_list:
-    print(f"Loading: {data_source['description']}...")
-    view.open_excel_file(data_source)
+for my_data_source in my_data_source_list:
+    print(f"Loading: {my_data_source['description']}...")
+    dash_view.open_excel_file(my_data_source)
 
 print("Done Loading Files")
 
-view.run()
+dash_view.run()

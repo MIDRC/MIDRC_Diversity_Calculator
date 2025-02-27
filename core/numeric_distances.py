@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains functions for calculating various numerical distance metrics between datasets.
+"""
+
 import itertools
 import logging
 from types import SimpleNamespace

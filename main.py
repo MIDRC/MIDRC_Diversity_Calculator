@@ -19,6 +19,10 @@
 #  contract 75N92020D00021/5N92023F00002 and through the Advanced Research
 #  Projects Agency for Health (ARPA-H).
 
+"""
+This module contains the main function to launch the MIDRC-REACT application.
+"""
+
 import sys
 
 from PySide6.QtCore import Qt

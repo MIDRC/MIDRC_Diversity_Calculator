@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains the JSDController class, which manages the JSD view and model.
+"""
+
 from bisect import bisect_left
 
 import itertools
@@ -27,7 +31,7 @@ from core.famd_calc import calc_famd_ks2_at_date, calc_famd_ks2_at_dates
 from core.data_preprocessing import combine_datasets_from_list
 from core.numeric_distances import calc_ks2_samp_by_feature
 from core.jsdmodel import JSDTableModel
-from gui.jsdview_base import JsdViewBase
+from gui.common.jsdview_base import JsdViewBase
 
 
 class JSDController(QObject):

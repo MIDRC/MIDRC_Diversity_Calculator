@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module provides a mixin class for adding snapshot (grab) and save functionalities to a QWidget.
+"""
+
 from typing import Optional
 
 from PySide6.QtCharts import QChart, QChartView

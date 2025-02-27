@@ -13,6 +13,10 @@
 #      limitations under the License.
 #
 
+"""
+This module contains functions for data preprocessing and combining datasets.
+"""
+
 import numpy as np
 import pandas as pd
 

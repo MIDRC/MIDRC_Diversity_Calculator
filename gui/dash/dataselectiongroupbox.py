@@ -13,13 +13,18 @@
 #      limitations under the License.
 #
 
+"""
+This module contains the DataSelectionGroupBox class, which represents a group box widget for data selection.
+"""
+
 import base64
 import io
 
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output, State
-from gui.jsdview_base import GroupBoxData
-from gui.dash.jsdview_dash import JSDViewDash
+from gui.common.jsdview_base import GroupBoxData
+from gui.common.file_upload import process_file_upload
+
 
 class DataSelectionGroupBox(GroupBoxData):
     """
@@ -135,7 +140,8 @@ class DataSelectionGroupBox(GroupBoxData):
     def _initialize_data_sources(self):
         # Initialize file comboboxes based on data sources from JSDController
         data_sources = self.jsd_model.data_sources
-        for index, data_source_key in enumerate(list(data_sources.keys())[len(self.file_comboboxes):self.num_fileboxes], start=len(self.file_comboboxes)):
+        for index, data_source_key in enumerate(list(data_sources.keys())[len(self.file_comboboxes):self.num_fileboxes],
+                                                start=len(self.file_comboboxes)):
             combobox = dcc.Dropdown(
                 options=[{'label': ds_key, 'value': ds_key} for ds_key in data_sources.keys()],
                 value=data_source_key,
@@ -264,12 +270,15 @@ class DataSelectionGroupBox(GroupBoxData):
                 'content type': content_type,
             }
 
-            print("⚠️ Manually calling handle_excel_file_uploaded")
-            JSDViewDash.handle_excel_file_uploaded(self.app, data_source_dict)  # Call manually
-
-            return html.Div([
-                f'File uploaded: {filename}'
-            ])
+            print("⚠️ Manually calling file upload handler")
+            # Retrieve the JSDViewDash instance from the app configuration.
+            jsd_view = self.app.config.get('jsd_view')
+            if jsd_view is not None:
+                process_file_upload(jsd_view, data_source_dict)
+            else:
+                print("JSDViewDash instance not found in app.config.")
+            return html.Div([f'File uploaded: {filename}'])
+        return html.Div(['No file uploaded yet.'])
 
     def update_category_combobox(self):
         """

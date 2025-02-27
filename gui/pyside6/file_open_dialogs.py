@@ -13,13 +13,21 @@
 #      limitations under the License.
 #
 
+"""
+Module for file open dialogs using PySide6.
+
+This module provides dialogs for opening Excel and CSV/TSV files along with
+options dialogs. The dialogs support file-specific persistence via QSettings,
+plugin processing, and column selection.
+"""
+
 import os
 import csv
 import importlib.util
-import yaml
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
+import yaml
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QTextEdit, QDialogButtonBox, QFileDialog, QSizePolicy,
@@ -29,15 +37,13 @@ from PySide6.QtCore import QFileInfo, QSettings
 
 from gui.pyside6.columnselectordialog import ColumnSelectorDialog, NumericColumnSelectorDialog
 
-# =============================================================================
-# Base dialog for file options
-# =============================================================================
 
 class BaseFileOptionsDialog(QDialog):
     """
     Base dialog window for displaying and editing file options.
 
-    Provides common functionality such as setting the default window title and base name.
+    Provides common functionality such as setting the default window title
+    and base name from the file.
     """
     def __init__(self, parent: Optional[QWidget], file_name: str) -> None:
         """
@@ -54,9 +60,6 @@ class BaseFileOptionsDialog(QDialog):
         self.default_base: str = fi.baseName()
 
 
-# =============================================================================
-# Excel file options dialog (unchanged)
-# =============================================================================
 class FileOptionsDialog(BaseFileOptionsDialog):
     """
     Dialog window for displaying and editing Excel file options.
@@ -96,31 +99,39 @@ class FileOptionsDialog(BaseFileOptionsDialog):
 
 
 def represent_list(dumper, data):
-    # Represent lists in flow style (inline with square brackets)
+    """
+    Represent lists in flow style (inline with square brackets)
+
+    Args:
+        dumper: The YAML dumper.
+        data: The list to represent.
+    """
     return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
 
 
 class FlowStyleListDumper(yaml.Dumper):
+    """ YAML dumper that represents lists in flow style. """
     pass
 
 
 FlowStyleListDumper.add_representer(list, represent_list)
 
-# =============================================================================
-# CSV/TSV file options dialog with enhanced features
-# =============================================================================
-
+# pylint: disable=too-many-ancestors,too-many-instance-attributes,too-many-locals,too-many-statements
 class CSVTSVOptionsDialog(BaseFileOptionsDialog):
     """
     Dialog for editing CSV/TSV file options with plugin processing.
 
-    The file path is displayed as a relative path if there are 2 or less ../ segments,
-    otherwise the full path is shown.
+    Provides file-specific persistence and a fallback to last used settings.
     """
     def __init__(self, parent: Optional[QWidget], file_name: str,
                  available_columns: Optional[List[str]] = None) -> None:
         """
-        Initialize the CSVTSVOptionsDialog.
+        Initialize the CSV/TSV options dialog.
+
+        Args:
+            parent (Optional[QWidget]): The parent widget.
+            file_name (str): The file path.
+            available_columns (Optional[List[str]]): The list of available columns.
         """
         super().__init__(parent, file_name)
         self.available_columns = available_columns or []
@@ -235,7 +246,13 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
         self.load_defaults()
 
     def _load_values_from_group(self, settings, group: str) -> Dict[str, Any]:
-        """Helper to load common QSettings values from a given group."""
+        """
+        Helper to load common QSettings values from a given group.
+
+        Args:
+            settings: QSettings object.
+            group (str): The group name to load values from.
+        """
         settings.beginGroup(group)
         values = {
             "plugin": settings.value("plugin", ""),
@@ -250,6 +267,7 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
     def load_defaults(self) -> None:
         """
         Load saved options for this file from QSettings.
+
         If no file-specific settings are found, load the last used settings.
         """
         settings = self.settings
@@ -279,13 +297,16 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
         if saved_columns:
             self.columns_line_edit.setText(saved_columns)
         if saved_numeric:
-            try:
-                self.numeric_cols_text_edit.setText(saved_numeric)
-            except Exception:
-                pass
+            self.numeric_cols_text_edit.setText(saved_numeric)
 
     def _set_settings_values_to_group(self, settings, group):
-        """Helper to set common QSettings values."""
+        """
+        Helper to set common QSettings values.
+
+        Args:
+            settings: QSettings object.
+            group (str): The group name to set values for.
+        """
         settings.beginGroup(group)
         settings.setValue("plugin", self.plugin_combo.currentText().strip())
         settings.setValue("name", self.name_line_edit.text())
@@ -323,8 +344,14 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
             delimiter = ',' if self.file_name.lower().endswith('.csv') else '\t'
             try:
                 df = pd.read_csv(self.file_name, delimiter=delimiter)
+            except pd.errors.ParserError as pe:
+                self.plugin_status_label.setText(f"CSV parsing failed: {pe}")
+                return
+            except FileNotFoundError as fnfe:
+                self.plugin_status_label.setText(f"File not found: {fnfe}")
+                return
             except Exception as e:
-                self.plugin_status_label.setText(f"Processing failed: {str(e)}")
+                self.plugin_status_label.setText(f"Processing failed: {e}")
                 return
             plugin_path = os.path.join("plugins", f"{selected_plugin}.py")
             if not os.path.exists(plugin_path):
@@ -347,7 +374,7 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
 
             # Check selected cols and numeric cols
             selected_cols = [col.strip() for col in self.columns_line_edit.text().split(',') if col.strip()]
-            cols = [col for col in self.columns_line_edit.text().split(",") if col in self.available_columns]
+            cols = [col for col in selected_cols if col in self.available_columns]
             self.columns_line_edit.setText(",".join(cols))
             numeric_dict = yaml.safe_load(self.numeric_cols_text_edit.toPlainText())
             if numeric_dict:
@@ -394,7 +421,7 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
             # Attempt to load YAML configuration; if invalid or empty, fallback to selected columns.
             try:
                 numeric_config = yaml.safe_load(self.numeric_cols_text_edit.toPlainText()) or {}
-            except Exception:
+            except yaml.YAMLError:
                 numeric_config = {}
             if numeric_config and isinstance(numeric_config, dict) and numeric_config.keys():
                 preselected = {}
@@ -403,7 +430,7 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
                         preselected[v["raw column"]] = k
                 # Pre-check dialog checkboxes based on preselected names.
                 for col, settings in dialog.column_settings.items():
-                    if col in preselected.keys():
+                    if col in preselected:
                         settings['checkbox'].setChecked(True)
                         settings['label_edit'].setText(preselected[col])
             if dialog.exec():
@@ -442,9 +469,6 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
         }
 
 
-# =============================================================================
-# Helper function to extract header columns from a CSV/TSV file
-# =============================================================================
 def get_csv_tsv_columns(file_name: str) -> List[str]:
     """
     Extract and return the header row (column names) from a CSV or TSV file.
@@ -460,13 +484,10 @@ def get_csv_tsv_columns(file_name: str) -> List[str]:
         with open(file_name, newline='', encoding='utf-8') as f:
             reader = csv.reader(f, delimiter=delimiter)
             return next(reader)
-    except Exception:
+    except csv.Error:
         return []
 
 
-# =============================================================================
-# Updated file dialog functions
-# =============================================================================
 def open_excel_file_dialog(self: Any) -> None:
     """
     Open a file dialog to select an Excel file and show its options dialog.
@@ -489,7 +510,7 @@ def open_excel_file_dialog(self: Any) -> None:
         'remove column name text': dialog.remove_column_text_line_edit.text()
     }
     self.add_data_source.emit(data_source_dict)
-    self._dataselectiongroupbox.add_file_to_comboboxes(
+    self.dataselectiongroupbox.add_file_to_comboboxes(
         data_source_dict['description'],
         data_source_dict['name']
     )
@@ -502,7 +523,6 @@ def open_yaml_input_dialog(self: Any) -> None:
     The dialog loads previously saved YAML content (if available) and saves
     the current input upon acceptance.
     """
-    from PySide6.QtCore import QSettings
     settings = QSettings("MIDRC", "REACH")
     default_yaml = settings.value("yaml_input/default_yaml", "")
 
@@ -525,7 +545,7 @@ def open_yaml_input_dialog(self: Any) -> None:
         yaml_content: str = text_edit.toPlainText()
         try:
             data_source_dict: Dict[str, Any] = yaml.safe_load(yaml_content)
-        except Exception as e:
+        except yaml.YAMLError as e:
             QMessageBox.critical(self, "Error", f"Failed to parse YAML content: {e}")
             return
 
@@ -536,7 +556,7 @@ def open_yaml_input_dialog(self: Any) -> None:
         # Save the current YAML content as default
         settings.setValue("yaml_input/default_yaml", yaml_content)
         self.add_data_source.emit(data_source_dict)
-        self._dataselectiongroupbox.add_file_to_comboboxes(
+        self.dataselectiongroupbox.add_file_to_comboboxes(
             data_source_dict.get("description", ""),
             data_source_dict.get("name", "")
         )
@@ -571,7 +591,7 @@ def open_csv_tsv_file_dialog(self: Any) -> None:
         'plugin': data['plugin']
     }
     self.add_data_source.emit(data_source_dict)
-    self._dataselectiongroupbox.add_file_to_comboboxes(
+    self.dataselectiongroupbox.add_file_to_comboboxes(
         data_source_dict.get('description', ''),
         data_source_dict.get('name', '')
     )

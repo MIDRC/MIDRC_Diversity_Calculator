@@ -13,7 +13,9 @@
 #      limitations under the License.
 #
 
-import math
+"""
+This module contains the ColumnSelectorDialog and NumericColumnSelectorDialog classes for selecting columns in a GUI.
+"""
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QDialogButtonBox, QScrollArea, QWidget, QGridLayout, QCheckBox, QButtonGroup, QHBoxLayout,
@@ -36,7 +38,8 @@ class NumericColumnSelectorDialog(QDialog):
 
     Methods:
         __init__(self, columns, parent=None): Initialize the NumericColumnSelectorDialog object.
-        toggle_inputs(self, checked, min_input, max_input, step_input): Toggle the visibility of the min, max, and step inputs based on the checkbox state.
+        toggle_inputs(self, checked, min_input, max_input, step_input): Toggle the visibility of the min, max, and step
+                                                                        inputs based on the checkbox state.
         get_selected_columns_with_bins(self): Return a dictionary of selected columns with their bin settings.
     """
     def __init__(self, columns, parent=None):
@@ -174,10 +177,6 @@ class ColumnSelectorDialog(QDialog):
         button_group = QButtonGroup(self)
         button_group.setExclusive(exclusive)
         self.checkboxes = {}
-
-        total_columns = len(columns)
-        # Calculate the dynamic number of columns
-        num_cols = math.ceil(total_columns / rows_per_column)
 
         # Add checkboxes in a grid layout using rows per column
         for idx, column in enumerate(columns):
