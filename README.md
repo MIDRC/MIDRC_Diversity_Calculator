@@ -115,7 +115,7 @@ Using pip:
 
 ```bash
 python -m pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r MIDRC-REACT/requirements.txt
 ```
 
 <h3>Starting</h3>
