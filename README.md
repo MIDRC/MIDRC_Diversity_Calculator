@@ -76,13 +76,15 @@ To start the application, run `python main.py`
 
 ### Layout and Loading of CSV/TSV Files
 
-The application supports loading CSV/TSV files in addition to Excel files. For CSV files, the layout is determined by a comma\-separated format, and for TSV files the information is separated via tabs. The file options dialog dynamically adjusts based on the file type selected. Key features include:
+The application supports loading CSV/TSV files in addition to Excel files. For CSV files, the layout is determined by a comma\-separated format, and for TSV files the information is separated via tabs. The file options dialog dynamically adjusts based on the file type selected.
 
-- **File‑specific Persistence:** The settings for each file (such as plugin, description, and column configurations) are stored via QSettings.
+- ***Multi-Dimensional Distances:*** The usage of multi-dimensional distances (FAMD, Aggregate) requires the full data in CSV or TSV format rather than just cumulative sums.
+- **File‑specific Persistence:** The settings for each file (such as plugin, description, and column configurations) are stored.
 - **Default Fallback:** If no file\-specific settings are found, the dialog will load the last used settings.
-- **Column Selection:** The dialog allows selecting columns and numeric columns through a pre\-configured interface, with options to pre\-select items based on the content of the associated text edits.
+- **Column Selection:** The dialog allows selecting which columns will be used in the display, and all columns selected are used for the multi-dimensional distances.
+- **Numeric Column Selection:** You may set which columns are numerical instead of categorical, as well as setting how to bin the data for categorical distances. The GUI provides options for a range of values for the bins, and you may adjust the binning by editing the yaml content provided after creating the default bins.
 
-The TSV files used and their associated plugin can be downloaded directly from [data\.midrc\.org](https://data.midrc.org) or via the gen3 interface to MIDRC.
+The application can load TSV files downloaded directly from [data\.midrc\.org](https://data.midrc.org) or via the gen3 interface to MIDRC using the plugin included in the plugins directory.
 
 ### GUI Manipulation
 The plots and figures should be movable, adjustable, re-sizable, or hidden. 
