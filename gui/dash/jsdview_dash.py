@@ -27,7 +27,8 @@ import plotly.graph_objects as go
 from core.jsdconfig import JSDConfig
 from core.jsdmodel import JSDTableModel
 from core.jsdcontroller import JSDController
-from gui.jsdview_base import JsdViewBase
+from gui.common.jsdview_base import JsdViewBase
+from gui.common.file_upload import process_file_upload
 from gui.dash.dataselectiongroupbox import DataSelectionGroupBox
 
 class JSDViewDash(JsdViewBase):
@@ -229,10 +230,7 @@ class JSDViewDash(JsdViewBase):
         Args:
             data_source_dict (dict): The data source dictionary.
         """
-        print(f"handle_excel_file_uploaded() triggered with file: {data_source_dict['name']}")  # Debugging print
-        self.open_excel_file(data_source_dict)
-        print("Excel file loaded, try to update layout")
-        self.data_selection_group_box.update_filebox_layout(self.data_selection_group_box.num_fileboxes)
+        process_file_upload(self, data_source_dict)
 
     def run(self):
         """

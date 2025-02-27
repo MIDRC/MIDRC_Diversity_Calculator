@@ -28,7 +28,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from core.jsdmodel import JSDTableModel
-from gui.jsdview_base import JsdViewBase
+from gui.common.jsdview_base import JsdViewBase
 from gui.ipython.dataselectiongroupbox import DataSelectionGroupBox
 
 

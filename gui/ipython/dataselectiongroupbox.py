@@ -22,7 +22,7 @@ import io
 from PySide6.QtCore import Signal, QObject
 import ipywidgets as widgets
 
-from gui.jsdview_base import GroupBoxData
+from gui.common.jsdview_base import GroupBoxData
 
 # Define the data selection group box
 class DataSelectionGroupBox(QObject, GroupBoxData):

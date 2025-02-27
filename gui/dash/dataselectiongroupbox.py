@@ -22,8 +22,9 @@ import io
 
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output, State
-from gui.jsdview_base import GroupBoxData
-from gui.dash.jsdview_dash import JSDViewDash
+from gui.common.jsdview_base import GroupBoxData
+from gui.common.file_upload import process_file_upload
+
 
 class DataSelectionGroupBox(GroupBoxData):
     """
@@ -269,15 +270,15 @@ class DataSelectionGroupBox(GroupBoxData):
                 'content type': content_type,
             }
 
-            print("⚠️ Manually calling handle_excel_file_uploaded")
-            JSDViewDash.handle_excel_file_uploaded(self.app, data_source_dict)  # Call manually
-
-            return html.Div([
-                f'File uploaded: {filename}'
-            ])
-        return html.Div([
-            'No file uploaded yet.'
-        ])
+            print("⚠️ Manually calling file upload handler")
+            # Retrieve the JSDViewDash instance from the app configuration.
+            jsd_view = self.app.config.get('jsd_view')
+            if jsd_view is not None:
+                process_file_upload(jsd_view, data_source_dict)
+            else:
+                print("JSDViewDash instance not found in app.config.")
+            return html.Div([f'File uploaded: {filename}'])
+        return html.Div(['No file uploaded yet.'])
 
     def update_category_combobox(self):
         """
