@@ -1,207 +1,173 @@
-                  
- 
-<h1 align="center" style="font-weight: bold;">MIDRC-REACT Representativeness Exploration and Comparison Tool</h1>
+# MIDRC-REACT Representativeness Exploration and Comparison Tool
 
-<p align="center">
-<a href="#tech">Technologies</a> |
-<a href="#started">Getting Started</a> |
-<a href="#colab">Collaborators</a> |
-<a href="#references">References</a> |
-<a href="#contribute">Contribute</a>
-</p>
+[Technologies](#technologies) | [Getting Started](#getting-started) | [Collaborators](#collaborators) | [References](#references) | [Contribute](#contribute)
 
-<p align="center">
-<a href="https://www.midrc.org/">📱 Visit MIDRC Website</a>
-</p>
+[📱 Visit MIDRC Website](https://www.midrc.org/)
 
-<h2>:information_source: Overview</h2>
+## :information_source: Overview
 
-The MIDRC Representativeness Exploration and Comparison Tool (REACT) is a tool designed to compare the representativeness of biomedical data. 
-By leveraging the Jensen-Shannon distance (JSD) measure, this tool provides insights into the demographic representativeness of datasets within the biomedical field.
-It also supports monitoring the representativeness of datasets over time by assessing the representativeness of historical data.
-Developed and utilized by MIDRC, this tool assesses the representativeness of data within the open data commons to the US population.
-Additionally, it can be generalized by users for other dataset representativeness needs, such as assessing the similarity of demographic distributions across multiple attributes in different biomedical datasets.
+The MIDRC Representativeness Exploration and Comparison Tool (REACT) is a tool designed to compare the representativeness of biomedical data. By leveraging the Jensen‑Shannon distance (JSD) measure, it provides insight into the demographic representativeness of datasets within the biomedical field. It also supports monitoring historical data for changes in representativeness. Developed by MIDRC, it assesses how well data within the open data commons represent the US population and can be adapted for other data needs.
 
-<h2>:wrench: Features</h2>
+## :wrench: Features
 
-* **Jensen-Shannon Distance (JSD) Calculation**: Uses the JSD measure to assess the representativeness of data.
-* **Comparative Analysis**: Enables comparisons between different datasets to evaluate population representativeness.
-* **Biomedical Focus**: Specifically tailored for analyzing biomedical data, ensuring relevance and similarity.
-* **Historical Data**: Enables the ability to assess data over time for monitoring changes in representativeness.
+- **Jensen‑Shannon Distance Calculation**: Uses the JSD measure to assess data representativeness.
+- **Comparative Analysis**: Enables comparisons between various datasets.
+- **Biomedical Focus**: Tailored for biomedical data analysis.
+- **Historical Data**: Supports monitoring changes over time.
 
-<h2>:notebook_with_decorative_cover: Background</h2>
+## :notebook_with_decorative_cover: Background
 
-The methodology behind MIDRC-REACT is based on the 2023 paper by Whitney et al. titled 
-<a href="#1">"Longitudinal assessment of demographic representativeness in the Medical Imaging and Data Resource Center open data commons"[1]</a>. 
-This paper provides the theoretical foundation for using JSD in evaluating demographic representativeness.
+The methodology is based on the 2023 paper by Whitney et al. titled [“Longitudinal assessment of demographic representativeness in the Medical Imaging and Data Resource Center open data commons”\[1\]](#1). This paper provides the theoretical approach for using JSD.
 
 ![screenshot](docs/images/screenshot.jpg)
 
-<h2 id="technologies">💻 Technologies</h2>
+## Technologies
 
-Technologies used with this application
-* Python
-* PySide6
-* numpy
-* scipy
-* pandas
+**Technologies used with this application:**
+- Python
+- PySide6
+- numpy, scipy, pandas
 
-There is a requirements.txt file available to install requirements
+A `requirements.txt` file is provided for installing dependencies.
 
-<h2 id="started">🚀 Getting started</h2>
+## Getting Started
 
-### Configure yaml
-First, configure your own jsdconfig.yaml file to select which data to load by default. There is a jsdconfig-example.yaml file provided that may be copied over or used as a template for your own config file.
-* The filename needs to be specified, and a human-readable name should be provided for use in the plots and figures. 
-* Please see the ***Generating custom Excel files*** section for additional information.
-* On your first run, you may use ```cp jsdconfig-example.yaml jsdconfig.yaml``` to load the MIDRC data.
+### Configure YAML
 
-### Run application
-To start the application, run `python main.py`
+First, create your own `jsdconfig.yaml` file to select which data to load by default using the provided example file:
 
-### Generating plots and figures
-* Select the files you wish to compare in the drop-down menus that you wish to make comparisons between. 
-* A checkbox is provided next to the drop-down menus to select whether additional plots should be shown for each individual file selected. 
-* Note: displaying plots for two or more files simultaneously may require a 4k monitor
+- Ensure the filename is correctly specified and include a human‑readable name for display in plots.
+- See the *Generating custom Excel files* section for details.
+- Run the following command to copy the example configuration:
 
-### Generating custom excel files
-- Use the provided MIDRC, CDC, and Census Excel files as an example on how to prepare your custom data. 
-- For each date, ***cumulative sums are expected***.
-- **Each attribute should have its own sheet** which will be automatically parsed by the application.
-- Column names within each sheet are parsed and compared between files
-  - Where there is a matching column name within a worksheet of the same name, the JSD will be calculated using those values.
-  - ***A Date column is expected***, and it should be sorted. Please see how the census data is loaded using the example config file if your data does not have multiple dates, and you do not have a date column.
-- The list of attributes provided in the GUI should be a list where worksheets with an identical name exist in both files. If it is not, please check your spelling
-- The ```remove column name text``` config parameter is due to how the MIDRC data is generated. There is a ```(CUSUM)``` suffix that needs to be removed to compare it to CDC and Census data.
+  ```bash
+  cp jsdconfig-example.yaml jsdconfig.yaml
+  ```
+
+### Run Application
+
+To start the application, run:
+
+`python main.py`
+
+### Generating Plots and Figures
+
+* Use the drop‑down menus to select files for comparison.
+* A checkbox is provided next to each drop‑down to display individual plots.
+*  Note: Displaying multiple files simultaneously may require a 4k monitor.
+
+### Generating Custom Excel Files
+
+* Use the MIDRC, CDC, and Census Excel files as examples.
+* For each date, ***cumulative sums are expected***.
+* **Each attribute should have its own sheet** so it is automatically parsed.
+* Where matching column names exist across sheets, JSD is calculated.
+* ***A Date column is required*** and should be sorted. Please see how the census data is loaded using the example config file if your data does not have multiple dates.
+* The `remove column name text` parameter adjusts for `(CUSUM)` suffixes in the MIDRC-generated data, and is optional.
 
 ### Layout and Loading of CSV/TSV Files
 
-The application supports loading CSV/TSV files in addition to Excel files. For CSV files, the layout is determined by a comma\-separated format, and for TSV files the information is separated via tabs. The file options dialog dynamically adjusts based on the file type selected.
+The application supports CSV/TSV files as well as Excel:
+* CSV files use comma\-separation; TSV files use tabs.
+* The file options dialog adjusts based on file type.
+* ***Multi\-Dimensional Distances:*** The usage of multi-dimensional distances (FAMD, Aggregate) requires the full data in CSV or TSV format rather than just cumulative sums..
+* **File\-specific Persistence:** Saves settings for each file.
+* **Default Fallback:** Loads the last used settings if no file data is found.
+* **Column Selection:** The dialog allows selecting which columns will be used in the display, and all columns selected are used for the multi-dimensional distances.
+* **Numeric Column Selection:** You may set which columns are numerical instead of categorical, as well as setting how to bin the data for categorical distances. The GUI provides options for a range of values for the bins, and you may adjust the binning by editing the YAML content provided after creating the default bins.
 
-- ***Multi-Dimensional Distances:*** The usage of multi-dimensional distances (FAMD, Aggregate) requires the full data in CSV or TSV format rather than just cumulative sums.
-- **File‑specific Persistence:** The settings for each file (such as plugin, description, and column configurations) are stored.
-- **Default Fallback:** If no file\-specific settings are found, the dialog will load the last used settings.
-- **Column Selection:** The dialog allows selecting which columns will be used in the display, and all columns selected are used for the multi-dimensional distances.
-- **Numeric Column Selection:** You may set which columns are numerical instead of categorical, as well as setting how to bin the data for categorical distances. The GUI provides options for a range of values for the bins, and you may adjust the binning by editing the yaml content provided after creating the default bins.
-
-The application can load TSV files downloaded directly from [data\.midrc\.org](https://data.midrc.org) or via the gen3 interface to MIDRC using the plugin included in the plugins directory.
+The application can load TSV files downloaded directly from data.midrc.org or via the gen3 interface to MIDRC using the plugin included in the plugins directory.
 
 ### GUI Manipulation
-The plots and figures should be movable, adjustable, re-sizable, or hidden. 
 
-To see the list of available dock widgets, you can right-click on any menu/title bar area, i.e. either the main window menu bar or any title bar in a dock widget. This is useful if you hide one of hte docked widgets and wish to view them again.
+* Plots and figures are movable, resizable, or can be hidden.
+* Right‑click on any menu or title-bar area to view available dock widgets.
+* Keyboard shortcuts allow copying JSD values and dates as tab‑delimited data for Excel or notebooks.
 
-Keyboard commands may be used to copy and paste the calculated JSD values (and dates) and pasted in Excel or a notebook as tab-delimited data.
+### Prerequisites
 
- 
-<h3>Prerequisites</h3>
+* Python 3.10 or higher
+* [Git](https://github.com)
 
-- Python 3.10 or higher
-- [Git](https://github.com)
- 
-<h3>Cloning</h3>
+### Cloning
 
-How to clone the project
+Clone the repository:
 
 ```bash
 git clone https://github.com/MIDRC/MIDRC-REACT.git
 ```
- 
-<h3>Installing Requirements</h3>
 
-You may install project dependencies using pip.
+### Installing Requirements
 
-Using pip:
+Install dependencies using pip:
 
 ```bash
 python -m pip install --upgrade pip
 pip install -r MIDRC-REACT/requirements.txt
 ```
 
-<h3>Starting</h3>
+### Starting
 
-How to start the project
+Start the project using:
 
 ```bash
 cp MIDRC-REACT/jsdconfig-example.yaml MIDRC-REACT/jsdconfig.yaml
 python MIDRC-REACT
 ```
 
-Note: if you are inside the MIDRC-REACT directory, you may run `python .` instead of `python MIDRC-REACT`.
- 
-<h2 id="colab">🤝 Collaborators</h2>
+Alternatively, from within the `MIDRC-REACT` directory, you can also run:
 
-<h3>Special thank you for all people that contributed for this project</h3>
-<table>
-<tr>
+`python .`
 
-<p>
-Robert Tomek,
-Maryellen Giger,
-Heather Whitney
-</p>
-<h3>We'd also like to acknowledge</h3>
+## 🤝 Collaborators
 
-Natalie Baughan, 
-Kyle Myers, 
-Karen Drukker, 
-Judy Gichoya, 
-Brad Bower, 
-Weijie Chen, 
-Nicholas Gruszauskas, 
-Jayashree Kalpathy-Cramer,
-Sanmi Koyejo,
-Rui Sá,
-Berkman Sahiner,
-Zi Zhang,
+### Special Thanks
 
-#### The MIDRC AI Reliability Working Group:
-* Co-leads
-  * Karen Drukker
-  * Judy Wawira Gichoya
-* AAPM
-  * Weijie Chen
-  * Kyle Myers
-  * Heather Whitney
-* ACR
-  * Jayashree Kalpathy-Cramer
-* RSNA
-  * Zi Jill Zhang
-* NIH
-  * Rui Sá
-  * Brad Bower
-* MIDRC Central (University of Chicago)
-  * Maryellen Giger
-  * Nick Gruszaukas,
-  * Katie Pizer
-  * Robert Tomek
-* Project Manager
-  * Emily Townley
+Robert Tomek, Maryellen Giger, Heather Whitney
 
-</tr>
-</table>
+#### Acknowledgements
 
-<h2 id="references">:book: References</h2>
-<a id="1">[1]</a> 
-Whitney HM, Baughan N, Myers KJ, Drukker K, Gichoya J, Bower B, Chen W, Gruszauskas N, Kalpathy-Cramer J, Koyejo S, Sá RC, Sahiner B, Zhang Z, Giger ML. 
-Longitudinal assessment of demographic representativeness in the Medical Imaging and Data Resource Center open data commons. 
-J Med Imaging (Bellingham). 2023 Nov;10(6):61105. 
-<a href="https://doi.org/10.1117/1.JMI.10.6.061105">doi: 10.1117/1.JMI.10.6.061105</a>. Epub 2023 Jul 18. PMID: 37469387; PMCID: PMC10353566.
- 
-<h2 id="contribute">📫 Contribute</h2>
+Natalie Baughan, Kyle Myers, Karen Drukker, Judy Gichoya, Brad Bower, Weijie Chen, Nicholas Gruszauskas, Jayashree Kalpathy\-Cramer, Sanmi Koyejo, Rui Sá, Berkman Sahiner, Zi Zhang
 
-1. `git clone https://github.com/MIDRC/MIDRC_Diversity_Calculator.git`
-2. `git checkout -b feature/NAME`
-3. Open a Pull Request explaining the problem solved or feature made, if exists, append screenshot of visual modifications and wait for the review!
- 
-<h3>Documentations that might help</h3>
+**MIDRC AI Reliability Working Group:**
+
+* *Co\-leads:* Karen Drukker, Judy Wawira Gichoya
+* *AAPM:* Weijie Chen, Kyle Myers, Heather Whitney
+* *ACR:* Jayashree Kalpathy\-Cramer
+* *RSNA:* Zi Jill Zhang
+* *NIH:* Rui Sá, Brad Bower
+* *MIDRC Central (University of Chicago):* Maryellen Giger, Nick Gruszauskas, Katie Pizer, Robert Tomek
+* *Project Manager:* Emily Townley
+
+## :book: References
+
+<a id="1">[1]</a> Whitney HM, Baughan N, Myers KJ, Drukker K, Gichoya J, Bower B, Chen W, Gruszauskas N, Kalpathy\-Cramer J, Koyejo S, Sá RC, Sahiner B, Zhang Z, Giger ML.
+*Longitudinal assessment of demographic representativeness in the Medical Imaging and Data Resource Center open data commons.*
+J Med Imaging (Bellingham). 2023 Nov;10(6):61105.
+[doi: 10.1117/1.JMI.10.6.061105](https://doi.org/10.1117/1.JMI.10.6.061105). Epub 2023 Jul 18. PMID: 37469387; PMCID: PMC10353566.
+
+## 📫 Contribute
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/MIDRC/MIDRC_Diversity_Calculator.git
+```
+
+2. Create a feature branch:
+
+`git checkout -b feature/NAME`
+
+3. Open a Pull Request explaining the changes, and attach any necessary screenshots.
+
+### Documentation That Might Help
 
 [📝 How to create a Pull Request](https://www.atlassian.com/br/git/tutorials/making-a-pull-request)
 
- 
-<h2 id="license">:heavy_check_mark: License</h2>
-This project is licensed with the Apache 2.0 license. See LICENSE file for details.
+## :heavy_check_mark: License
 
+This project is licensed under the Apache 2.0 license. See the `LICENSE` file for details.
 
-<h2 id="acknowledgement">Acknowledgement</h2>
-<em>This work was supported in part by The Medical Imaging and Data Resource Center (MIDRC), which is funded by the National Institute of Biomedical Imaging and Bioengineering (NIBIB) of the National Institutes of Health under contract 75N92020D00021/5N92023F00002 and through the Advanced Research Projects Agency for Health (ARPA-H).</em>
+## Acknowledgement
+
+*This work was supported in part by The Medical Imaging and Data Resource Center (MIDRC), funded by the National Institute of Biomedical Imaging and Bioengineering (NIBIB) and through ARPA\-H.*
