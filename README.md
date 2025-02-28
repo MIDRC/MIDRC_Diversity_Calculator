@@ -46,9 +46,9 @@ First, create your own `jsdconfig.yaml` file to select which data to load by def
 
 ### Run Application
 
-To start the application, run:
+To start the application within the source directory, run:
 
-`python main.py`
+`python .`
 
 ### Generating Plots and Figures
 
