@@ -46,9 +46,12 @@ First, create your own `jsdconfig.yaml` file to select which data to load by def
 
 ### Run Application
 
-To start the application within the source directory, run:
+To start the application within the project directory, run:
 
-`python .`
+  ```bash
+  pip install -e .
+  midrc-react
+  ```
 
 ### Generating Plots and Figures
 
@@ -97,6 +100,12 @@ Clone the repository:
 git clone https://github.com/MIDRC/MIDRC-REACT.git
 ```
 
+Enter the project directory:
+
+```bash
+cd MIDRC-REACT
+```
+
 ### Installing Requirements
 
 Install dependencies using pip:
@@ -111,13 +120,17 @@ pip install -r midrc_react/requirements.txt
 Start the project using:
 
 ```bash
-cp midrc_react/jsdconfig-example.yaml midrc_react/jsdconfig.yaml
-python midrc_react
+cp jsdconfig-example.yaml jsdconfig.yaml
+pip install -e .
+midrc-react
 ```
 
-Alternatively, from within the `MIDRC-REACT` directory, you can also run:
+Once installed using `pip install -e .` from the base directory, you may run the application from any directory using:
 
-`python .`
+`midrc-react`
+
+or, alternatively:
+`MIDRC-REACT`
 
 ## 🤝 Collaborators
 
