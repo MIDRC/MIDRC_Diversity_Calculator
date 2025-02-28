@@ -103,7 +103,7 @@ Install dependencies using pip:
 
 ```bash
 python -m pip install --upgrade pip
-pip install -r MIDRC-REACT/requirements.txt
+pip install -r midrc_react/requirements.txt
 ```
 
 ### Starting
@@ -111,8 +111,8 @@ pip install -r MIDRC-REACT/requirements.txt
 Start the project using:
 
 ```bash
-cp MIDRC-REACT/jsdconfig-example.yaml MIDRC-REACT/jsdconfig.yaml
-python MIDRC-REACT
+cp midrc_react/jsdconfig-example.yaml midrc_react/jsdconfig.yaml
+python midrc_react
 ```
 
 Alternatively, from within the `MIDRC-REACT` directory, you can also run:

@@ -25,8 +25,8 @@ import numpy as np
 from scipy.stats import ks_2samp, wasserstein_distance
 from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler, RobustScaler, StandardScaler
 
-from core.aggregate_jsd_calc import calc_jsd_from_counts_dict
-from core.cucconi import cucconi_test
+from midrc_react.core.aggregate_jsd_calc import calc_jsd_from_counts_dict
+from midrc_react.core.cucconi import cucconi_test
 
 
 def calc_numerical_metric_by_feature(df, feature: str, dataset_column: str, metric_function):

@@ -24,6 +24,7 @@ plugin processing, and column selection.
 import csv
 import importlib.util
 import os
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
@@ -34,7 +35,7 @@ from PySide6.QtWidgets import (
 )
 import yaml
 
-from gui.pyside6.columnselectordialog import ColumnSelectorDialog, NumericColumnSelectorDialog
+from midrc_react.gui.pyside6.columnselectordialog import ColumnSelectorDialog, NumericColumnSelectorDialog
 
 
 class BaseFileOptionsDialog(QDialog):
@@ -176,9 +177,15 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
                 if file.endswith(".py"):
                     plugin_name = file[:-3]
                     self.plugin_combo.addItem(plugin_name)
-            # Set the default selection to the first plugin if available
-            if self.plugin_combo.count() > 0:
-                self.plugin_combo.setCurrentIndex(1)
+        plugin_folder = os.path.join(Path(__file__).resolve().parent.parent.parent, plugin_folder)
+        if os.path.isdir(plugin_folder):
+            for file in os.listdir(plugin_folder):
+                if file.endswith(".py"):
+                    plugin_name = file[:-3]
+                    self.plugin_combo.addItem(plugin_name)
+        # Set the default selection to the first plugin if available
+        if self.plugin_combo.count() > 0:
+            self.plugin_combo.setCurrentIndex(1)
         self.process_button = QPushButton("Process Plugin")
         self.process_button.clicked.connect(self.process_plugin)
         plugin_layout.addWidget(plugin_label)
@@ -356,8 +363,10 @@ class CSVTSVOptionsDialog(BaseFileOptionsDialog):
                 return
             plugin_path = os.path.join("plugins", f"{selected_plugin}.py")
             if not os.path.exists(plugin_path):
-                self.plugin_status_label.setText("Plugin file not found.")
-                return
+                plugin_path = os.path.join(Path(__file__).resolve().parent.parent.parent, plugin_path)
+                if not os.path.exists(plugin_path):
+                    self.plugin_status_label.setText("Plugin file not found.")
+                    return
             spec = importlib.util.spec_from_file_location(selected_plugin, plugin_path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)

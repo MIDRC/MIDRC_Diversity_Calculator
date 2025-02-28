@@ -27,10 +27,10 @@ import plotly.graph_objects as go
 from PySide6.QtCore import QDate, Signal
 import seaborn as sns
 
-from core.jsdmodel import JSDTableModel
-from gui.common.jsdview_base import JsdViewBase
-from gui.common.plot_utils import create_stacked_area_figure, prepare_area_chart_data
-from gui.ipython.dataselectiongroupbox import DataSelectionGroupBox
+from midrc_react.core.jsdmodel import JSDTableModel
+from midrc_react.gui.common.jsdview_base import JsdViewBase
+from midrc_react.gui.common.plot_utils import create_stacked_area_figure, prepare_area_chart_data
+from midrc_react.gui.ipython.dataselectiongroupbox import DataSelectionGroupBox
 
 
 class JsdViewIPython(JsdViewBase):

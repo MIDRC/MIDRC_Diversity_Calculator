@@ -16,7 +16,7 @@
 """
 This module contains a function to parse Excel files and return a pandas DataFrame.
 
-CURRENTLY UNUSED IN MIDRC-REACT PROJECT
+CURRENTLY UNUSED IN midrc_react PROJECT
 """
 
 import pandas as pd

@@ -46,7 +46,7 @@ class JSDConfig:
 
     def __post_init__(self):
         """Load the YAML data from the current filename."""
-        os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+        # os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
         self._load_data()
 
     def _load_data(self):

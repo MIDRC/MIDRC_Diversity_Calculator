@@ -14,7 +14,7 @@
 #
 
 """
-This module contains the JsdWindow class, which represents the main window of the MIDRC-REACT application.
+This module contains the JsdWindow class, which represents the main window of the midrc_react application.
 """
 
 from __future__ import annotations
@@ -36,14 +36,14 @@ from PySide6.QtWidgets import (
     QTableView, QVBoxLayout, QWidget,
 )
 
-from core.datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate
-from gui.common.jsdview_base import JsdViewBase
-from gui.pyside6.copyabletableview import CopyableTableView
-from gui.pyside6.dataselectiongroupbox import JsdDataSelectionGroupBox
-from gui.pyside6.file_open_dialogs import (
+from midrc_react.core.datetimetools import convert_date_to_milliseconds, numpy_datetime64_to_qdate
+from midrc_react.gui.common.jsdview_base import JsdViewBase
+from midrc_react.gui.pyside6.copyabletableview import CopyableTableView
+from midrc_react.gui.pyside6.dataselectiongroupbox import JsdDataSelectionGroupBox
+from midrc_react.gui.pyside6.file_open_dialogs import (
     open_csv_tsv_file_dialog, open_excel_file_dialog, open_yaml_input_dialog,
 )
-from gui.pyside6.grabbablewidget import GrabbableChartView
+from midrc_react.gui.pyside6.grabbablewidget import GrabbableChartView
 
 
 class JsdWindow(QMainWindow, JsdViewBase):

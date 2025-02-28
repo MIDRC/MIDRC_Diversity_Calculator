@@ -29,10 +29,10 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QSplashScreen
 
-from core.jsdconfig import JSDConfig
-from core.jsdcontroller import JSDController
-from core.jsdmodel import JSDTableModel
-from gui.pyside6.jsdview import JsdWindow
+from midrc_react.core.jsdconfig import JSDConfig
+from midrc_react.core.jsdcontroller import JSDController
+from midrc_react.core.jsdmodel import JSDTableModel
+from midrc_react.gui.pyside6.jsdview import JsdWindow
 
 
 class SplashScreen(QSplashScreen):
@@ -89,7 +89,7 @@ def launch_react():
     """
     Function: launch_react
 
-    This function launches the MIDRC-REACT application.
+    This function launches the midrc_react application.
     * It checks if a QApplication instance already exists, and if not, creates one.
     * It then creates a SplashScreen object and displays it.
     * Next, it initializes a JSDConfig object and retrieves the data source list from the configuration.

@@ -23,9 +23,9 @@ import io
 from dash import Dash, dcc, html
 from dash.dependencies import Input, Output, State
 
-from gui.common.file_upload import process_file_upload
-from gui.common.jsdview_base import GroupBoxData
-from gui.common.utils import create_data_source_dict, create_file_info, get_common_categories
+from midrc_react.gui.common.file_upload import process_file_upload
+from midrc_react.gui.common.jsdview_base import GroupBoxData
+from midrc_react.gui.common.utils import create_data_source_dict, create_file_info, get_common_categories
 
 
 class DataSelectionGroupBox(GroupBoxData):

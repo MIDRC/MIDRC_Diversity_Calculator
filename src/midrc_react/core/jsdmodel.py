@@ -22,7 +22,7 @@ from typing import Any, Optional
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, Signal
 from PySide6.QtGui import QColor
 
-from core.excel_layout import DataSource
+from midrc_react.core.excel_layout import DataSource
 
 
 class JSDTableModel(QAbstractTableModel):

@@ -19,12 +19,13 @@ import importlib.util
 import io
 import math
 import os
+from pathlib import Path
 import re
 import warnings
 
 import pandas as pd
 
-from core.data_preprocessing import bin_dataframe_column
+from midrc_react.core.data_preprocessing import bin_dataframe_column
 
 
 class DataSource:
@@ -96,8 +97,11 @@ class DataSource:
             A reference to the plugin's preprocess_data function if found, else None.
         """
         if not os.path.exists(plugin_path):
-            print(f"Plugin file {plugin_path} not found.")
-            return None
+            orig_plugin_path = plugin_path
+            plugin_path = os.path.join(Path(__file__).resolve().parent.parent, plugin_path)
+            if not os.path.exists(plugin_path):
+                print(f"Plugin file {orig_plugin_path} not found. Location {plugin_path} also not found.")
+                return None
 
         module_name = os.path.basename(plugin_path).replace(".py", "")
         spec = importlib.util.spec_from_file_location(module_name, plugin_path)

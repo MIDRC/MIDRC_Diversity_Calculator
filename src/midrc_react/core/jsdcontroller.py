@@ -25,13 +25,13 @@ import pandas as pd
 from PySide6.QtCore import QObject, Signal
 from scipy.spatial import distance
 
-from core.aggregate_jsd_calc import calc_aggregate_jsd_at_date
-from core.data_preprocessing import combine_datasets_from_list
-from core.datetimetools import pandas_date_to_qdate
-from core.famd_calc import calc_famd_ks2_at_date, calc_famd_ks2_at_dates
-from core.jsdmodel import JSDTableModel
-from core.numeric_distances import calc_ks2_samp_by_feature
-from gui.common.jsdview_base import JsdViewBase
+from midrc_react.core.aggregate_jsd_calc import calc_aggregate_jsd_at_date
+from midrc_react.core.data_preprocessing import combine_datasets_from_list
+from midrc_react.core.datetimetools import pandas_date_to_qdate
+from midrc_react.core.famd_calc import calc_famd_ks2_at_date, calc_famd_ks2_at_dates
+from midrc_react.core.jsdmodel import JSDTableModel
+from midrc_react.core.numeric_distances import calc_ks2_samp_by_feature
+from midrc_react.gui.common.jsdview_base import JsdViewBase
 
 
 class JSDController(QObject):

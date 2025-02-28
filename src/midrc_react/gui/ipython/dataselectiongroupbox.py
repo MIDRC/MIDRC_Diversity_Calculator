@@ -22,8 +22,8 @@ import io
 import ipywidgets as widgets
 from PySide6.QtCore import QObject, Signal
 
-from gui.common.jsdview_base import GroupBoxData
-from gui.common.utils import create_data_source_dict, create_file_info, get_common_categories
+from midrc_react.gui.common.jsdview_base import GroupBoxData
+from midrc_react.gui.common.utils import create_data_source_dict, create_file_info, get_common_categories
 
 
 # Define the data selection group box

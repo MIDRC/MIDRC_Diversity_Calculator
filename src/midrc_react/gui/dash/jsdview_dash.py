@@ -23,13 +23,13 @@ from dash.dependencies import Input, Output
 import plotly.express as px
 import plotly.graph_objects as go
 
-from core.jsdconfig import JSDConfig
-from core.jsdcontroller import JSDController
-from core.jsdmodel import JSDTableModel
-from gui.common.file_upload import process_file_upload
-from gui.common.jsdview_base import JsdViewBase
-from gui.common.plot_utils import create_stacked_area_figure, prepare_area_chart_data
-from gui.dash.dataselectiongroupbox import DataSelectionGroupBox
+from midrc_react.core.jsdconfig import JSDConfig
+from midrc_react.core.jsdcontroller import JSDController
+from midrc_react.core.jsdmodel import JSDTableModel
+from midrc_react.gui.common.file_upload import process_file_upload
+from midrc_react.gui.common.jsdview_base import JsdViewBase
+from midrc_react.gui.common.plot_utils import create_stacked_area_figure, prepare_area_chart_data
+from midrc_react.gui.dash.dataselectiongroupbox import DataSelectionGroupBox
 
 
 class JSDViewDash(JsdViewBase):

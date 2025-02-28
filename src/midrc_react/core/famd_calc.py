@@ -24,8 +24,8 @@ import pandas as pd
 import prince
 from tabulate import tabulate
 
-from core.data_preprocessing import combine_datasets_from_list
-from core.numeric_distances import calc_distances_via_df, scale_feature
+from midrc_react.core.data_preprocessing import combine_datasets_from_list
+from midrc_react.core.numeric_distances import calc_distances_via_df, scale_feature
 
 
 def preprocess_data_for_famd(raw_df, features, numeric_features, scaling_method='standard'):

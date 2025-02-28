@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 from scipy.spatial import distance
 
-from core.data_preprocessing import combine_datasets_from_list
+from midrc_react.core.data_preprocessing import combine_datasets_from_list
 
 
 def calc_jsd_from_counts_dict(counts_dict, dataset_names):
